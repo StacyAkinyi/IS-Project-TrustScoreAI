@@ -1,0 +1,1001 @@
+Employee_ID,Loan_Volumes,Transaction_Accuracy,Workplan_Completion,Error_Frequencies,Feedback_Text,Target
+EMP_0001,112,92.68686483822883,70.1163562343278,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0002,102,96.12530416342999,93.7131235305119,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0003,24,95.48268779741356,75.50548562494126,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0004,116,91.0382506539547,86.17023828061431,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0005,81,88.2703466124113,55.20686789601437,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0006,30,94.67581251653993,61.27193777318469,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0007,112,91.32555901829923,85.14717204893384,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0008,131,86.98414316687996,52.64019802342641,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0009,84,98.50858451854579,74.32988311218766,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0010,97,95.36832786414482,79.9684482831467,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0011,126,95.24775784668222,80.10728220262405,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0012,109,97.3387581386751,51.1466405634021,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0013,113,92.94492517982621,66.10540021145928,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0014,140,97.22581642603686,81.8245325524577,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0015,62,92.47136130266509,57.449986807462174,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0016,11,86.00763099873565,84.77078241640265,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0017,97,91.07872132041533,87.29626044068372,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0018,47,92.46197340969836,99.09845952230727,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0019,139,95.80303872448444,60.49209974282047,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0020,30,86.59868095193012,91.25653338330577,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0021,67,87.10027807990673,76.0148288459327,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0022,31,88.95525703951925,68.67312980720867,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0023,98,88.99747590056323,56.1188378662589,3,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0024,58,95.98276867688594,86.77528032437688,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0025,68,88.76095990842397,61.792879957184354,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0026,24,94.49647095036171,68.57110009365229,4,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0027,60,92.41410775207407,53.127111344868425,3,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0028,117,93.59941567269101,90.06834579097595,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0029,64,97.57160444767443,88.32942619858217,5,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0030,73,91.06572252323537,86.68079150211562,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0031,140,96.56367065596406,64.97217552459433,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0032,60,91.3305408932603,58.674003713297864,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0033,144,90.30807064841875,81.87766322351149,4,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0034,30,99.3794076596983,74.80831920566098,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0035,82,87.76556381018445,58.91262334523208,0,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0036,27,86.35505440866412,84.29556355249318,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0037,141,96.56478888303218,99.55632159106518,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0038,98,86.02374558031137,87.36097938710188,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0039,69,97.55618486054544,86.99931933428059,4,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0040,23,91.55790094535865,97.51563764652958,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0041,18,98.73270515937871,60.14681837874511,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0042,99,95.82299291682858,78.27749824607201,3,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0043,62,94.15607000511936,98.98233575169417,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0044,139,99.23960195586649,58.26470554850873,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0045,93,90.94974059578081,85.01259797222605,4,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0046,101,99.3113040480945,79.2905072985951,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0047,120,87.0250191613181,79.32395460943535,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0048,17,92.2563241289862,84.88353137600376,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0049,44,89.04866833588292,96.48084614378422,3,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0050,90,93.0976416836229,89.1290969925669,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0051,59,87.43020816837377,52.8068051708105,3,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0052,113,97.62294490465065,92.63640099378557,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0053,141,97.69611773971836,61.27706649628663,0,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0054,11,99.32854469085218,68.8457082368186,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0055,143,87.32008211324855,73.08664068061911,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0056,63,94.34998826357486,74.04530003765348,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0057,115,92.11355963050555,71.75901996276784,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0058,13,90.1657559806635,96.86766471079322,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0059,63,90.27310241701328,85.30095038320124,3,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0060,53,91.19190325910128,81.55853229783531,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0061,23,95.5738832453343,52.49210138914708,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0062,104,93.97429087402232,95.19566651301874,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0063,57,91.89522269141696,95.46950960041981,4,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0064,24,86.13900115554434,89.01065317150511,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0065,49,86.16648016118435,50.35146019068096,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0066,91,85.03509085938667,52.86401255388117,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0067,120,99.51549082310629,61.26118511342449,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0068,62,85.07880727837578,56.56747040724534,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0069,33,86.54640619020617,69.94180148518647,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0070,133,89.71894835214117,96.13115290438948,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0071,50,97.11145377725141,73.60302170984991,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0072,24,99.43148178646176,50.67013132160828,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0073,54,96.85020338187785,64.1372844789381,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0074,74,95.35840348668461,52.22974541864808,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0075,98,92.81951001120353,51.81438113067511,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0076,80,86.30057817793275,63.785992654777615,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0077,18,99.37256189505895,63.78061693394727,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0078,97,96.37588620918523,89.35633013008021,5,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0079,138,94.58424078001393,98.7417326390556,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0080,145,96.38553768308275,68.56035469449992,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0081,72,95.86154993909707,71.44434394305193,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0082,148,94.5584736968423,92.23947181430107,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0083,90,99.70865200269982,63.40695100477567,0,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0084,145,98.55045718954037,57.8190902201724,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0085,42,94.69997378675745,92.65448117018252,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0086,132,95.39762817185387,52.325029322003275,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0087,14,85.77393709988065,80.98497200997079,6,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0088,50,95.04876196825059,78.09964237334034,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0089,37,85.6624815656515,67.29602237508472,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0090,144,93.82395635454897,65.75947605486795,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0091,81,99.99030249348752,88.59288630908107,3,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0092,21,93.3370987215577,54.321230538127324,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0093,42,92.09815177122,61.83921546556927,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0094,57,89.69282284758381,86.62243659190449,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0095,71,86.80783868179697,77.41602918632121,3,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0096,46,95.96535507187423,56.39941042667932,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0097,108,87.88898541678445,94.106780714103,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0098,113,86.72923031870927,69.67239232817957,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0099,44,91.32643989595769,91.39341876610864,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0100,110,96.93012756938646,89.38565077638543,4,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0101,140,96.1759682218033,81.2212723235864,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0102,10,85.82323921969713,74.72405656475465,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0103,14,91.82715527554234,98.97754201908785,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0104,112,92.83651864106753,57.24825361899085,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0105,36,94.66819975938733,86.25778637755573,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0106,146,94.75251025664842,59.55953507323945,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0107,24,90.47045874185959,66.91315526661742,4,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0108,99,93.4101579100527,65.43493716865976,4,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0109,51,92.21592825766129,97.35179938693615,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0110,133,98.27497534784922,98.36780888941377,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0111,72,92.9539769895235,59.15077221173636,4,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0112,105,91.61548242622243,51.10175801487521,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0113,61,91.06728174522776,86.00040198315565,7,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0114,105,93.58641639150198,70.89949669352421,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0115,141,97.05965469101346,54.44201225437822,5,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0116,38,93.07602235571181,84.18770527885212,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0117,45,94.92482762620813,77.25527641303498,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0118,22,96.06783650359787,99.0258411000553,3,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0119,80,92.80252164818097,61.37047479306895,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0120,95,91.40225584982296,70.19889381632741,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0121,37,98.14998066793675,77.12729016977114,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0122,75,91.26259126041839,89.58499942266758,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0123,54,91.92914275863382,77.44193283600293,5,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0124,71,99.85511970012666,80.64500804309746,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0125,143,85.00356285363827,61.307352579497035,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0126,37,87.78209364365084,92.34593640442799,3,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0127,37,90.75945834879589,71.43152734852379,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0128,117,98.9888486413788,57.047981376088465,2,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0129,53,86.05044558621206,83.20939572527087,4,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0130,93,85.14228150442747,60.80452265926537,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0131,39,85.79025753965843,54.87812551196499,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0132,84,86.32815115920427,93.09934542021361,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0133,137,85.56395159809391,73.00811322442198,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0134,101,92.19671990284758,87.46418563478882,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0135,138,93.71135810840991,64.52937799031776,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0136,130,89.07530456603506,89.34850674588331,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0137,36,90.97431075963453,55.59679635107652,4,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0138,130,86.37549002667146,67.79866868974264,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0139,125,90.04555695742633,98.90309089867642,3,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0140,12,92.83778787451784,89.6994858184003,5,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0141,112,95.98407710776968,74.8627965157344,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0142,146,85.05019543064469,66.98887357809426,3,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0143,71,92.00966149806479,93.60678500112382,4,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0144,60,89.45504314682323,77.24238795422579,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0145,68,97.79232732537852,87.92125089345555,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0146,127,95.73329972851363,87.70538401580819,6,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0147,105,93.83662801706342,50.89728392842459,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0148,122,89.1589846854516,56.31268913963067,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0149,71,98.65508653086302,82.9814683197371,5,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0150,61,85.67651015830485,58.08099056429357,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0151,21,86.64201398018673,62.77466723278023,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0152,48,90.87445210810534,97.33189770998035,0,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0153,139,86.86656335945284,78.00911291874559,9,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0154,140,99.34623546339138,87.53647534996736,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0155,122,96.96983983215075,77.89903693913199,4,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0156,110,88.88473977402721,77.62568073913626,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0157,122,93.82831343459868,54.707595506284896,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0158,90,99.73495772620123,67.18315963045515,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0159,122,98.26298467197255,64.12154493432558,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0160,11,94.01197669663297,69.53641828068066,3,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0161,139,98.55585950762905,89.91720941121642,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0162,63,99.83777364720038,68.59663339584324,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0163,96,96.15029234340436,72.58484096158413,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0164,138,85.9747961422434,69.86906952426583,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0165,135,91.02370354638231,54.67039859876478,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0166,139,97.56738602924868,72.05360791253918,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0167,62,88.45853793707529,59.78046365222575,3,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0168,77,97.45963776625936,59.33616478865207,5,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0169,132,86.80508143052494,54.701805221713315,0,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0170,47,85.7041803572172,67.83354870708824,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0171,33,90.76135917236874,87.87409423947088,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0172,78,85.5509790613992,63.8220845291698,4,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0173,125,99.35905394474989,65.61745509427568,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0174,107,97.39308543690949,82.13373288362118,3,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0175,148,97.01154530694812,59.79204062934595,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0176,106,94.4466688449423,94.84789652117672,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0177,133,88.2448603455483,76.00952616257771,6,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0178,79,92.77390550014589,72.38014701601085,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0179,102,93.95911108645511,77.89100959646007,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0180,12,92.87547251290403,58.30171567080977,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0181,99,88.90350051927291,80.67365693195882,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0182,105,92.72871886472089,68.15503683170053,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0183,61,92.3677951130294,94.85931704823095,3,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0184,137,99.94503663710087,58.44271033388431,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0185,48,98.46154222069306,75.35255519327205,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0186,91,91.9507112232343,79.9056314684509,5,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0187,113,94.34406074402678,51.66918008931906,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0188,138,96.21807406138343,68.18465623780702,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0189,20,85.52297740350737,86.63176173504164,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0190,51,98.4238216184176,91.01887537244866,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0191,108,97.90190224626886,65.65809974086412,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0192,16,91.86148146660561,89.92966361913756,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0193,99,90.8675464912057,98.38779385516943,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0194,121,89.09439062284473,92.84369680375471,0,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0195,69,92.15015242495552,55.88219940796626,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0196,122,85.66564995299855,86.98651660427703,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0197,11,97.78290300020512,65.98334162202724,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0198,138,85.53133552627817,99.42079947060382,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0199,57,89.93577048054806,74.26794915799435,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0200,149,98.97384232478485,56.12169491794705,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0201,46,96.0281898178518,86.25927740136953,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0202,18,89.2208644086629,66.1505599193107,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0203,108,88.78973640941328,99.85390785408308,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0204,57,85.07623209727039,98.9891228927261,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0205,140,95.43571439274625,82.80670090102903,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0206,63,85.73175372509759,56.49132244758588,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0207,129,92.98903779101143,84.34304988375146,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0208,125,99.43182958888075,54.65152432300136,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0209,84,86.64203290081682,51.46820795511962,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0210,122,98.417198964521,91.1479223110743,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0211,113,99.87213002717573,60.48764738418407,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0212,93,85.92275539358853,68.95135631095488,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0213,121,98.24359403706192,98.67286949880867,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0214,108,92.74118530665424,66.84202509305516,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0215,102,98.5977057916687,64.82448906416576,5,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0216,137,93.56978412879361,95.91039998113877,4,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0217,119,94.93168015159847,55.5374222659479,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0218,91,93.15668361996099,87.97912050573159,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0219,63,97.96739320461023,99.4032783326387,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0220,77,96.00864878430552,95.06480053873244,2,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0221,42,92.81890468270622,82.5833959353213,4,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0222,30,98.0224120607732,65.7030397496366,4,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0223,57,88.67928298383002,62.71609905891584,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0224,137,87.36010989553789,90.96275524357306,4,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0225,145,87.40600157995108,93.99109569758477,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0226,144,90.01013318117857,76.27174562728464,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0227,137,88.58035046951527,62.2169970393233,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0228,42,98.95135525764609,55.64716042055868,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0229,124,86.58751140742876,54.35897339159156,6,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0230,128,95.48486107059381,85.95387236769278,4,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0231,31,87.83832309677508,71.00593639238625,4,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0232,47,98.22455699155525,95.26799371389352,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0233,118,99.4197293227736,86.98356503633818,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0234,60,91.98205013154976,59.56302089572934,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0235,17,98.18607220342197,80.68887094078495,5,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0236,36,85.07717756132072,71.77527271990797,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0237,36,97.2992037611215,78.86248653843066,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0238,30,88.42937742287386,86.90345616692585,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0239,39,98.63051963904051,90.30979405018954,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0240,106,85.01680167220164,92.18686632033621,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0241,37,93.34272602559635,62.69874372860124,4,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0242,120,96.34953705677403,51.55577999586789,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0243,70,88.88032496046861,86.96473675823866,0,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0244,57,87.8969929688094,55.31718631278873,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0245,13,86.26147336701978,65.74597943064839,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0246,44,89.8965036475494,50.19085670621736,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0247,58,93.39766468463245,84.08347412008101,3,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0248,26,86.73765785170386,58.35660057356106,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0249,55,90.65043042980199,82.76412048458292,3,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0250,126,85.13608606979088,99.58713085839194,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0251,15,97.28019130749763,53.63354358050081,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0252,108,86.92673077139787,53.85390059757304,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0253,133,89.25014422398372,67.01900463333374,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0254,46,85.27641578107327,93.31932571256709,5,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0255,33,91.48361175838768,60.77649343956659,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0256,102,97.60182254111828,68.01889099651737,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0257,55,90.88226817167795,53.425270331348976,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0258,104,87.6924598513575,88.15776456294446,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0259,108,96.30548251075778,70.41531713797255,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0260,125,96.83210472806117,87.96243665304215,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0261,76,87.6063021296135,95.18039221733974,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0262,137,96.56281162811484,61.638157355064436,4,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0263,27,99.20946832384507,90.36980151699757,4,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0264,34,87.49566380398409,52.95469450391266,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0265,63,96.56476438798204,94.94236940901237,5,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0266,67,95.62858006903944,82.53842737793737,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0267,76,92.10360832652633,93.71133620691758,0,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0268,113,85.86880690838197,50.0094199778291,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0269,33,86.12041626636781,58.45405351779962,3,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0270,123,97.78621988797971,69.4879693713246,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0271,41,99.85222559125971,68.97514516873593,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0272,95,95.14078385780132,61.33651914617553,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0273,136,91.68937460515482,69.08059699336,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0274,139,94.71360465102862,56.44243560001274,2,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0275,26,93.91593788842818,70.6380564633013,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0276,113,90.75418390608432,90.11771645796321,0,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0277,146,85.9843921686102,73.95350315516757,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0278,52,97.32269421111161,50.90000444726075,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0279,48,90.57750293858086,71.07220207896236,5,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0280,35,97.2817846503564,51.35875080454221,4,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0281,108,88.78763124532573,98.3121705353399,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0282,59,85.01544219768451,56.37269797114345,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0283,22,87.38407424915135,85.38441631653095,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0284,69,92.02809125152876,98.63881614460429,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0285,144,99.16455452436745,91.30195258332859,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0286,66,86.53290429540579,84.96576875631018,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0287,45,97.81314661692349,91.97304547503835,3,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0288,29,92.90536144317792,99.08993466303139,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0289,74,97.38881148699845,81.06722486267648,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0290,17,89.47561646484989,77.95924034146633,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0291,124,97.59920747008708,81.41190552316407,4,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0292,101,96.59234170025206,76.63379433807775,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0293,107,88.45080524547151,81.75445529548594,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0294,75,86.97002689614067,72.49211039862796,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0295,41,98.02081483798439,60.922159144165356,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0296,95,99.44854980160198,56.01236132558378,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0297,60,85.46953470621274,53.41704677661302,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0298,72,95.96905100460529,63.16578918766,3,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0299,134,98.64286766421728,52.30617821678669,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0300,67,97.86040138138748,78.35853899596928,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0301,67,99.46780708405313,64.19142235117602,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0302,95,96.40141117657146,91.2267404043516,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0303,58,91.63448143571365,53.71204364941932,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0304,79,89.67927985742696,61.317574717074294,4,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0305,24,89.81114110657191,86.5123073545073,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0306,63,95.86634008921175,79.94041481917458,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0307,110,96.18755518046447,53.22456356245838,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0308,17,88.00538715323069,93.86197285811002,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0309,62,98.02184220235796,93.86308814130898,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0310,69,95.72386060303371,66.52040019378869,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0311,117,93.44125429515074,67.02029216747823,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0312,14,92.07298690153769,99.45141791750869,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0313,112,93.14849208684937,81.30880857965691,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0314,15,87.38868607418897,76.56582602840295,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0315,118,88.05551873914412,91.90760917759621,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0316,125,86.36746735609287,64.26451691786582,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0317,103,87.30487057241669,71.45912966981784,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0318,56,91.80540451907925,63.38883377441671,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0319,108,92.95531590592384,89.45804232943658,5,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0320,64,85.26792838717479,78.6674672817609,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0321,61,96.95196741796042,82.94125350700352,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0322,22,89.41251960015217,62.61536249197033,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0323,123,98.67754052439867,61.011265068865754,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0324,133,99.51266895420666,74.41873144914693,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0325,115,87.78188312014981,86.87828745464134,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0326,129,91.93145936148491,76.261987876008,4,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0327,72,85.01847752749639,51.63228387728343,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0328,28,93.9749089768364,93.42757531601444,4,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0329,101,94.10959672394007,53.23434467575658,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0330,67,88.71309933405063,97.79122418603761,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0331,99,93.37619008874796,51.25709791386364,0,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0332,126,88.38310213665603,84.72252280653544,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0333,71,87.41238203617286,54.110353185589084,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0334,32,94.77279200203397,95.53382897175698,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0335,136,89.88888195928112,73.22166181127713,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0336,146,93.85395908328434,56.87618874085077,0,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0337,149,91.49870123457484,67.04078498949232,5,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0338,138,99.76527111104356,58.2412337673381,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0339,67,87.24370964001349,58.5290955778545,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0340,131,91.96897894953716,97.4054160085721,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0341,10,95.20684939538988,72.26230561423941,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0342,43,90.93317625819952,89.44011319526797,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0343,105,99.62049777806035,81.9802780588841,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0344,135,95.82831441890403,83.82131811691961,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0345,127,94.8547578634674,56.584671923601924,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0346,57,96.35588901416835,61.70922234077428,0,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0347,98,99.28972957058076,89.33751675772184,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0348,126,98.6172797947696,98.53831032373915,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0349,138,95.86427962189617,63.133782129932584,4,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0350,25,96.23742458651924,63.57843823755199,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0351,78,87.18883111052718,73.64485664054524,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0352,31,86.54188606738998,99.19201564277189,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0353,102,93.56356752766246,63.44794729132355,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0354,85,85.2755145541081,70.34859548171319,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0355,95,92.23534572327387,94.57400078117533,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0356,38,88.15524369878302,50.1460516310681,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0357,78,90.19024851467259,51.988298249428475,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0358,56,96.63707103689434,80.20358385356096,0,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0359,103,99.1185625634858,95.36900823564235,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0360,94,86.08624408219512,61.94283302009639,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0361,48,93.01363308964667,73.48208873403544,0,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0362,109,98.238002287294,72.52326508289092,2,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0363,42,86.23762801660632,73.64856730477551,0,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0364,110,97.3677107034525,81.12598478648727,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0365,32,90.36702026392408,73.48718814953419,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0366,19,89.83142053329003,72.3734070661229,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0367,78,99.66199579472179,73.71442102156303,5,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0368,109,88.01288634793441,79.54337206355208,3,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0369,43,95.39790911234022,76.85037441756792,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0370,147,97.321610920148,92.70679988252522,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0371,105,85.61775242918908,52.47484267468333,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0372,10,95.05578187531619,91.66585357365062,0,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0373,78,99.2732496153299,92.1962306305862,2,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0374,13,86.86329950092089,64.24540107654803,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0375,25,98.44331954027558,73.14259775079253,4,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0376,33,93.92164956065405,71.92692442687178,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0377,89,94.24906872793711,60.925491717706514,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0378,11,94.1941626229841,69.83984235431582,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0379,137,89.48253829505971,52.21938860854272,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0380,93,99.0280272294919,63.89110363908672,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0381,149,99.21025693946558,90.8341087725359,0,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0382,133,94.37956990320922,64.22811508814488,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0383,42,96.75134088912422,90.91033343741238,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0384,110,94.18386978821736,76.57997323022154,3,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0385,21,92.26597671361061,93.993133868058,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0386,76,94.91230177448875,78.73897771322076,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0387,74,93.29502178887938,51.48341115323699,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0388,83,93.96213793947895,83.77101037735446,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0389,52,96.75748830128293,52.24267840117843,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0390,53,92.21355747173477,72.5298509491567,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0391,38,85.61131159138709,96.4713347236557,5,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0392,21,87.45999221484246,58.26019696689251,4,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0393,104,91.57910824734307,69.4936176470772,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0394,55,95.87239839811087,86.49301544242391,0,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0395,139,93.89917972465268,94.11292780474238,3,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0396,44,94.7544127881018,83.5471502371254,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0397,90,92.18918392864431,62.908662709558456,6,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0398,99,94.23613032913364,83.73039264581081,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0399,17,89.93526156721994,64.8363820552045,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0400,102,92.05273889044997,85.92146149093676,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0401,99,96.16418598392434,97.70165637925203,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0402,124,98.07749168459682,86.06967255531441,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0403,114,91.50483000934584,93.14402514562062,0,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0404,144,85.65492486561041,50.10519215879417,4,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0405,67,87.42508816220204,85.87860623657971,3,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0406,123,85.31291708937307,91.47937784326251,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0407,84,94.79894528855995,52.02793687723407,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0408,129,89.98471938032664,93.57988636441152,0,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0409,30,93.13717953579051,62.83471141550229,6,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0410,147,92.39915270175699,83.26460509890276,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0411,110,86.2228973432864,90.01774395117033,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0412,108,91.04892041685747,83.13322565296778,0,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0413,45,88.30841687383484,54.61423960366286,3,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0414,105,91.27599683001479,79.81607594301842,0,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0415,46,88.05367420513365,77.47918283610719,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0416,21,97.606786094154,95.01606340371357,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0417,122,87.61290004867381,70.21198648221046,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0418,22,99.41170827230465,66.0540548543525,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0419,32,91.23861049220412,87.49253822182331,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0420,108,97.69367938028574,70.63376630416982,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0421,114,94.43147227308918,82.30480875025316,3,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0422,39,96.0302544799863,82.32250450623035,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0423,26,96.5158583210017,94.4019532180059,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0424,122,92.57267322839527,79.93462011595487,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0425,71,93.14950785044933,75.10768049809934,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0426,93,92.70993801713088,56.94356631982585,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0427,121,93.82087567135119,55.786880333935265,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0428,95,85.4409166863476,57.71607826415397,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0429,28,90.93272754773523,58.592424066354724,3,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0430,109,94.09283070341758,81.89385463318169,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0431,149,93.96585347883797,87.04906251372893,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0432,85,96.89434141908447,76.49957614632093,6,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0433,18,94.82514008248162,91.45088662727454,6,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0434,37,99.88199974511008,99.56316133668166,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0435,137,89.25781792912967,91.0006314559678,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0436,61,90.38726544499347,84.74411868379795,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0437,92,90.75770727801694,76.62463497185733,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0438,120,91.98719210530373,72.4426535837354,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0439,126,97.53997095671814,54.21961902722712,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0440,78,88.53688140938814,69.96843741973454,0,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0441,108,96.64000310553143,95.50673183910672,4,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0442,149,91.07965274628616,90.40113149532765,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0443,34,94.02783075493012,60.80256825058436,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0444,132,94.4881079983946,73.33038923486079,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0445,62,90.59272955783402,90.83616012792723,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0446,66,92.68922807808708,53.36922773927613,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0447,48,91.19546761971546,69.36962928343297,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0448,118,86.03699179279928,92.59206184369738,2,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0449,51,91.5574808322524,70.19489320850619,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0450,131,86.46090088830329,53.880732236572044,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0451,142,91.07531198620482,77.12671842661257,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0452,84,93.89377599747672,93.08712474591476,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0453,85,93.69122349015251,79.51427714765799,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0454,18,94.9393191851248,61.31395541071159,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0455,83,86.4289226193194,69.21198100686907,3,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0456,16,94.78184868295656,72.50616805909661,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0457,146,89.68222085044671,78.96331769102633,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0458,36,90.98568919205667,87.96755128763066,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0459,131,97.86979380884058,54.94368088203177,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0460,14,85.13545606194326,94.48260165087831,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0461,38,93.82618950010908,50.61548515080378,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0462,92,93.98070970150161,68.50261673371276,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0463,145,90.94989664515343,51.371015498632886,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0464,118,88.55541785662504,69.64871126726456,4,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0465,74,88.52011057392326,76.29062994366619,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0466,95,98.25564504491129,75.58406932907559,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0467,80,91.63036560674286,58.28141735141327,0,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0468,54,89.96334044483758,82.28702550478062,0,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0469,141,91.73166360747105,52.23892252523341,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0470,45,95.04085602189042,88.09534100662077,3,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0471,79,87.18634852367127,97.33222169967732,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0472,28,91.74150752820607,66.9884413575559,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0473,117,93.81826556665581,75.8619690857166,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0474,100,99.2287503227715,68.94551390294072,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0475,99,88.78791673113129,50.335519515202996,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0476,28,90.38876121874368,69.2937251447558,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0477,48,90.69037884883636,89.58601296306733,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0478,135,94.08307236467324,79.7994421091741,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0479,135,90.35098079560002,55.06299573075795,4,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0480,67,93.00267887949543,92.35697448468926,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0481,70,96.72685494767543,76.55426724426215,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0482,136,95.58078391168306,92.0861680872338,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0483,114,91.69552969768878,79.01107593925147,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0484,10,97.96324266511253,77.984422241897,4,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0485,140,93.37210374390794,55.26295925985062,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0486,101,93.09858759253319,58.3679866569314,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0487,122,85.51281648908737,98.60126282482955,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0488,65,99.80039470535742,61.424337337738535,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0489,126,86.8445621279444,98.87260589951839,5,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0490,143,88.4669636864147,76.59563532621317,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0491,67,85.7754525586229,56.78945235319686,6,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0492,53,94.6000445025537,54.96511013768465,0,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0493,70,88.3705176545902,60.443203535287,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0494,56,87.70015656209085,96.28186650126679,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0495,89,86.32833376334862,70.70751121641135,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0496,127,86.54963435686024,69.77171339964572,0,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0497,29,93.77006050663883,65.6603130535087,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0498,56,95.32311798799893,57.35309252832942,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0499,58,90.96068482696602,74.39255985962032,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0500,23,92.1984562238811,56.50238912555693,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0501,10,95.28951603974477,91.77401181911638,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0502,126,85.26069685278219,68.51984931376532,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0503,63,89.84695985605418,68.74017838908982,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0504,127,99.5964662210552,73.70032142415779,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0505,12,93.70168344543202,72.20638565828759,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0506,21,88.8133686984624,99.74289865296608,3,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0507,83,92.8259506995432,77.26905606091512,5,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0508,25,90.13980232181373,54.410085189493536,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0509,111,92.98367483239448,80.3438670788465,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0510,126,86.88612267709973,57.579214643494,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0511,17,86.99071980728917,51.5468822365671,3,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0512,131,87.1531354305909,98.53710768386242,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0513,101,99.09729687890263,88.6769445767282,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0514,99,95.99348377512013,99.00544962068835,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0515,145,87.43572841993482,73.89392240111212,3,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0516,69,87.82523625648402,76.6128765574488,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0517,37,95.96244212306314,58.416847795956514,4,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0518,110,87.34245767188261,62.345371333379276,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0519,50,88.51841940002242,91.92746074514142,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0520,55,99.45020249230599,67.8092823558797,0,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0521,44,88.82959787092648,91.34074868982094,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0522,143,94.9244852555672,85.45068621435159,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0523,91,99.67946931100795,58.858546263593276,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0524,124,90.61445150709689,75.37231830598711,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0525,56,85.26273986293093,83.86936607593584,0,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0526,19,88.66220935633561,61.751860740191255,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0527,65,97.46315787012558,91.53442552600384,0,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0528,39,97.96913253932556,77.24138287725934,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0529,118,96.52779046785687,58.262102522130164,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0530,14,86.69664728614859,79.14922130823012,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0531,128,96.93265557544605,99.9856902077957,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0532,42,98.78016695490257,57.526074583170676,0,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0533,127,94.00914313819354,90.83784650597642,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0534,74,99.11313034507097,60.3654501593779,0,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0535,20,97.40258325567817,89.11941647300436,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0536,94,95.0045727548636,86.72889615607066,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0537,35,93.65777855067623,65.02446928002162,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0538,72,90.22860500862956,66.2911558782225,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0539,95,87.38931167864207,89.62606959814596,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0540,68,94.07430884035811,73.07227559436564,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0541,36,89.77167330427179,86.54090143559044,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0542,107,97.99658001291468,57.39920736829174,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0543,114,99.90005406037943,92.62788909507768,2,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0544,108,96.28641643923359,85.54423583411597,3,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0545,138,86.35722542930576,95.34714044174169,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0546,64,89.33028393295957,56.61861895174862,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0547,15,86.63664447648624,79.65072501802989,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0548,104,94.75767471687574,79.95602925201626,6,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0549,142,96.47786296833677,67.67303702733912,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0550,111,98.88512246321068,72.9233212284629,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0551,12,91.57258519617982,51.89907816449267,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0552,32,98.52063474382666,87.2930019313506,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0553,62,98.16836738561992,77.4661239701587,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0554,92,89.75793575148097,52.88705259345869,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0555,94,98.03350938310857,84.03779464802427,5,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0556,87,90.63508377822589,73.3391038615594,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0557,119,89.4530391184042,51.72306297125,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0558,10,94.7361198819159,98.48038634240477,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0559,60,89.92571841827622,97.45560715447203,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0560,13,94.45313122493717,75.64512080735987,3,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0561,122,94.14747708248042,54.68362103529551,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0562,41,93.45158391022689,87.73106107992959,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0563,43,90.70629556349196,74.59655500528645,5,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0564,101,93.22749582477215,65.122373914469,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0565,104,93.94728212478132,74.57090887642784,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0566,81,93.18530332743211,76.12220727027322,4,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0567,48,91.66629179126802,78.13558495111695,4,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0568,127,85.22000585569396,72.06118568276632,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0569,12,93.80592561551727,80.28776515695283,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0570,132,87.52666577714079,95.93673553031887,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0571,59,94.63863953420784,68.11340435492956,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0572,21,96.39016491884298,86.28582316099745,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0573,63,92.50667963696112,94.72262784121162,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0574,142,93.13545497469607,72.79896378799685,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0575,66,99.27217839498987,72.17279181909521,4,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0576,121,97.70751042058862,80.10584926773898,0,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0577,56,98.71354773927204,79.5703379711244,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0578,94,97.2064943247938,90.32946711631385,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0579,75,86.63377512770097,73.82416918891464,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0580,84,87.23487783955292,99.80614748197206,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0581,112,92.89935695903439,52.97357844336404,5,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0582,47,88.69104488196997,50.15839242903509,3,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0583,59,92.15043212561739,82.00991557798119,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0584,107,90.91547985727526,64.92174561809384,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0585,91,93.2412135764568,62.019119434974186,0,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0586,39,96.20313574203735,65.59495400021402,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0587,88,95.73236360648912,62.80237825524772,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0588,100,92.81851198728002,51.53950248302239,4,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0589,61,97.33590128225588,98.57665211952943,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0590,88,91.4629313730705,61.037274422639086,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0591,39,98.45071434760183,86.70148812946532,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0592,115,86.06920405082747,88.12981973470876,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0593,60,99.31990045049962,96.46286990036145,0,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0594,90,94.82039622147022,51.527472854669,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0595,142,90.70111763405808,93.60241692235039,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0596,38,87.95731189859316,76.36130904199001,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0597,141,92.187748441654,81.6272054982914,4,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0598,147,87.91837484777952,82.22351385605168,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0599,83,87.49497411614713,90.98989024923637,4,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0600,26,94.26027636119461,66.67036610795553,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0601,93,92.84627086872678,86.65255949299967,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0602,78,95.05144051916412,76.42890548610985,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0603,43,98.94408816132983,89.6697007152674,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0604,15,92.9839032000856,99.52730163850667,5,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0605,62,93.71398079894196,60.03255087018806,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0606,135,86.34439508732413,99.7324320779999,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0607,52,95.76453678862944,54.4906077141387,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0608,124,90.99857810206234,50.115877395240695,2,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0609,120,99.65087857993868,52.20809680889156,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0610,89,97.3476102339349,67.08912023683808,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0611,104,92.83721560774177,81.64531653392172,5,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0612,127,86.8483398125825,53.45147704439248,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0613,17,97.89123689920883,50.28329072647836,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0614,141,96.99671643136033,96.85455142293974,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0615,113,87.7687769430555,91.09633179699648,4,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0616,141,89.42917433830465,90.45915855695155,4,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0617,34,96.90110887221756,94.22121377509885,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0618,105,87.77842669821115,85.00171363860522,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0619,102,98.76628733757066,55.22020648740407,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0620,70,91.36791137794543,69.95500940368615,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0621,131,86.30558443881488,86.15747432323147,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0622,60,97.23622965256422,64.01672303957605,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0623,30,90.60264524557581,84.37031820681187,5,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0624,14,92.89748791230672,51.224922413382615,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0625,101,86.68456516616828,65.30686704397966,4,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0626,70,85.03876022267474,77.45651681385863,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0627,31,94.56977808689946,81.60449147531212,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0628,79,92.72762755500598,78.85203322309555,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0629,10,93.9030785368472,84.88781380367148,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0630,142,96.90615775570774,50.304437411991955,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0631,21,94.6990887013429,55.04705999887607,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0632,99,87.62160164241065,93.44721261395725,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0633,55,90.411587786659,84.08743220450806,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0634,43,98.58836657181641,55.646582134300566,7,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0635,87,96.54917050377519,92.10372186992896,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0636,54,93.34955586905076,62.11156089122834,3,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0637,82,88.83467496713908,73.91299420976117,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0638,35,89.53090752752192,57.25982564423302,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0639,56,95.97937101378452,85.50550282108533,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0640,130,97.76761391279156,83.3427210507134,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0641,65,95.07137004295922,60.555623558306806,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0642,103,97.14294963652662,93.17003834285009,4,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0643,116,96.49984202800609,70.06530121098561,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0644,72,87.24555951935437,64.62575455353709,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0645,57,91.35917219369954,57.616479473226775,7,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0646,70,87.29475701242843,63.30840062577687,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0647,90,88.52853377202977,51.10134606119085,5,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0648,35,98.03889436976579,79.16287462280579,3,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0649,45,92.09337948449773,92.11153731719739,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0650,10,93.03037152763991,77.44902247208209,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0651,17,87.67668947841658,60.96369809619379,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0652,122,89.68407679073194,51.68345891069364,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0653,108,88.45369252641805,60.73140366294014,0,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0654,56,88.09279246777639,70.80607140355461,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0655,136,94.56941189973955,87.98057143498983,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0656,65,88.85325771468572,59.392142626888706,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0657,23,94.48023229030628,85.98957266773431,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0658,37,85.8768192116283,93.34667341759419,0,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0659,87,87.12661590290652,72.69734240541786,3,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0660,139,89.11810381000188,91.07159958212966,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0661,118,93.95570375343537,77.73286740175479,0,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0662,23,95.13761867631064,81.85454185404525,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0663,65,91.64075450169291,76.31392301691014,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0664,124,91.68686371865843,73.15863583756709,0,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0665,16,95.86775277097927,61.73267208879247,3,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0666,12,85.23731637648373,65.1597029730523,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0667,120,90.11635036711331,64.49850594718045,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0668,116,97.2806058567885,78.16444654769074,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0669,27,94.04829115320058,55.9976846511945,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0670,47,90.05840699133131,95.83958453511676,3,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0671,124,98.5828718849451,86.03275726415566,5,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0672,24,96.58934091174073,70.07228154565968,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0673,128,88.973431708551,57.9312072263189,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0674,37,94.67934756288575,94.09960848608179,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0675,48,93.93626092283435,91.18890450505826,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0676,26,91.01781871058473,86.08607763585897,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0677,95,90.504341188072,63.57735237056212,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0678,135,90.15340712163555,70.12233187168344,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0679,53,94.2573367509347,55.13741262262117,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0680,34,91.63614904721004,59.45197623637659,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0681,22,97.47794669877133,89.15083186583664,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0682,34,95.04403924200943,85.75193594253419,3,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0683,77,86.04897408564152,79.67428814879673,4,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0684,147,94.60252335742248,94.78633629630863,0,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0685,76,89.06721154750278,79.16332589065227,0,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0686,118,93.89217987480134,73.34839999818054,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0687,120,95.20197896655176,67.01853731528814,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0688,120,88.46243783731018,97.02242528680863,6,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0689,43,91.85287967320554,54.135773076217674,3,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0690,120,87.85487294228602,96.54436860304043,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0691,17,85.78508313679762,91.33573299655092,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0692,122,90.67714635228803,56.49649622678506,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0693,92,90.44416407768988,78.24921788376268,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0694,51,99.93220736056385,93.32739908745435,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0695,110,91.69528526796464,78.59045818035769,3,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0696,15,90.00354324208301,95.35999107803111,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0697,35,93.70712510075012,97.14919084080213,6,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0698,73,86.33151091161653,71.11922610921529,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0699,68,99.42498603932219,68.86568307031618,0,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0700,118,94.5244006838655,96.81605769845784,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0701,130,96.32256729911272,83.7570030574834,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0702,42,87.55716907260876,55.80113406740846,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0703,30,91.14216779507805,52.11458746113406,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0704,79,91.34033670094284,78.23145254986315,0,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0705,121,97.3270966585163,96.50854827192123,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0706,13,85.01855019639115,92.21243512029092,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0707,103,89.51279662529882,83.79238732321681,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0708,84,99.71854561516456,56.955792444554376,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0709,71,92.12329815259328,62.711569187434776,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0710,103,90.73789420366012,93.77556132763081,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0711,104,86.7974350302647,59.140361832845024,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0712,64,99.61246942942023,63.92197041252173,0,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0713,146,85.30039533888737,56.4800325597721,2,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0714,140,96.05770337510864,83.80541157072057,5,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0715,40,96.52899707182763,97.19911526816048,0,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0716,49,88.654850740958,63.448401579769296,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0717,45,95.07337665419556,73.77033039250368,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0718,15,86.39393716569084,81.71698698556021,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0719,75,88.8557089964812,99.97331241078153,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0720,84,96.81852982438397,55.240403249878604,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0721,13,97.97029288050311,74.92853997528546,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0722,88,94.12729618989687,69.25600599512501,4,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0723,143,92.60257647730724,93.29100826111775,4,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0724,127,87.3895603092847,73.79838655058279,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0725,122,85.94663549618726,55.5488762292574,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0726,103,86.76473542710337,81.72120726432918,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0727,71,88.41035950144148,88.53903091319398,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0728,88,90.12511752845381,50.14406258328073,4,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0729,145,90.71364288266481,92.94783427103147,3,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0730,35,90.19482652883505,59.30115000028328,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0731,53,88.58582998295898,77.60346823266889,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0732,142,92.64586370127547,70.7898750343725,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0733,79,97.37929162349346,85.98269083052652,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0734,127,89.19555307707219,68.55808073928709,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0735,77,99.1358052865335,93.48815883408554,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0736,28,98.10004992585772,86.5248180479395,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0737,29,87.42646317028165,82.38565855314607,6,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0738,122,96.79413935135642,89.81202977814272,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0739,149,93.6188107347665,87.70115174641911,0,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0740,56,93.49863043257128,51.79693374607767,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0741,10,90.86564144587261,69.7367176922414,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0742,99,92.51729498773014,96.5403648658245,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0743,73,90.95768166143816,56.28621344961131,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0744,47,93.09598928139914,86.85482752160256,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0745,46,94.41925079158953,98.72959056676649,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0746,135,95.11455709613573,52.60993145224858,4,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0747,148,92.9872178883914,84.10969403133052,2,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0748,109,95.82133100993097,73.40770706505151,5,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0749,86,87.11917073913258,78.95876276873611,0,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0750,12,88.17973736353358,54.26706682421624,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0751,143,97.28102506111405,52.15034759334697,0,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0752,19,89.83791966769623,83.3433330275461,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0753,14,85.3434073746418,91.1654714910359,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0754,147,87.30686724502047,89.10076674664836,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0755,139,88.35421651744467,77.19028639331187,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0756,22,99.35984331841881,54.99334105680891,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0757,139,93.59562143396273,84.40222219180069,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0758,93,98.99096110714382,62.094444177707295,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0759,74,93.62745025744937,95.55343513836918,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0760,72,92.19031660206778,91.91326797728524,3,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0761,110,89.70591536791144,85.46914835436954,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0762,82,94.09556416650064,97.44229779155651,5,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0763,26,87.08797036926295,51.57109107556364,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0764,18,98.47392440939059,86.8100212530381,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0765,47,97.43998607711926,66.51213896682026,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0766,103,89.76297171815105,95.30329428431827,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0767,104,99.29196291401942,63.33375983309888,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0768,58,97.37801151123352,86.24282496575086,4,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0769,78,94.99460328752559,93.88235098253907,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0770,71,86.82642866687912,52.08284091913412,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0771,87,92.17351034572108,69.88237897960181,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0772,126,92.59161332270126,88.11545160109694,3,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0773,129,88.4882703754807,72.74594447537936,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0774,146,86.19948091538953,63.362631489679764,4,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0775,85,96.65085445707538,60.9902674411595,5,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0776,44,86.83052578186593,56.5759133458189,0,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0777,10,93.91436125842662,92.85647799281412,0,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0778,49,99.04673760825492,78.7677701625778,3,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0779,73,98.14157788897063,53.8192472495728,0,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0780,69,89.16628935623892,69.12901617853177,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0781,73,97.77172956326898,68.38668254025549,4,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0782,102,85.00498759180734,59.08695953547315,3,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0783,81,85.26531714419886,71.77538127360953,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0784,20,94.03829745764297,66.60496826965682,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0785,114,90.47197328716794,67.09018527460913,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0786,23,90.7969126173872,86.95132788939793,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0787,69,93.46661636018324,61.16316927525982,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0788,39,87.87673683387791,82.09299794276777,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0789,44,88.17633025998218,78.53248119404674,0,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0790,14,92.26902380528297,78.40462561689336,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0791,92,96.31380316515795,83.1503673070888,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0792,132,94.29246627111381,77.4191018097827,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0793,87,89.46032572355259,93.96275574231923,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0794,71,91.45505766263382,83.779004597513,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0795,141,87.55997137824997,77.3481625685694,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0796,98,86.11944721505623,91.48815601438224,4,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0797,51,96.74044061116224,80.30732824667399,5,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0798,98,88.98081113782293,64.55721238925895,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0799,49,87.66649581776872,60.35474590882856,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0800,81,95.37427083353978,57.61638928313394,3,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0801,48,94.2707751143078,94.97276062730508,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0802,113,94.49784439020196,85.50677158990328,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0803,23,88.43341907269921,96.86892190821604,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0804,41,88.48968307844021,80.16459028574715,0,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0805,134,88.31203944678458,73.67004407474563,0,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0806,106,87.60628893493441,52.98582444854446,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0807,32,94.83585508842485,83.5821140773015,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0808,72,97.72023827874102,79.11043798841156,5,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0809,62,95.86476204514992,99.51044467938107,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0810,113,96.88140450640815,61.95793888911215,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0811,113,91.07197643627799,76.53686776434179,4,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0812,48,94.81113693057998,82.54786675590364,0,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0813,143,90.31354360667162,82.22955873711717,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0814,76,92.8825693295296,78.06467714742013,0,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0815,144,92.22452269802294,88.84640051636127,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0816,51,87.65330717715781,60.24906047634082,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0817,24,90.80618140503447,86.28136001372079,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0818,120,99.45733413223526,80.98672857165445,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0819,42,88.72870386572413,94.80375558972867,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0820,47,87.00705604419232,92.35972195167909,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0821,106,91.27870932435903,65.75735195662766,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0822,42,96.85506603790222,63.81186624875765,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0823,95,93.73222344669958,99.08266619262238,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0824,75,95.21462240857366,76.36325904576283,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0825,19,87.84542272262016,95.32104819572184,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0826,14,94.28422289511582,58.19405118902411,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0827,132,89.85250592367211,82.1409457400087,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0828,83,97.51455048932151,90.4930093680293,3,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0829,106,94.43948209016105,97.36976247932233,0,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0830,127,87.98284416662943,66.86700705085117,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0831,47,85.9692501976613,86.24905849620262,0,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0832,56,85.63949813930549,76.94065045198096,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0833,118,90.5711285147521,53.031446303323406,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0834,24,88.9877670498147,84.49998686544717,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0835,145,94.69135185193763,84.50482791189216,0,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0836,14,92.49000752467927,96.53034024232684,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0837,56,88.99028917008071,74.86562230844862,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0838,77,87.23856666925265,61.51254603552573,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0839,85,86.90799644031175,52.22819117243396,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0840,139,97.96990588210626,70.78210933429528,4,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0841,104,88.65216952607301,65.0958350038751,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0842,124,94.77565971866453,88.05441530119379,3,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0843,45,97.160288919794,67.71338824205233,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0844,35,94.21121966777105,97.4535598157422,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0845,52,97.89347847470418,98.11551014938921,3,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0846,36,90.88590582292711,81.0454295108854,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0847,78,99.34333285973423,96.43301435074414,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0848,20,86.99717506267146,88.04271722572477,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0849,83,86.53224294486307,77.34298204875631,3,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0850,113,94.88038219311166,59.01539677113891,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0851,47,99.14246712119893,72.92989717569199,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0852,143,97.13325192454492,78.04372316813088,4,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0853,32,86.14625289157077,93.1980790367505,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0854,56,89.19051570902074,74.06666882678324,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0855,99,98.95478327256735,94.88373363389783,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0856,55,88.79587649201177,83.71744895117345,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0857,116,96.71755635680378,56.84995315268357,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0858,149,97.37698293893055,99.74906846625464,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0859,113,92.43178155191472,76.36163303769564,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0860,120,90.79523364772473,69.59291482045394,5,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0861,113,91.7518664862964,82.95568822347633,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0862,69,88.40447041548046,55.44466569905195,3,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0863,109,98.34086374193267,81.82693233766771,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0864,77,91.75929485094636,74.91180002496364,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0865,142,98.2368916068415,70.33370349992916,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0866,129,86.58540219859411,97.65100105894496,3,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0867,46,99.82412906500197,76.12698583660266,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0868,81,91.64909631165428,60.95587397349692,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0869,136,85.71746230591158,72.94817396886494,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0870,115,85.57032772356182,95.96937022863364,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0871,101,96.19310886222758,58.80477356652973,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0872,40,94.88553301305521,60.697851934411844,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0873,131,97.03195837191382,50.65147838785419,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0874,146,86.58051300929209,50.70950246978836,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0875,60,85.53356300553322,91.46958134792563,3,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0876,38,92.62868934171368,86.6061303421478,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0877,49,90.81392847224154,67.75205282259792,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0878,50,91.92920405006434,84.91555786137863,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0879,20,99.87382613305411,69.76029631549851,3,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0880,10,99.56124936506005,97.64483979989137,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0881,55,99.13473084509789,98.35263407130174,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0882,110,96.7576401515151,69.63968879046718,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0883,99,90.32262040385335,92.7110953170434,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0884,119,91.18196395394158,88.6544520848733,1,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0885,66,93.24424065578387,65.49999685858947,4,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0886,10,97.4580168460726,61.6019914450553,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0887,72,86.03069248777402,72.91173251964169,3,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0888,64,91.36445328827332,89.06744203072031,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0889,124,86.23926495188903,98.00838923643727,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0890,62,92.71986379860267,88.17895344332862,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0891,146,98.48351236009353,92.7603492509185,0,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0892,66,96.73727386845907,80.15321530852583,4,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0893,126,88.41763626314665,91.7703915421063,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0894,44,99.6398627439819,89.22104290017089,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0895,72,95.01025597069642,68.84927709631401,0,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0896,34,85.15641549096105,77.59951510603605,6,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0897,99,88.8312022702783,90.23765609948475,2,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0898,84,88.91069949879875,52.30283670949782,6,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0899,47,86.0388145942879,90.4039641177915,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0900,139,99.39739777113894,58.89440620245117,2,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0901,144,92.17382941863886,75.73418085607194,0,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0902,100,98.43721896057824,90.41377197779688,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0903,26,89.83323255166943,62.69105390783474,6,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0904,137,86.8785035564924,62.29037196530765,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0905,117,92.1150416485932,70.13821992311259,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0906,34,86.70934952071475,94.73213987888172,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0907,97,92.2902325446631,50.022139071860394,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0908,38,98.80445771829112,95.06915483209676,4,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0909,72,92.81152212751319,57.69035123208039,5,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0910,123,94.24749590342626,99.5043188033741,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0911,58,87.34957655460713,97.7423496519234,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0912,90,85.65603438819954,74.73375947956417,2,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0913,93,86.66211943269711,75.63601239063141,3,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0914,114,93.97797363526549,74.07746701379271,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0915,127,86.42517548488458,81.77218228297613,3,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0916,95,90.63989334911967,54.53608511174655,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0917,72,93.25137910687234,51.63089741707832,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0918,113,90.8297919794477,52.88514642079494,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0919,58,87.45525702197952,72.21826746207572,5,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0920,80,89.10686961271159,63.77739696097417,0,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0921,10,98.92476299272866,81.10197811854968,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0922,132,95.13973413379533,99.62211446873894,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0923,71,92.4407175801983,69.3161586538233,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0924,41,85.1907233498034,78.69206270522567,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0925,38,99.88623100734205,70.78019479536678,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0926,58,95.07182402341965,92.36358338609297,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0927,39,89.75383716017417,95.11182017311191,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0928,28,98.18902989996758,93.867780610263,3,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0929,27,88.87647430437727,98.71861193396288,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0930,10,93.16024868774127,51.37595925702077,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0931,87,94.54106145594737,91.99080810727655,2,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0932,124,88.31595057180593,87.58860865195467,3,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0933,122,99.67595918200894,61.43472047001824,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0934,123,96.22287858968497,97.81600466937638,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0935,72,93.36719838266605,57.408896411497274,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0936,141,87.70891897262952,83.97749635669541,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0937,138,85.8078731049704,61.24451084079563,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0938,17,89.80089748781475,71.56903243870373,3,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0939,64,96.29781003870104,85.95799484722845,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0940,112,89.03996947453038,78.16623210165233,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0941,140,93.09334330743258,71.37509156640559,0,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0942,41,95.91920765096114,66.31692154659936,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0943,19,86.61915571969696,91.98298278543952,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0944,119,95.2794702417381,57.19071751574069,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0945,133,86.37806331565066,71.50514382649,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0946,96,99.47694613190495,95.18787858875712,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0947,64,92.32591195097409,92.29247752299838,1,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0948,41,87.26014161564817,70.04708812365233,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0949,144,90.1357545405032,88.15541818006542,0,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0950,102,91.20124673942892,91.15804153544296,2,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0951,17,96.37277516614806,94.44437120018148,0,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0952,74,96.15135679114914,77.2252884524614,2,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0953,66,94.17910758005996,60.22304430273559,4,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0954,76,86.5889606883774,62.76545382519658,0,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0955,81,87.2735405738151,64.78473370208022,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0956,63,86.40635380968335,79.69012404048078,3,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0957,76,93.65759174931326,51.64048120643042,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0958,60,98.15707662267106,81.80212343899842,0,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0959,106,91.50700768382157,68.21771192141159,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,1
+EMP_0960,101,87.4127226093662,64.76209012448211,3,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0961,17,93.37063487723451,93.97482853640632,1,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0962,44,97.17628325298566,73.00011977903995,4,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0963,105,96.12568092269395,54.75265227663464,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0964,97,98.22176169512532,91.33733840131235,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0965,87,89.16853145873301,52.38206287182533,0,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0966,41,87.90930800901663,86.33746120840983,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0967,129,98.19724728912908,88.69531108853326,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0968,55,94.86340469167035,67.6301302964429,0,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0969,64,89.66393395011332,91.23939281388934,4,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0970,16,96.13522075858764,75.78297029282267,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0971,83,97.22677576720552,73.16468266363984,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0972,16,94.22467360511699,52.27016407343463,0,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0973,94,95.31826164819873,64.5014596824453,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0974,121,90.62889856663999,96.550498544265,2,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0975,134,93.08043501014559,69.591198164175,0,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0976,45,92.86238756089243,77.33502602783841,0,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0977,38,97.72071686696158,76.6010839492126,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0978,91,97.59945970423274,79.52155449113467,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0979,11,97.49020704020565,53.06654778216413,1,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0980,138,85.16547421393699,68.10881273993641,4,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0981,56,96.24318226703332,86.1564136941277,0,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0982,20,96.38014585166508,60.02801255364915,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0983,139,95.17568234282713,60.178918877318026,3,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0984,128,96.34396986837179,50.50453033445124,3,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0985,149,97.62955557245063,71.87409633041048,2,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0986,29,92.05478581152678,94.1367190336711,0,Needs supervision on loan processing volumes; frequent documentation delays.,0
+EMP_0987,14,92.53075320232671,52.59504717936545,2,"Excellent collaboration skills, highly compliant with banking regulations.",0
+EMP_0988,46,86.87071085367086,59.55593547480013,1,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0989,146,90.78063824571042,65.50422691713776,3,Consistently meets targets and handles client queries with high integrity.,1
+EMP_0990,62,94.65047769867677,86.58623682821064,3,Occasionally overlooks compliance details during high-pressure transaction cycles.,0
+EMP_0991,108,96.70599664220912,82.03177964012933,4,"Excellent collaboration skills, highly compliant with banking regulations.",1
+EMP_0992,95,88.25813646536815,70.79719522909275,2,Consistently meets targets and handles client queries with high integrity.,0
+EMP_0993,117,87.06734348738853,87.95344696291878,1,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
+EMP_0994,33,94.94563006750738,80.4815505828451,2,"Exemplary adherence to security protocols, maintains exceptional audit scores.",0
+EMP_0995,90,85.02819825287366,94.80203998286095,1,Needs supervision on loan processing volumes; frequent documentation delays.,1
+EMP_0996,129,87.67558876460994,90.90133745693464,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0997,68,85.43607070515931,62.64068030446003,3,Struggles with meeting task deadlines and balancing cash reconciliation errors.,0
+EMP_0998,137,87.50327676782307,63.57192888171001,1,"Exemplary adherence to security protocols, maintains exceptional audit scores.",1
+EMP_0999,123,87.71978919888258,56.26782378961928,1,Consistently meets targets and handles client queries with high integrity.,1
+EMP_1000,124,90.81510392125591,66.84823628587283,4,Occasionally overlooks compliance details during high-pressure transaction cycles.,1
