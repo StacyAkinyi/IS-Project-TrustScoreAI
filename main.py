@@ -1,101 +1,109 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-import joblib
-import numpy as np
-import psycopg2
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List
+from fastapi import FastAPI
 
-app = FastAPI(
-    title="TrustScoreAI Backend API",
-    description="Automated Employee Appraisal & Professional Reliability Scoring Engine for the Banking Sector",
-    version="1.0.0"
+# Assuming your models and schemas are saved in `models.py` and `schemas.py`
+from models import User, KPIMetric, NarrativeFeedback, TrustGrade, SessionLocal
+from schemas import (
+    UserCreate, UserResponse, 
+    KPICreate, KPIResponse, 
+    NarrativeFeedbackCreate, NarrativeFeedbackResponse, 
+    TrustGradeCreate, TrustGradeResponse
 )
+app = FastAPI(title="TrustScoreAI API", version="1.0")
 
-# Database Connection Settings
-DB_CONFIG = {
-    "dbname": "trust_score_ai_db",
-    "user": "postgres",
-    "password": "Bambino.0",
-    "host": "127.0.0.1",
-    "port": "5432",
-    "sslmode": "disable"
-}
+# Mount the router we created earlier
+router = APIRouter(prefix="/api/v1", tags=["TrustScoreAI Core API"])
+app.include_router(router)
 
-# Load Pre-trained Machine Learning Model and TF-IDF Vectorizer
-try:
-    rf_model = joblib.load('trust_score_rf_model.pkl')
-    tfidf_vectorizer = joblib.load('tfidf_vectorizer.pkl')
-    print("Machine learning models loaded successfully into FastAPI memory.")
-except Exception as e:
-    print(f"Warning: Model files not found. Please run train_models.py first! Error: {e}")
-
-# Define Request Body Structure (Pydantic Model)
-class AppraisalRequest(BaseModel):
-    employee_code: str
-    loan_volumes: int
-    transaction_accuracy: float
-    workplan_completion: float
-    error_frequencies: int
-    feedback_text: str
-
-@app.get("/")
-def home():
-    return {"message": "Welcome to the TrustScoreAI API engine. Documentation is available at /docs"}
-
-@app.post("/evaluate-employee/")
-def evaluate_employee(data: AppraisalRequest):
-    """
-    Ingests live employee quantitative KPIs and qualitative feedback,
-    computes truth-weighted NLP and Random Forest reliability classifications,
-    stores the results in PostgreSQL, and returns the evaluation outcome.
-    """
+# ==========================================
+# Database Dependency
+# ==========================================
+def get_db():
+    db = SessionLocal()
     try:
-        # 1. Format Numerical Features
-        X_num = np.array([[data.loan_volumes, data.transaction_accuracy, 
-                           data.workplan_completion, data.error_frequencies]])
-        
-        # 2. Process Text Feedback via TF-IDF Vectorizer
-        X_text = tfidf_vectorizer.transform([data.feedback_text]).toarray()
-        
-        # 3. Combine Features for Random Forest Prediction
-        X_combined = np.hstack((X_num, X_text))
-        
-        # 4. Predict Reliability Class (1 = Reliable, 0 = Needs Improvement)
-        prediction = int(rf_model.predict(X_combined)[0])
-        probability = float(np.max(rf_model.predict_proba(X_combined)))
-        
-        # Determine status label
-        status_label = "Reliable / High-Performing" if prediction == 1 else "Needs Improvement / Intervention Required"
+        yield db
+    finally:
+        db.close()
 
-        # 5. Persist record into PostgreSQL database
-        conn = psycopg2.connect(**DB_CONFIG)
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            INSERT INTO performance_records 
-            (employee_code, loan_volumes, transaction_accuracy, workplan_completion, error_frequencies, feedback_text, reliability_target)
-            VALUES (%s, %s, %s, %s, %s, %s, %s);
-        """, (
-            data.employee_code, 
-            data.loan_volumes, 
-            data.transaction_accuracy, 
-            data.workplan_completion, 
-            data.error_frequencies, 
-            data.feedback_text, 
-            prediction
-        ))
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
+# ==========================================
+# 1. User Endpoints (Hierarchical Access)
+# ==========================================
+@router.post("/users/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    # Check if email already exists
+    db_user = db.query(User).filter(User.email == user.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # In a real app, hash the password before saving!
+    new_user = User(**user.model_dump())
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
 
-        return {
-            "status": "success",
-            "employee_code": data.employee_code,
-            "prediction_class": prediction,
-            "evaluation_result": status_label,
-            "confidence_score": round(probability * 100, 2),
-            "message": "Appraisal record processed and securely logged to PostgreSQL database."
-        }
+@router.get("/users/{user_id}", response_model=UserResponse)
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# ==========================================
+# 2. KPI Metrics Endpoints (Quantitative Data)
+# ==========================================
+@router.post("/kpis/", response_model=KPIResponse, status_code=status.HTTP_201_CREATED)
+def log_kpi_metric(kpi: KPICreate, db: Session = Depends(get_db)):
+    # Verify user exists
+    user = db.query(User).filter(User.user_id == kpi.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    
+    new_kpi = KPIMetric(**kpi.model_dump())
+    db.add(new_kpi)
+    db.commit()
+    db.refresh(new_kpi)
+    return new_kpi
+
+@router.get("/users/{user_id}/kpis/", response_model=List[KPIResponse])
+def get_employee_kpis(user_id: int, db: Session = Depends(get_db)):
+    """Fetches continuous quantitative banking features like loan volumes for a specific employee."""
+    kpis = db.query(KPIMetric).filter(KPIMetric.user_id == user_id).all()
+    return kpis
+
+# ==========================================
+# 3. Narrative Feedback Endpoints (Qualitative Data)
+# ==========================================
+@router.post("/feedback/", response_model=NarrativeFeedbackResponse, status_code=status.HTTP_201_CREATED)
+def submit_feedback(feedback: NarrativeFeedbackCreate, db: Session = Depends(get_db)):
+    # This endpoint captures multi-source review narratives for the NLP pipeline
+    new_feedback = NarrativeFeedback(**feedback.model_dump())
+    db.add(new_feedback)
+    db.commit()
+    db.refresh(new_feedback)
+    return new_feedback
+
+@router.get("/users/{user_id}/feedback/", response_model=List[NarrativeFeedbackResponse])
+def get_employee_feedback(user_id: int, db: Session = Depends(get_db)):
+    feedback_records = db.query(NarrativeFeedback).filter(NarrativeFeedback.user_id == user_id).all()
+    return feedback_records
+
+# ==========================================
+# 4. Trust Grade Endpoints (ML Outputs)
+# ==========================================
+@router.post("/trust-grades/", response_model=TrustGradeResponse, status_code=status.HTTP_201_CREATED)
+def generate_trust_grade(grade: TrustGradeCreate, db: Session = Depends(get_db)):
+    """Stores the final computed reliability score from the Random Forest engine."""
+    new_grade = TrustGrade(**grade.model_dump())
+    db.add(new_grade)
+    db.commit()
+    db.refresh(new_grade)
+    return new_grade
+
+@router.get("/users/{user_id}/trust-grades/", response_model=List[TrustGradeResponse])
+def get_employee_trust_grades(user_id: int, db: Session = Depends(get_db)):
+    """Returns the unified trust scores for the hierarchical dashboards."""
+    grades = db.query(TrustGrade).filter(TrustGrade.user_id == user_id).all()
+    return grades

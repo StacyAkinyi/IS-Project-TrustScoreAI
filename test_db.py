@@ -2,11 +2,11 @@ import psycopg2
 
 try:
     connection = psycopg2.connect(
-        dbname="PostgreSQL 18",
+        dbname="TrustScoreAI_db",
         user="postgres",
         password="Bambino.0",
         host="localhost",
-        port="5432",
+        port="5433",
         sslmode="disable"
     )
     
