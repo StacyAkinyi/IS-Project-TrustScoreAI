@@ -2,123 +2,180 @@ import pandas as pd
 import numpy as np
 import random
 from datetime import datetime, timedelta
+from niafaker import NiaFaker
 
-# Set random seed for reproducibility
+# Set random seeds for reproducibility
 np.random.seed(42)
 random.seed(42)
+
+fake = NiaFaker("ke", seed=42)
 
 # ==========================================
 # Configuration & Constants
 # ==========================================
+NUM_EXECUTIVES = 3
+NUM_SUPERVISORS = 15
 NUM_EMPLOYEES = 200
 NUM_MONTHS = 12
-ROLES = ['Employee', 'Supervisor', 'Executive']
-ROLE_PROBS = [0.80, 0.15, 0.05]
-BRANCHES = ['NBO-01', 'NBO-02', 'MSA-01', 'KSM-01']
-DEPARTMENTS = ['Retail Banking', 'Credit Processing', 'Operations', 'Compliance']
+
+# Exactly 10 Branches
+BRANCHES = [
+    'NBO-Central', 'NBO-Westlands', 'NBO-Upperhill', 'MSA-Island', 
+    'MSA-Nyali', 'KSM-Central', 'NKU-CBD', 'ELD-Core', 
+    'KTL-Branch', 'THK-Industrial'
+]
+
+# Exactly 10 Departments
+DEPARTMENTS = [
+    'Retail Banking', 'Credit Processing', 'Operations', 'Compliance', 
+    'Treasury', 'IT Risk', 'Customer Service', 'Wealth Management', 
+    'Corporate Banking', 'Trade Finance'
+]
+
+REGIONS = ['Nairobi Region', 'Coast Region', 'Western Region']
+EMPLOYEE_ROLES = ['Teller', 'Loan Officer', 'Customer Success', 'Analyst']
 
 # Mock textual snippets for NLP dataset
-POSITIVE_NOTES = ["Consistently meets targets.", "Shows strong integrity.", "Excellent collaboration skills."]
-NEGATIVE_NOTES = ["Missed deadlines frequently.", "Compliance oversight noted.", "Needs improvement in peer collaboration."]
-COMPLIANCE_NOTES = ["Strictly follows AML protocols.", "Minor KYC errors detected.", "Perfect adherence to regulatory guidelines."]
+POSITIVE_NOTES = [
+    "Consistently meets targets with high integrity.",
+    "Shows strong ethical compliance and teamwork.",
+    "Excellent collaboration skills during month-end reconciliation."
+]
+NEGATIVE_NOTES = [
+    "Struggles with meeting deadlines.",
+    "Minor KYC compliance oversight noted.",
+    "Needs improvement in peer collaboration and ledger speed."
+]
 
 # ==========================================
-# 1. Generate Employee Profiles (employee_dim.csv)
+# 1. Generate Hierarchical Users
 # ==========================================
-print("Generating employee_dim.csv...")
-employee_data = []
-for user_id in range(1, NUM_EMPLOYEES + 1):
-    role = np.random.choice(ROLES, p=ROLE_PROBS)
-    employee_data.append({
-        'user_id': user_id,
-        'first_name': f"User_{user_id}_First",
-        'last_name': f"User_{user_id}_Last",
-        'email': f"user{user_id}@trustscoreai.bank.ke",
-        'role': role,
-        'branch_code': random.choice(BRANCHES),
-        'department': random.choice(DEPARTMENTS),
-        'hire_date': (datetime.now() - timedelta(days=random.randint(365, 3650))).strftime('%Y-%m-%d'),
-        'is_active': np.random.choice([True, False], p=[0.95, 0.05])
+print("Generating hierarchical user data...")
+
+# A. Executive Managers
+executives_data = []
+for exec_id in range(1, NUM_EXECUTIVES + 1):
+    executives_data.append({
+        'executive_id': exec_id,
+        'full_name': fake.name(),
+        'oversight_region': random.choice(REGIONS)
     })
+df_executives = pd.DataFrame(executives_data)
 
-df_employees = pd.DataFrame(employee_data)
-df_employees.to_csv('employee_dim.csv', index=False)
+# B. Immediate Supervisors
+supervisors_data = []
+for sup_id in range(1, NUM_SUPERVISORS + 1):
+    supervisors_data.append({
+        'supervisor_id': sup_id,
+        'executive_id': random.randint(1, NUM_EXECUTIVES),
+        'full_name': fake.name(),
+        'department_code': random.choice(DEPARTMENTS)
+    })
+df_supervisors = pd.DataFrame(supervisors_data)
 
-# Extract lists of IDs by role for relational mapping
-employee_ids = df_employees[df_employees['role'] == 'Employee']['user_id'].tolist()
-supervisor_ids = df_employees[df_employees['role'] == 'Supervisor']['user_id'].tolist()
+# C. Employees
+employees_data = []
+for emp_id in range(1, NUM_EMPLOYEES + 1):
+    employees_data.append({
+        'employee_id': emp_id,
+        'supervisor_id': random.randint(1, NUM_SUPERVISORS),
+        'full_name': fake.name(),
+        'role': random.choice(EMPLOYEE_ROLES),
+        'branch_location': random.choice(BRANCHES)
+    })
+df_employees = pd.DataFrame(employees_data)
+
+# Export User Tables
+df_executives.to_csv('synthetic_executive_manager.csv', index=False)
+df_supervisors.to_csv('synthetic_immediate_supervisor.csv', index=False)
+df_employees.to_csv('synthetic_employee.csv', index=False)
+
 
 # ==========================================
-# 2. Generate Quantitative Metrics (numerical_kpis.csv)
+# 2. Generate Quantitative Metrics (performance_records)
 # ==========================================
-print("Generating numerical_kpis.csv...")
+print("Generating performance_records.csv...")
 kpi_data = []
-metric_id = 1
+record_id = 1
 start_date = datetime(2025, 1, 1)
 
-for user_id in df_employees['user_id']:
-    # Generate 12 months of KPI data per user
+for emp_id in df_employees['employee_id']:
+    # Generate multiple records per employee
     for month_offset in range(NUM_MONTHS):
         eval_date = start_date + pd.DateOffset(months=month_offset)
         
-        # Simulating operational variables with realistic banking variances
-        loan_vols = max(0, np.random.normal(loc=150000, scale=50000))
-        accounts = max(0, int(np.random.normal(loc=45, scale=15)))
-        error_freq = max(0, min(100, np.random.normal(loc=2.5, scale=1.0))) # Cash reconciliation errors
-        np_credit_pct = max(0, min(100, np.random.normal(loc=3.0, scale=1.5))) 
-        deadline_rate = max(0, min(100, np.random.normal(loc=85.0, scale=10.0)))
-        ledger_speed = max(0, min(100, np.random.normal(loc=90.0, scale=5.0)))
-        tx_accuracy = max(0, min(100, np.random.normal(loc=98.0, scale=2.0)))
-        target_achieved = max(0, min(100, np.random.normal(loc=88.0, scale=12.0)))
+        # Simulating operational variables
+        loan_vols = max(0, int(np.random.normal(loc=120, scale=30)))
+        tx_accuracy = max(50.0, min(100.0, np.random.normal(loc=95.0, scale=4.0)))
+        wp_completion = max(40.0, min(100.0, np.random.normal(loc=88.0, scale=10.0)))
+        err_freq = max(0, int(np.random.poisson(lam=2)))
         
+        # Compute target (1 = Reliable, 0 = Needs Improvement)
+        score = (tx_accuracy * 0.4) + (wp_completion * 0.4) - (err_freq * 5)
+        reliability_target = 1 if score > 75 else 0
+
+        # Adding optional feedback directly to the record 
+        inline_feedback = random.choice(POSITIVE_NOTES + NEGATIVE_NOTES) if random.random() > 0.5 else None
+
         kpi_data.append({
-            'metric_id': metric_id,
-            'user_id': user_id,
-            'evaluation_period': eval_date.strftime('%Y-%m-%d'),
-            'loan_processing_volumes': round(loan_vols, 2),
-            'account_creation_volumes': accounts,
-            'cash_reconciliation_error_freq': round(error_freq, 2),
-            'non_performing_credit_pct': round(np_credit_pct, 2),
-            'task_deadline_fulfilment_rate': round(deadline_rate, 2),
-            'daily_ledger_balancing_speed': round(ledger_speed, 2),
-            'transaction_accuracy_rate': round(tx_accuracy, 2),
-            'target_achievement_rate': round(target_achieved, 2)
+            'record_id': record_id,
+            'employee_id': emp_id,
+            'loan_volumes': loan_vols,
+            'transaction_accuracy': round(tx_accuracy, 2),
+            'workplan_completion': round(wp_completion, 2),
+            'error_frequencies': err_freq,
+            'feedback_text': inline_feedback,
+            'truthfulness_weight': round(random.uniform(0.8, 1.0), 2),
+            'reliability_target': reliability_target,
+            'recorded_at': eval_date.strftime('%Y-%m-%d %H:%M:%S')
         })
-        metric_id += 1
+        record_id += 1
 
 df_kpis = pd.DataFrame(kpi_data)
-df_kpis.to_csv('numerical_kpis.csv', index=False)
+df_kpis.to_csv('synthetic_performance_records.csv', index=False)
+
 
 # ==========================================
-# 3. Generate Qualitative Text (textual_reviews.csv)
+# 3. Generate Qualitative Text (unstructured_feedback)
 # ==========================================
-print("Generating textual_reviews.csv...")
+print("Generating unstructured_feedback.csv...")
 feedback_data = []
 feedback_id = 1
 
-# Generate 2-3 feedback records per employee
-for user_id in employee_ids:
+for emp_id in df_employees['employee_id']:
+    # Each employee gets 2-3 pieces of unstructured feedback
     num_reviews = random.randint(2, 3)
+    
+    # Type-safe native Python extraction (Bypasses pandas .values linter errors)
+    emp_supervisor = next(emp['supervisor_id'] for emp in employees_data if emp['employee_id'] == emp_id)
+
     for _ in range(num_reviews):
-        evaluator = random.choice(supervisor_ids)
-        feedback_date = start_date + timedelta(days=random.randint(0, 360))
+        is_peer_review = random.choice([True, False])
         
+        if is_peer_review:
+            # Peer review: supervisor_id is None, author_employee_id has a value
+            sup_id_val = None
+            author_id_val = random.choice([e['employee_id'] for e in employees_data if e['employee_id'] != emp_id])
+        else:
+            # Manager review: supervisor_id has value, author_employee_id is None
+            sup_id_val = emp_supervisor
+            author_id_val = None
+
+        narrative = random.choice(POSITIVE_NOTES + NEGATIVE_NOTES)
+        # Mock sentiment polarity (-1.0 to 1.0)
+        sentiment = round(random.uniform(0.5, 1.0) if narrative in POSITIVE_NOTES else random.uniform(-1.0, 0.0), 2)
+
         feedback_data.append({
             'feedback_id': feedback_id,
-            'user_id': user_id,
-            'evaluator_id': evaluator,
-            'feedback_date': feedback_date.strftime('%Y-%m-%d %H:%M:%S'),
-            'raw_narrative': random.choice(POSITIVE_NOTES + NEGATIVE_NOTES),
-            'supervisor_notes': random.choice(POSITIVE_NOTES + NEGATIVE_NOTES),
-            'peer_evaluations': random.choice(POSITIVE_NOTES),
-            'compliance_behavior_notes': random.choice(COMPLIANCE_NOTES),
-            'behavioral_integrity_notes': "Displayed standard banking ethics.",
-            'professional_accountability_notes': "Handled cash registers responsibly.",
-            'collaboration_notes': "Worked well during the end-of-month reconciliation.",
+            'employee_id': emp_id,
+            'supervisor_id': sup_id_val,
+            'author_employee_id': author_id_val,
+            'narrative_text': narrative,
+            'sentiment_polarity_value': sentiment
         })
         feedback_id += 1
 
 df_feedback = pd.DataFrame(feedback_data)
-df_feedback.to_csv('textual_reviews.csv', index=False)
+df_feedback.to_csv('synthetic_unstructured_feedback.csv', index=False)
 
-print("Data generation complete! Saved to employee_dim.csv, numerical_kpis.csv, and textual_reviews.csv.")
+print("Data generation complete! 5 relational CSV files created successfully for the TrustScoreAI System.")

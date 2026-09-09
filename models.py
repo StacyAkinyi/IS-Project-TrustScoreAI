@@ -1,96 +1,99 @@
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, Date, Numeric, Text, DateTime, ForeignKey, func
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Text
+from sqlalchemy.orm import relationship
+from datetime import datetime
+from database import Base
 
 
-DATABASE_URL = "postgresql://postgres:Bambino.0@localhost:5433/trustscoreai_db"
+class ExecutiveManager(Base):
+    __tablename__ = "executive_managers"
 
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    id = Column(Integer, primary_key=True, index=True)
+    full_name = Column(String, nullable=False)
+    oversight_region = Column(String, nullable=False)
+    username = Column(String, unique=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
 
-Base = declarative_base()
+    supervisors = relationship("ImmediateSupervisor", back_populates="executive")
 
 
-class User(Base):
-    __tablename__ = 'tbl_users'
+class ImmediateSupervisor(Base):
+    __tablename__ = "immediate_supervisors"
 
-    user_id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String(50), nullable=False)
-    last_name = Column(String(50), nullable=False)
-    email = Column(String(100), unique=True, index=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)
-    role = Column(String(20), nullable=False) # 'Employee', 'Supervisor', 'Executive'
-    branch_code = Column(String(20))
-    department = Column(String(50))
-    hire_date = Column(Date)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    id = Column(Integer, primary_key=True, index=True)
+    executive_id = Column(Integer, ForeignKey("executive_managers.id"), nullable=False)
+    full_name = Column(String, nullable=False)
+    department_code = Column(String, nullable=False)
+    username = Column(String, unique=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
 
-    # Relationships
-    kpis = relationship("KPIMetric", back_populates="user", cascade="all, delete-orphan")
-    trust_grades = relationship("TrustGrade", back_populates="user", cascade="all, delete-orphan")
-    feedback_received = relationship("NarrativeFeedback", foreign_keys='NarrativeFeedback.user_id', back_populates="employee", cascade="all, delete-orphan")
-    feedback_given = relationship("NarrativeFeedback", foreign_keys='NarrativeFeedback.evaluator_id', back_populates="evaluator")
+    executive = relationship("ExecutiveManager", back_populates="supervisors")
+    employees = relationship("Employee", back_populates="supervisor")
 
-class KPIMetric(Base):
-    __tablename__ = 'tbl_kpis'
 
-    metric_id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('tbl_users.user_id', ondelete="CASCADE"), nullable=False)
-    evaluation_period = Column(Date, nullable=False)
-    loan_processing_volumes = Column(Numeric(10, 2), default=0.00)
-    account_creation_volumes = Column(Integer, default=0)
-    cash_reconciliation_error_freq = Column(Numeric(5, 2), default=0.00)
-    non_performing_credit_pct = Column(Numeric(5, 2), default=0.00)
-    task_deadline_fulfilment_rate = Column(Numeric(5, 2), default=0.00)
-    daily_ledger_balancing_speed = Column(Numeric(5, 2), default=0.00)
-    transaction_accuracy_rate = Column(Numeric(5, 2), default=0.00)
-    target_achievement_rate = Column(Numeric(5, 2), default=0.00)
-    recorded_at = Column(DateTime, server_default=func.now())
+class Employee(Base):
+    __tablename__ = "employees"
 
-    # Relationships
-    user = relationship("User", back_populates="kpis")
+    id = Column(Integer, primary_key=True, index=True)
+    supervisor_id = Column(Integer, ForeignKey("immediate_supervisors.id"), nullable=False)
+    full_name = Column(String, nullable=False)
+    role = Column(String, nullable=False)
+    branch_location = Column(String, nullable=False)
+    username = Column(String, unique=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
 
-class NarrativeFeedback(Base):
-    __tablename__ = 'tbl_narrativefeedback'
+    supervisor = relationship("ImmediateSupervisor", back_populates="employees")
+    performance_records = relationship("PerformanceRecord", back_populates="employee")
+    feedback_entries = relationship(
+        "UnstructuredFeedback",
+        back_populates="employee",
+        foreign_keys="UnstructuredFeedback.employee_id"
+    )
+
+
+class PerformanceRecord(Base):
+    __tablename__ = "performance_records"
+
+    record_id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
+    loan_volumes = Column(Integer, nullable=False)
+    transaction_accuracy = Column(Float, nullable=False)
+    workplan_completion = Column(Float, nullable=False)
+    error_frequencies = Column(Integer, nullable=False)
+    feedback_text = Column(Text, nullable=True)
+    truthfulness_weight = Column(Float, default=1.0)
+    reliability_target = Column(Integer, nullable=False)
+
+    employee = relationship("Employee", back_populates="performance_records")
+
+
+class UnstructuredFeedback(Base):
+    __tablename__ = "unstructured_feedback"
 
     feedback_id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('tbl_users.user_id', ondelete="CASCADE"), nullable=False)
-    evaluator_id = Column(Integer, ForeignKey('tbl_users.user_id', ondelete="SET NULL"))
-    feedback_date = Column(DateTime, server_default=func.now())
-    raw_narrative = Column(Text)
-    supervisor_notes = Column(Text)
-    peer_evaluations = Column(Text)
-    compliance_behavior_notes = Column(Text)
-    behavioral_integrity_notes = Column(Text)
-    professional_accountability_notes = Column(Text)
-    collaboration_notes = Column(Text)
-    sentiment_processed_status = Column(Boolean, default=False)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
+    supervisor_id = Column(Integer, ForeignKey("immediate_supervisors.id"), nullable=True)
+    author_employee_id = Column(Integer, ForeignKey("employees.id"), nullable=True)
+    narrative_text = Column(Text, nullable=False)
+    sentiment_polarity_value = Column(Float, nullable=True)
 
-    # Relationships
-    employee = relationship("User", foreign_keys=[user_id], back_populates="feedback_received")
-    evaluator = relationship("User", foreign_keys=[evaluator_id], back_populates="feedback_given")
+    employee = relationship("Employee", back_populates="feedback_entries", foreign_keys=[employee_id])
 
-class TrustGrade(Base):
-    __tablename__ = 'tbl_trustgrades'
+class AppraisalReport(Base):
+    __tablename__ = "appraisal_reports"
 
     report_id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('tbl_users.user_id', ondelete="CASCADE"), nullable=False)
-    report_generation_date = Column(DateTime, server_default=func.now())
-    final_reliability_score = Column(Numeric(5, 2), nullable=False)
-    ml_precision_weights = Column(Numeric(5, 4))
-    parsed_sentiment_bounds = Column(Numeric(5, 4))
-    classification_accuracy = Column(Numeric(5, 4))
-    macro_f1_score = Column(Numeric(5, 4))
-    root_mean_squared_error = Column(Numeric(5, 4))
-    dashboard_visibility_tier = Column(String(20), default='Executive')
-    model_version = Column(String(50))
-    executive_approval_status = Column(Boolean, default=False)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
+    unified_trust_score = Column(Float, nullable=False)
+    compliance_override_status = Column(Boolean, default=False)
+    overriding_executive_id = Column(Integer, ForeignKey("executive_managers.id"), nullable=True)
+    generation_date = Column(DateTime, default=datetime.utcnow)
 
-    # Relationships
-    user = relationship("User", back_populates="trust_grades")
 
-# Run this to create the tables in the database if they don't exist yet
-if __name__ == "__main__":
-    Base.metadata.create_all(bind=engine)
-    print("✅ Database tables created successfully!")
+class AppraisalSourceMapping(Base):
+    __tablename__ = "appraisal_source_mappings"
+
+    mapping_id = Column(Integer, primary_key=True, index=True)
+    report_id = Column(Integer, ForeignKey("appraisal_reports.report_id"), nullable=False)
+    record_id = Column(Integer, ForeignKey("performance_records.record_id"), nullable=True)
+    feedback_id = Column(Integer, ForeignKey("unstructured_feedback.feedback_id"), nullable=True)
+    
