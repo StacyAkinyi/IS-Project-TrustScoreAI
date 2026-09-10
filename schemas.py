@@ -18,7 +18,44 @@ class EmployeeCreate(BaseModel):
     role: str
     branch_location: str
 
+# --- Response Schemas (Primary Keys Aligned with DB Schema) ---
+class EmployeeResponse(BaseModel):
+    employee_id: int
+    supervisor_id: int
+    full_name: str
+    role: str
+    branch_location: str
+
+    class Config:
+        from_attributes = True
+
+class SupervisorResponse(BaseModel):
+    supervisor_id: int
+    executive_id: int
+    full_name: str
+    department_code: str
+
+    class Config:
+        from_attributes = True
+
+class ExecutiveResponse(BaseModel):
+    executive_id: int
+    full_name: str
+    oversight_region: str
+
+    class Config:
+        from_attributes = True
+
 # --- Processing & Appraisal Schemas ---
+class AppraisalInput(BaseModel):
+    employee_id: int
+    supervisor_id: int
+    loan_volumes: int
+    transaction_accuracy: float
+    workplan_completion: float
+    error_frequencies: int
+    narrative_text: str
+
 class PerformanceRecordCreate(BaseModel):
     employee_id: int
     loan_volumes: int
@@ -28,6 +65,19 @@ class PerformanceRecordCreate(BaseModel):
     feedback_text: Optional[str] = None
     truthfulness_weight: float = 1.0
     reliability_target: int
+
+class PerformanceRecordResponse(BaseModel):
+    record_id: int
+    employee_id: int
+    loan_volumes: int
+    transaction_accuracy: float
+    workplan_completion: float
+    error_frequencies: int
+    feedback_text: Optional[str] = None
+    reliability_target: int
+
+    class Config:
+        from_attributes = True
 
 class UnstructuredFeedbackCreate(BaseModel):
     employee_id: int
@@ -59,46 +109,8 @@ class AppraisalSourceMappingResponse(BaseModel):
 
     class Config:
         from_attributes = True
-class EmployeeResponse(BaseModel):
-    id: int
-    supervisor_id: int
-    full_name: str
-    role: str
-    branch_location: str
 
-    class Config:
-        from_attributes = True
-
-
-class PerformanceRecordResponse(BaseModel):
-    record_id: int
-    employee_id: int
-    loan_volumes: int
-    transaction_accuracy: float
-    workplan_completion: float
-    error_frequencies: int
-    feedback_text: Optional[str] = None
-    reliability_target: int
-
-    class Config:
-        from_attributes = True  
-              
-class SupervisorResponse(BaseModel):
-    id: int
-    executive_id: int
-    full_name: str
-    department_code: str
-
-    class Config:
-        from_attributes = True        
-
-class ExecutiveResponse(BaseModel):
-    id: int
-    full_name: str
-    oversight_region: str
-
-    class Config:
-        from_attributes = True
+# --- Authentication Schemas ---
 class LoginRequest(BaseModel):
     username: str
     password: str
@@ -108,4 +120,3 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     role: str
     user_id: int
-                
