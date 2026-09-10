@@ -1,6 +1,7 @@
 import pandas as pd
 from database import SessionLocal
 import models
+import auth
 
 db = SessionLocal()
 
@@ -14,7 +15,9 @@ try:
         db.add(models.ExecutiveManager(
             id=int(row['executive_id']),
             full_name=row['full_name'],
-            oversight_region=row['oversight_region']
+            oversight_region=row['oversight_region'],
+            username=f"exec{int(row['executive_id'])}",
+            hashed_password=auth.hash_password("password123")
         ))
     db.commit()
 
@@ -28,7 +31,9 @@ try:
             id=int(row['supervisor_id']),
             executive_id=int(row['executive_id']),
             full_name=row['full_name'],
-            department_code=row['department_code']
+            department_code=row['department_code'],
+            username=f"sup{int(row['supervisor_id'])}",
+            hashed_password=auth.hash_password("password123")
         ))
     db.commit()
 
@@ -43,7 +48,9 @@ try:
             supervisor_id=int(row['supervisor_id']),
             full_name=row['full_name'],
             role=row['role'],
-            branch_location=row['branch_location']
+            branch_location=row['branch_location'],
+            username=f"emp{int(row['employee_id'])}",
+            hashed_password=auth.hash_password("password123")
         ))
     db.commit()
 

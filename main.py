@@ -6,10 +6,23 @@ import numpy as np
 from datetime import datetime
 from typing import List
 
+
+
 # Import your custom modules
 import models
 import schemas
+import auth
 from database import engine, get_db
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+security = HTTPBearer()
+
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+    payload = auth.decode_access_token(token)
+    if payload is None:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    return payload  # contains {"user_id": ..., "role": ..., "exp": ...}
 
 # Initialize all database tables defined in models.py
 models.Base.metadata.create_all(bind=engine)
@@ -146,7 +159,15 @@ def submit_comprehensive_appraisal(
 # ---------------------------------------------------------
 
 @app.get("/api/v1/employees/{employee_id}", response_model=schemas.EmployeeResponse)
-def get_employee(employee_id: int, db: Session = Depends(get_db)):
+def get_employee(
+    employee_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    # Employees can only view themselves; supervisors/executives can view any employee
+    if current_user["role"] == "employee" and current_user["user_id"] != employee_id:
+        raise HTTPException(status_code=403, detail="You can only view your own profile")
+
     employee = db.query(models.Employee).filter(models.Employee.id == employee_id).first()
     if not employee:
         raise HTTPException(status_code=404, detail="Employee not found")
@@ -154,7 +175,14 @@ def get_employee(employee_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/api/v1/employees/{employee_id}/performance", response_model=List[schemas.PerformanceRecordResponse])
-def get_employee_performance(employee_id: int, db: Session = Depends(get_db)):
+def get_employee_performance(
+    employee_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user["role"] == "employee" and current_user["user_id"] != employee_id:
+        raise HTTPException(status_code=403, detail="You can only view your own performance records")
+
     records = db.query(models.PerformanceRecord).filter(
         models.PerformanceRecord.employee_id == employee_id
     ).all()
@@ -162,18 +190,34 @@ def get_employee_performance(employee_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/api/v1/employees/{employee_id}/reports", response_model=List[schemas.AppraisalReportResponse])
-def get_employee_reports(employee_id: int, db: Session = Depends(get_db)):
+def get_employee_reports(
+    employee_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user["role"] == "employee" and current_user["user_id"] != employee_id:
+        raise HTTPException(status_code=403, detail="You can only view your own reports")
+
     reports = db.query(models.AppraisalReport).filter(
         models.AppraisalReport.employee_id == employee_id
     ).all()
-    return reports    
+    return reports  
 
 # ---------------------------------------------------------
 # 5. Supervisor Dashboard Endpoints
 # ---------------------------------------------------------
 
 @app.get("/api/v1/supervisors/{supervisor_id}", response_model=schemas.SupervisorResponse)
-def get_supervisor(supervisor_id: int, db: Session = Depends(get_db)):
+def get_supervisor(
+    supervisor_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user["role"] == "employee":
+        raise HTTPException(status_code=403, detail="Employees cannot access supervisor data")
+    if current_user["role"] == "supervisor" and current_user["user_id"] != supervisor_id:
+        raise HTTPException(status_code=403, detail="You can only view your own profile")
+
     supervisor = db.query(models.ImmediateSupervisor).filter(
         models.ImmediateSupervisor.id == supervisor_id
     ).first()
@@ -183,7 +227,16 @@ def get_supervisor(supervisor_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/api/v1/supervisors/{supervisor_id}/employees", response_model=List[schemas.EmployeeResponse])
-def get_supervisor_employees(supervisor_id: int, db: Session = Depends(get_db)):
+def get_supervisor_employees(
+    supervisor_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user["role"] == "employee":
+        raise HTTPException(status_code=403, detail="Employees cannot access supervisor data")
+    if current_user["role"] == "supervisor" and current_user["user_id"] != supervisor_id:
+        raise HTTPException(status_code=403, detail="You can only view your own team")
+
     employees = db.query(models.Employee).filter(
         models.Employee.supervisor_id == supervisor_id
     ).all()
@@ -191,7 +244,16 @@ def get_supervisor_employees(supervisor_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/api/v1/supervisors/{supervisor_id}/team-reports", response_model=List[schemas.AppraisalReportResponse])
-def get_supervisor_team_reports(supervisor_id: int, db: Session = Depends(get_db)):
+def get_supervisor_team_reports(
+    supervisor_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user["role"] == "employee":
+        raise HTTPException(status_code=403, detail="Employees cannot access supervisor data")
+    if current_user["role"] == "supervisor" and current_user["user_id"] != supervisor_id:
+        raise HTTPException(status_code=403, detail="You can only view your own team's reports")
+
     reports = db.query(models.AppraisalReport).join(
         models.Employee, models.AppraisalReport.employee_id == models.Employee.id
     ).filter(
@@ -205,7 +267,16 @@ def get_supervisor_team_reports(supervisor_id: int, db: Session = Depends(get_db
 # ---------------------------------------------------------
 
 @app.get("/api/v1/executives/{executive_id}", response_model=schemas.ExecutiveResponse)
-def get_executive(executive_id: int, db: Session = Depends(get_db)):
+def get_executive(
+    executive_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user["role"] in ("employee", "supervisor"):
+        raise HTTPException(status_code=403, detail="Only executives can access this data")
+    if current_user["role"] == "executive" and current_user["user_id"] != executive_id:
+        raise HTTPException(status_code=403, detail="You can only view your own profile")
+
     executive = db.query(models.ExecutiveManager).filter(
         models.ExecutiveManager.id == executive_id
     ).first()
@@ -215,7 +286,16 @@ def get_executive(executive_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/api/v1/executives/{executive_id}/supervisors", response_model=List[schemas.SupervisorResponse])
-def get_executive_supervisors(executive_id: int, db: Session = Depends(get_db)):
+def get_executive_supervisors(
+    executive_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user["role"] in ("employee", "supervisor"):
+        raise HTTPException(status_code=403, detail="Only executives can access this data")
+    if current_user["role"] == "executive" and current_user["user_id"] != executive_id:
+        raise HTTPException(status_code=403, detail="You can only view your own org")
+
     supervisors = db.query(models.ImmediateSupervisor).filter(
         models.ImmediateSupervisor.executive_id == executive_id
     ).all()
@@ -223,7 +303,16 @@ def get_executive_supervisors(executive_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/api/v1/executives/{executive_id}/employees", response_model=List[schemas.EmployeeResponse])
-def get_executive_employees(executive_id: int, db: Session = Depends(get_db)):
+def get_executive_employees(
+    executive_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user["role"] in ("employee", "supervisor"):
+        raise HTTPException(status_code=403, detail="Only executives can access this data")
+    if current_user["role"] == "executive" and current_user["user_id"] != executive_id:
+        raise HTTPException(status_code=403, detail="You can only view your own org")
+
     employees = db.query(models.Employee).join(
         models.ImmediateSupervisor, models.Employee.supervisor_id == models.ImmediateSupervisor.id
     ).filter(
@@ -233,7 +322,16 @@ def get_executive_employees(executive_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/api/v1/executives/{executive_id}/reports", response_model=List[schemas.AppraisalReportResponse])
-def get_executive_reports(executive_id: int, db: Session = Depends(get_db)):
+def get_executive_reports(
+    executive_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user["role"] in ("employee", "supervisor"):
+        raise HTTPException(status_code=403, detail="Only executives can access this data")
+    if current_user["role"] == "executive" and current_user["user_id"] != executive_id:
+        raise HTTPException(status_code=403, detail="You can only view your own org")
+
     reports = db.query(models.AppraisalReport).join(
         models.Employee, models.AppraisalReport.employee_id == models.Employee.id
     ).join(
