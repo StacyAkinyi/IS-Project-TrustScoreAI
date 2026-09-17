@@ -9,6 +9,7 @@ from datetime import datetime
 from pymongo import MongoClient
 
 import models
+from models import Base
 import schemas
 import auth
 from database import engine, get_db
@@ -19,7 +20,7 @@ security = HTTPBearer()
 # ---------------------------------------------------------
 # Application & Middleware Setup
 # ---------------------------------------------------------
-models.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="TrustScoreAI System API",
@@ -28,7 +29,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173", 
+        "http://127.0.0.1:5173"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -81,20 +85,27 @@ def health_check():
     return {"status": "TrustScoreAI System API is active and running."}
 
 
-
 @app.post("/api/v1/submit-appraisal")
-def submit_appraisal(payload: schemas.AppraisalInput, db: Session = Depends(get_db)):
+def submit_appraisal(payload: ComprehensiveAppraisalRequest, db: Session = Depends(get_db)):
     try:
-        # 1. Machine Learning Inference & Unified Score Computation
-        if 'model' in globals() and model is not None:
-            features = np.array([[
+        # 1. Machine Learning & NLP Inference Pipeline
+        if 'rf_model' in globals() and 'tfidf_vectorizer' in globals():
+            # Structure numerical array
+            X_num = np.array([[
                 payload.loan_volumes,
                 payload.transaction_accuracy,
                 payload.workplan_completion,
                 payload.error_frequencies
             ]])
-            ml_pred = float(model.predict(features)[0])
+            
+            # Vectorize the unstructured text
+            X_text = tfidf_vectorizer.transform([payload.narrative_text]).toarray()
+            
+            # Concatenate and predict
+            X_combined = np.hstack((X_num, X_text))
+            ml_pred = float(rf_model.predict(X_combined)[0])
         else:
+            # Fallback logic if models fail to load
             ml_pred = (payload.transaction_accuracy + payload.workplan_completion) / 2.0
 
         unified_score = round(ml_pred, 2)
@@ -146,7 +157,9 @@ def submit_appraisal(payload: schemas.AppraisalInput, db: Session = Depends(get_
         }
 
     except Exception as e:
+        db.rollback() # Rollback SQL transaction on failure
         raise HTTPException(status_code=500, detail=str(e))
+
 # ---------------------------------------------------------
 # 4. Employee Dashboard Endpoints
 # ---------------------------------------------------------

@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # Database connection URL using your local PostgreSQL credentials
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:Bambino.0@localhost:5433/trust_score_ai_db"
+SQLALCHEMY_DATABASE_URL = "postgresql://postgres:Bambino.0@127.0.0.1:5433/trust_score_ai_db"
 
 # Create the SQLAlchemy engine
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
