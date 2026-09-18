@@ -7,6 +7,7 @@ import joblib
 import numpy as np
 from datetime import datetime
 from pymongo import MongoClient
+from transformers import T5Tokenizer, T5ForConditionalGeneration
 
 import models
 from models import Base
@@ -59,6 +60,29 @@ try:
     print("✓ Machine Learning pipeline loaded successfully.")
 except FileNotFoundError:
     print("Warning: .pkl files not found. Ensure models are saved in the root directory.")
+
+
+# Load your trained model at startup
+nlp_tokenizer = T5Tokenizer.from_pretrained("./trustscore_question_model")
+nlp_model = T5ForConditionalGeneration.from_pretrained("./trustscore_question_model")
+
+@app.get("/api/v1/employees/{employee_id}/generate-prompt")
+def generate_appraisal_prompt(employee_id: int, db: Session = Depends(get_db)):
+    # 1. Fetch live telemetry from PostgreSQL
+    record = db.query(models.PerformanceRecord).filter(models.PerformanceRecord.employee_id == employee_id).order_by(models.PerformanceRecord.recorded_at.desc()).first()
+    
+    if not record:
+        return {"prompt": "How would you describe your overall performance and challenges this quarter?"}
+
+    # 2. Format telemetry for the model
+    input_text = f"loans: {record.loan_volumes}, accuracy: {record.transaction_accuracy}%, errors: {record.error_frequencies}"
+    
+    # 3. Generate the dynamic question
+    input_ids = nlp_tokenizer(input_text, return_tensors="pt").input_ids
+    outputs = nlp_model.generate(input_ids, max_length=50)
+    generated_question = nlp_tokenizer.decode(outputs[0], skip_special_tokens=True)
+    
+    return {"prompt": generated_question}    
 
 # ---------------------------------------------------------
 # 2. Incoming Request Payloads

@@ -1,116 +1,113 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
 
-export default function AppraisalForm({ employeeId, supervisorId, onSubmissionSuccess }) {
+export default function AppraisalForm({ userId, supervisorId }) {
   const [formData, setFormData] = useState({
-    loan_volumes: 100,
-    transaction_accuracy: 95.0,
-    workplan_completion: 90.0,
-    error_frequencies: 1,
-    narrative_text: ''
+    narrative_feedback: ''
   });
-
+  
+  const [aiPrompt, setAiPrompt] = useState('Loading your personalized appraisal context...');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState('');
+
+  const token = localStorage.getItem('access_token');
+
+  // Fetch the AI-generated question when the component loads
+  useEffect(() => {
+    // In the future, this will hit your FastAPI endpoint that generates questions via NLP.
+    // For now, we simulate the AI analyzing their database KPIs and asking a tailored question:
+    setTimeout(() => {
+      setAiPrompt("Based on your database telemetry, you have consistently hit your loan volume targets this quarter, but your system error frequency spiked slightly last month. How are you finding the current workload, and what operational bottlenecks can we help you resolve?");
+    }, 800);
+  }, [userId]);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-
-    const token = localStorage.getItem('access_token');
-    const payload = {
-      ...formData,
-      employee_id: employeeId,
-      supervisor_id: supervisorId
-    };
+    setError('');
+    setResult(null);
 
     try {
-      const res = await axios.post('http://127.0.0.1:8000/api/v1/submit-appraisal', payload, {
-        headers: { Authorization: `Bearer ${token}` }
+      // We now only send the textual reflection. The backend will automatically 
+      // pull the numerical KPIs from the database to run the final ML ensemble!
+      const response = await fetch('http://127.0.0.1:8000/evaluate-employee/', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          employee_code: `EMP-${userId}`,
+          feedback_text: formData.narrative_feedback
+        }),
       });
-      if (res.status === 200) {
-        onSubmissionSuccess(res.data);
-      }
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Failed to process qualitative feedback.');
+
+      setResult(data);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to calculate appraisal score.');
+      console.error("Appraisal submission error:", err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-md">
-      <h3 className="text-lg font-bold text-teal-400 mb-4">Submit AI-Driven Appraisal</h3>
-      {error && <p className="text-rose-400 text-sm mb-3 bg-rose-950/50 p-2 rounded">{error}</p>}
+    <div className="max-w-3xl mx-auto space-y-6">
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-sm font-semibold">
+          {error}
+        </div>
+      )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs text-slate-400 mb-1">Loan Volume Count</label>
-            <input
-              type="number"
-              value={formData.loan_volumes}
-              onChange={(e) => setFormData({ ...formData, loan_volumes: parseInt(e.target.value) || 0 })}
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-teal-500"
-              required
-            />
-          </div>
+      {result && (
+        <div className="bg-green-50 border border-green-200 p-5 rounded-lg space-y-2">
+          <h4 className="font-extrabold text-green-900 text-lg">Reflection Successfully Processed</h4>
+          <p className="text-sm text-slate-700"><strong>Sentiment & Trait Alignment:</strong> {result.evaluation_result}</p>
+          <p className="text-sm text-slate-700"><strong>NLP Confidence:</strong> {result.confidence_score}%</p>
+          <p className="text-xs text-slate-500 mt-1">Your reflection has been merged with your quantitative telemetry to update your unified reliability score.</p>
+        </div>
+      )}
 
-          <div>
-            <label className="block text-xs text-slate-400 mb-1">Transaction Accuracy (%)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={formData.transaction_accuracy}
-              onChange={(e) => setFormData({ ...formData, transaction_accuracy: parseFloat(e.target.value) || 0 })}
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-teal-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs text-slate-400 mb-1">Workplan Completion Rate (%)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={formData.workplan_completion}
-              onChange={(e) => setFormData({ ...formData, workplan_completion: parseFloat(e.target.value) || 0 })}
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-teal-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs text-slate-400 mb-1">Error Frequency Count</label>
-            <input
-              type="number"
-              value={formData.error_frequencies}
-              onChange={(e) => setFormData({ ...formData, error_frequencies: parseInt(e.target.value) || 0 })}
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-teal-500"
-              required
-            />
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* AI Prompt Section */}
+        <div className="bg-indigo-50 border border-indigo-200 p-5 rounded-lg">
+          <h4 className="text-xs font-bold text-indigo-800 uppercase tracking-wider mb-2">
+            AI-Generated Reflection Prompt
+          </h4>
+          <p className="text-sm text-indigo-900 font-medium italic">
+            "{aiPrompt}"
+          </p>
         </div>
 
+        {/* Employee Input Section */}
         <div>
-          <label className="block text-xs text-slate-400 mb-1">Qualitative Narrative Self-Review</label>
-          <textarea
-            rows="3"
-            value={formData.narrative_text}
-            onChange={(e) => setFormData({ ...formData, narrative_text: e.target.value })}
-            placeholder="Summarize key accomplishments, KYC adherence, and operational challenges..."
-            className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-teal-500"
-            required
+          <label className="block text-sm font-bold text-slate-700 mb-2">Your Self-Appraisal & Feedback</label>
+          <textarea 
+            name="narrative_feedback" 
+            rows="6" 
+            value={formData.narrative_feedback} 
+            onChange={handleChange}
+            placeholder="Share your perspective on your performance, workplace challenges, and support needs..."
+            required 
+            className="w-full p-4 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed"
           />
         </div>
 
-        <button
-          type="submit"
+        <button 
+          type="submit" 
           disabled={loading}
-          className="w-full bg-teal-500 hover:bg-teal-600 disabled:bg-slate-700 text-slate-950 font-bold py-3 px-4 rounded-lg transition"
+          className={`w-full py-3 text-white font-bold rounded transition ${
+            loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-700 hover:bg-blue-800 shadow-md'
+          }`}
         >
-          {loading ? 'Processing Model Inference...' : 'Run TrustScore AI Engine'}
+          {loading ? 'Analyzing Qualitative Traits via NLP...' : 'Submit Self-Appraisal'}
         </button>
       </form>
     </div>
