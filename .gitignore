@@ -1,0 +1,6 @@
+venv/
+.venv/
+results/
+*.pkl
+*.h5
+*.pt

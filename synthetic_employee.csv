@@ -1,0 +1,201 @@
+employee_id,supervisor_id,full_name,role,branch_location
+1,8,Akoth Ochieng,Customer Success,KSM-Central
+2,15,Odongo Kivuti,Loan Officer,KTL-Branch
+3,7,Gachanja Muli,Loan Officer,KSM-Central
+4,13,Njeri Kinyua,Customer Success,NBO-Westlands
+5,11,Rehema Kinyua,Analyst,NBO-Upperhill
+6,12,Wamboi Musyoka,Analyst,THK-Industrial
+7,3,Aisha Anyango,Teller,NBO-Central
+8,3,Mwikali Kivuti,Teller,NKU-CBD
+9,5,Nyokabi Mwangi,Teller,KTL-Branch
+10,5,Mutheu Ochieng,Analyst,NBO-Central
+11,15,Okoth Muli,Customer Success,KTL-Branch
+12,13,Musyoka Ruto,Teller,THK-Industrial
+13,2,Akoth Chege,Loan Officer,NBO-Central
+14,12,Neema Kariuki,Loan Officer,NBO-Upperhill
+15,9,Mwikali Kibet,Loan Officer,MSA-Nyali
+16,15,Pendo Oloo,Teller,MSA-Island
+17,1,Nyokabi Mutai,Loan Officer,NBO-Central
+18,2,Kariuki Gachanja,Teller,KTL-Branch
+19,8,Omar Ruto,Loan Officer,THK-Industrial
+20,13,Mwende Korir,Teller,NBO-Westlands
+21,7,Amina Kioko,Teller,NBO-Westlands
+22,6,Okoth Kipchoge,Loan Officer,MSA-Island
+23,3,Wanjiru Ogola,Loan Officer,NBO-Westlands
+24,11,Wairimu Mwangi,Teller,MSA-Island
+25,8,Omar Kinyua,Teller,NBO-Upperhill
+26,5,Halima Wambua,Analyst,KTL-Branch
+27,5,Omar Njenga,Teller,KSM-Central
+28,8,Asha Kosgei,Loan Officer,NBO-Central
+29,10,Opiyo Mutinda,Loan Officer,NKU-CBD
+30,10,Mutua Mbithi,Teller,NKU-CBD
+31,11,Njeri Kipchoge,Customer Success,NKU-CBD
+32,6,Odongo Mwangi,Analyst,THK-Industrial
+33,4,Asha Musyoka,Loan Officer,KSM-Central
+34,5,Musyoka Oloo,Customer Success,THK-Industrial
+35,2,Kipchoge Musyoka,Teller,NBO-Westlands
+36,10,Hassan Musembi,Customer Success,MSA-Island
+37,15,Odhiambo Mutua,Analyst,MSA-Nyali
+38,13,Mutai Muli,Customer Success,NBO-Upperhill
+39,1,Korir Kariuki,Loan Officer,KTL-Branch
+40,9,Kiplagat Mutugi,Loan Officer,NBO-Central
+41,15,Apiyo Kibet,Loan Officer,NBO-Westlands
+42,12,Kipngetich Kipchoge,Loan Officer,NBO-Upperhill
+43,12,Atieno Ndeti,Loan Officer,MSA-Nyali
+44,14,Kariuki Owuor,Loan Officer,MSA-Island
+45,14,Baraka Mutai,Teller,MSA-Island
+46,14,Opiyo Kilonzo,Customer Success,KTL-Branch
+47,2,Muchiri Okoth,Customer Success,NBO-Central
+48,12,Njeri Mutugi,Teller,NKU-CBD
+49,12,Mutheu Mwangi,Loan Officer,KSM-Central
+50,15,Atieno Mbithi,Customer Success,NBO-Westlands
+51,7,Wangui Kinyua,Customer Success,KTL-Branch
+52,11,Jepkosgei Mutinda,Loan Officer,THK-Industrial
+53,14,Mwangi Chege,Customer Success,MSA-Island
+54,8,Nthenya Mutinda,Loan Officer,KTL-Branch
+55,2,Wangari Adhiambo,Customer Success,NBO-Westlands
+56,13,Juma Owour,Teller,NBO-Central
+57,14,Odongo Ogola,Analyst,THK-Industrial
+58,7,Jamal Owour,Teller,NBO-Westlands
+59,13,Pendo Ogola,Teller,KTL-Branch
+60,3,Amina Nguku,Customer Success,ELD-Core
+61,12,Fatuma Oloo,Customer Success,MSA-Island
+62,4,Wanjiru Oloo,Teller,MSA-Nyali
+63,6,Wairimu Mutua,Loan Officer,NBO-Upperhill
+64,3,Omar Kariuki,Analyst,NKU-CBD
+65,1,Hassan Ndeti,Analyst,THK-Industrial
+66,1,Apiyo Chege,Analyst,NKU-CBD
+67,5,Mutheu Anyango,Teller,NKU-CBD
+68,3,Amina Otieno,Teller,NKU-CBD
+69,7,Kipchoge Ogola,Loan Officer,NBO-Central
+70,4,Halima Muchiri,Customer Success,NKU-CBD
+71,14,Otieno Owuor,Teller,KTL-Branch
+72,11,Opiyo Kaloki,Teller,NBO-Central
+73,10,Kipngetich Kipchoge,Loan Officer,ELD-Core
+74,12,Chege Kimani,Loan Officer,THK-Industrial
+75,2,Njenga Chege,Analyst,NKU-CBD
+76,12,Jamal Odhiambo,Customer Success,THK-Industrial
+77,9,Mwikali Nguku,Customer Success,NBO-Westlands
+78,14,Neema Odhiambo,Analyst,KSM-Central
+79,3,Pendo Kaloki,Customer Success,THK-Industrial
+80,14,Gachanja Muchiri,Loan Officer,NBO-Westlands
+81,13,Amina Komen,Analyst,KSM-Central
+82,3,Neema Kibet,Customer Success,MSA-Nyali
+83,12,Wanjiru Biwott,Teller,KTL-Branch
+84,12,Mwende Anyango,Loan Officer,ELD-Core
+85,2,Nyambura Mutai,Analyst,MSA-Island
+86,9,Salma Mathenge,Analyst,KTL-Branch
+87,8,Gachanja Chege,Customer Success,MSA-Island
+88,2,Wamboi Kyalo,Loan Officer,MSA-Island
+89,12,Salma Kivuti,Customer Success,NBO-Westlands
+90,6,Wambua Chege,Teller,KTL-Branch
+91,1,Nyokabi Wambua,Loan Officer,ELD-Core
+92,5,Fatuma Owuor,Analyst,KSM-Central
+93,14,Zainab Omondi,Teller,NKU-CBD
+94,11,Odhiambo Owour,Loan Officer,THK-Industrial
+95,2,Mueni Kivuti,Loan Officer,KTL-Branch
+96,5,Mwikali Chege,Teller,THK-Industrial
+97,4,Muchiri Nguku,Teller,NBO-Upperhill
+98,2,Musyoka Mwangi,Analyst,ELD-Core
+99,4,Wangari Musembi,Customer Success,ELD-Core
+100,13,Juma Mutugi,Teller,KTL-Branch
+101,14,Kiplagat Kariuki,Teller,NBO-Upperhill
+102,2,Amina Kyalo,Customer Success,NKU-CBD
+103,2,Mutua Mutugi,Customer Success,THK-Industrial
+104,4,Njoroge Mutinda,Customer Success,THK-Industrial
+105,9,Nthenya Kilonzo,Loan Officer,THK-Industrial
+106,8,Awino Ndeti,Customer Success,KSM-Central
+107,7,Rehema Wambua,Analyst,KTL-Branch
+108,6,Chege Muchiri,Teller,NKU-CBD
+109,1,Kivuva Kosgei,Customer Success,THK-Industrial
+110,4,Gachanja Biwott,Loan Officer,MSA-Nyali
+111,1,Sadaka Musembi,Loan Officer,MSA-Nyali
+112,4,Korir Ogola,Teller,NBO-Upperhill
+113,12,Gachanja Ndeti,Analyst,ELD-Core
+114,3,Cherono Korir,Loan Officer,NBO-Westlands
+115,15,Asha Kilonzo,Teller,MSA-Nyali
+116,8,Wamboi Owuor,Customer Success,KSM-Central
+117,14,Kivuva Kyalo,Loan Officer,THK-Industrial
+118,1,Njeri Mutiso,Analyst,NKU-CBD
+119,1,Mutai Adhiambo,Customer Success,NBO-Westlands
+120,15,Halima Mwangi,Loan Officer,NKU-CBD
+121,13,Muchiri Gachanja,Analyst,NBO-Westlands
+122,11,Neema Ruto,Teller,THK-Industrial
+123,11,Wangari Mutai,Teller,NKU-CBD
+124,3,Mumbi Kamau,Teller,KSM-Central
+125,6,Mutheu Owour,Loan Officer,KTL-Branch
+126,3,Otieno Mbithi,Analyst,THK-Industrial
+127,3,Baraka Ogola,Customer Success,ELD-Core
+128,15,Wangari Mutinda,Loan Officer,NBO-Westlands
+129,5,Mwikali Kyalo,Customer Success,ELD-Core
+130,14,Zainab Odhiambo,Loan Officer,NKU-CBD
+131,5,Njoroge Nguku,Analyst,MSA-Nyali
+132,12,Rehema Wambua,Loan Officer,THK-Industrial
+133,4,Chege Mutinda,Loan Officer,NBO-Westlands
+134,1,Akoth Kioko,Loan Officer,NBO-Westlands
+135,7,Wambua Korir,Loan Officer,KTL-Branch
+136,5,Zainab Wambua,Customer Success,NBO-Westlands
+137,13,Abdul Mutinda,Analyst,KTL-Branch
+138,1,Muchiri Ruto,Teller,ELD-Core
+139,7,Chebet Odhiambo,Loan Officer,ELD-Core
+140,4,Opiyo Muli,Analyst,MSA-Nyali
+141,1,Kariuki Chege,Analyst,NBO-Westlands
+142,3,Cherono Ogola,Customer Success,KTL-Branch
+143,11,Ochieng Anyango,Analyst,MSA-Nyali
+144,8,Nthenya Kipchoge,Customer Success,NBO-Westlands
+145,7,Wanjiru Korir,Teller,ELD-Core
+146,11,Njoroge Njenga,Customer Success,MSA-Island
+147,14,Nyokabi Kibet,Loan Officer,MSA-Island
+148,1,Wanjiru Owour,Loan Officer,KTL-Branch
+149,11,Njenga Otieno,Teller,KSM-Central
+150,3,Muchiri Njenga,Loan Officer,NKU-CBD
+151,8,Akoth Adhiambo,Teller,ELD-Core
+152,13,Pendo Chege,Analyst,NBO-Central
+153,7,Okoth Anyango,Analyst,NBO-Westlands
+154,3,Opiyo Otieno,Customer Success,THK-Industrial
+155,9,Nyambura Ogola,Analyst,NBO-Westlands
+156,8,Baraka Ndeti,Customer Success,ELD-Core
+157,2,Njeri Mutugi,Customer Success,MSA-Nyali
+158,15,Fatuma Kariuki,Teller,NBO-Westlands
+159,12,Chebet Otieno,Teller,THK-Industrial
+160,6,Mwikali Kioko,Teller,MSA-Nyali
+161,10,Asha Kibet,Loan Officer,ELD-Core
+162,14,Chebet Omondi,Customer Success,THK-Industrial
+163,13,Njenga Kivuti,Customer Success,NBO-Central
+164,13,Wambui Gachanja,Customer Success,NBO-Central
+165,11,Jepchirchir Kariuki,Loan Officer,NBO-Central
+166,7,Halima Gachanja,Loan Officer,KSM-Central
+167,10,Otieno Njenga,Loan Officer,NBO-Upperhill
+168,8,Mwikali Anyango,Analyst,NKU-CBD
+169,2,Awino Mutugi,Teller,MSA-Nyali
+170,4,Chepngetich Kivuti,Teller,NBO-Central
+171,13,Kipchoge Musyoka,Customer Success,KSM-Central
+172,12,Mutheu Okoth,Loan Officer,NKU-CBD
+173,7,Mutua Mutugi,Teller,ELD-Core
+174,7,Jepchirchir Musembi,Analyst,MSA-Nyali
+175,6,Kilonzo Mbithi,Analyst,KSM-Central
+176,4,Mutheu Makena,Analyst,KTL-Branch
+177,12,Adhiambo Mutai,Customer Success,NBO-Upperhill
+178,9,Kivuva Mathenge,Customer Success,NBO-Upperhill
+179,5,Juma Okoth,Loan Officer,NBO-Westlands
+180,13,Wanza Mutinda,Customer Success,KSM-Central
+181,8,Nthenya Muli,Customer Success,MSA-Nyali
+182,2,Wambui Ogola,Analyst,NBO-Central
+183,2,Owour Mbithi,Analyst,ELD-Core
+184,11,Kivuva Muchiri,Analyst,KTL-Branch
+185,2,Adhiambo Musembi,Teller,KTL-Branch
+186,12,Nthenya Oloo,Loan Officer,KSM-Central
+187,7,Adhiambo Mutinda,Teller,KSM-Central
+188,9,Cherono Wambua,Customer Success,THK-Industrial
+189,10,Kiplagat Mathenge,Customer Success,NKU-CBD
+190,9,Jepkosgei Kaloki,Customer Success,NBO-Upperhill
+191,6,Njoroge Kimani,Customer Success,NBO-Upperhill
+192,4,Abdul Otieno,Loan Officer,NBO-Westlands
+193,13,Wairimu Mutiso,Teller,KSM-Central
+194,3,Muli Kyalo,Loan Officer,ELD-Core
+195,11,Sadaka Oloo,Customer Success,ELD-Core
+196,13,Fatuma Korir,Customer Success,THK-Industrial
+197,13,Jepkosgei Adhiambo,Analyst,NBO-Upperhill
+198,1,Zainab Kimani,Teller,KTL-Branch
+199,13,Musyoka Kilonzo,Analyst,KTL-Branch
+200,15,Abdul Oloo,Customer Success,NBO-Central

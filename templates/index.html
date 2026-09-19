@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrustScoreAI - Executive & Supervisor Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { color: #003366; border-bottom: 2px solid #003366; padding-bottom: 10px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; }
+        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #003366; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; }
+        button:hover { background-color: #002244; }
+        #result-box { margin-top: 25px; padding: 20px; background: #e9f5ff; border-left: 5px solid #003366; border-radius: 4px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>TrustScoreAI: Live Performance Evaluation Portal</h2>
+    <p>Simulate an employee performance review and evaluate professional reliability using the Random Forest and NLP pipeline.</p>
+    
+    <div class="form-group">
+        <label for="emp_code">Employee Code:</label>
+        <input type="text" id="emp_code" value="EMP_0101">
+    </div>
+
+    <div class="form-group">
+        <label for="loan_vol">Loan Volumes Processed:</label>
+        <input type="number" id="loan_vol" value="95">
+    </div>
+
+    <div class="form-group">
+        <label for="trans_acc">Transaction Accuracy (%):</label>
+        <input type="number" step="0.1" id="trans_acc" value="98.5">
+    </div>
+
+    <div class="form-group">
+        <label for="work_comp">Workplan Completion Rate (%):</label>
+        <input type="number" step="0.1" id="work_comp" value="90.0">
+    </div>
+
+    <div class="form-group">
+        <label for="error_freq">Error Frequencies (Count):</label>
+        <input type="number" id="error_freq" value="1">
+    </div>
+
+    <div class="form-group">
+        <label for="feedback">Supervisor Qualitative Feedback Notes:</label>
+        <textarea id="feedback" rows="3">Consistently meets targets and handles client queries with high integrity.</textarea>
+    </div>
+
+    <button onclick="submitAppraisal()">Evaluate Performance</button>
+
+    <div id="result-box">
+        <h3>Evaluation Output</h3>
+        <p><strong>Prediction Classification:</strong> <span id="res-status"></span></p>
+        <p><strong>Model Confidence:</strong> <span id="res-conf"></span>%</p>
+        <p><strong>Database Status:</strong> <span id="res-msg"></span></p>
+    </div>
+</div>
+
+<script>
+async function submitAppraisal() {
+    const payload = {
+        employee_code: document.getElementById('emp_code').value,
+        loan_volumes: parseInt(document.getElementById('loan_vol').value),
+        transaction_accuracy: parseFloat(document.getElementById('trans_acc').value),
+        workplan_completion: parseFloat(document.getElementById('work_comp').value),
+        error_frequencies: parseInt(document.getElementById('error_freq').value),
+        feedback_text: document.getElementById('feedback').value
+    };
+
+    try {
+        let response = await fetch('http://127.0.0.1:8000/evaluate-employee/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        let data = await response.json();
+        
+        if (response.ok) {
+            document.getElementById('res-status').innerText = data.evaluation_result;
+            document.getElementById('res-conf').innerText = data.confidence_score;
+            document.getElementById('res-msg').innerText = data.message;
+            document.getElementById('result-box').style.display = 'block';
+        } else {
+            alert("Error: " + JSON.stringify(data));
+        }
+    } catch (error) {
+        alert("Failed to connect to FastAPI backend server: " + error);
+    }
+}
+</script>
+
+</body>
+</html>

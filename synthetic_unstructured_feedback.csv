@@ -1,0 +1,598 @@
+feedback_id,employee_id,supervisor_id,author_employee_id,narrative_text,sentiment_polarity_value
+1,1,,111.0,Fosters strong inter-branch collaboration.,0.57
+2,1,8.0,,Resistant to adopting updated compliance systems.,-0.39
+3,1,,29.0,Resistant to adopting updated compliance systems.,-0.33
+4,2,,193.0,Honest and accountable in error reporting.,0.57
+5,2,,127.0,Minor KYC compliance oversight noted.,-0.85
+6,2,15.0,,Handles branch workflow shifts smoothly.,0.76
+7,3,7.0,,Struggles with meeting volume deadlines.,-0.64
+8,3,,52.0,Consistently acts with high integrity and transparency.,0.68
+9,3,,117.0,Adapts quickly to new banking software rollouts.,0.5
+10,3,,193.0,Struggles with meeting volume deadlines.,-0.72
+11,4,13.0,,Adapts quickly to new banking software rollouts.,0.88
+12,4,,22.0,Excellent teamwork during month-end reconciliation.,0.61
+13,4,13.0,,Fails to verify documentation thoroughly.,-0.88
+14,5,11.0,,Honest and accountable in error reporting.,0.82
+15,5,,17.0,Excellent teamwork during month-end reconciliation.,0.77
+16,6,,56.0,Adapts quickly to new banking software rollouts.,0.61
+17,6,12.0,,Upholds ethical standards during audit checks.,0.82
+18,7,3.0,,Actively assists peers with cross-departmental tasks.,0.78
+19,7,3.0,,Excellent teamwork during month-end reconciliation.,0.92
+20,7,3.0,,Honest and accountable in error reporting.,0.43
+21,7,3.0,,Excellent teamwork during month-end reconciliation.,0.4
+22,8,3.0,,Consistently exceeds monthly volume targets.,0.73
+23,8,3.0,,High output speed on ledger entries.,0.65
+24,8,3.0,,Resistant to adopting updated compliance systems.,-0.44
+25,8,,165.0,Needs improvement in peer collaboration.,-0.46
+26,9,5.0,,Consistently acts with high integrity and transparency.,0.73
+27,9,5.0,,Adapts quickly to new banking software rollouts.,0.59
+28,10,,189.0,Upholds ethical standards during audit checks.,0.73
+29,10,,135.0,Fails to pivot during operational shifts.,-0.55
+30,10,,129.0,Fails to verify documentation thoroughly.,-0.32
+31,11,15.0,,Behind on quarterly workplan milestones.,-0.23
+32,11,15.0,,Adapts quickly to new banking software rollouts.,0.53
+33,11,,194.0,Minor KYC compliance oversight noted.,-0.6
+34,11,,43.0,Actively assists peers with cross-departmental tasks.,0.82
+35,12,13.0,,Questionable accountability under pressure.,-0.81
+36,12,,138.0,Exhibits inconsistent ethical transparency.,-0.34
+37,13,,149.0,Adapts quickly to new banking software rollouts.,0.75
+38,13,2.0,,Honest and accountable in error reporting.,0.75
+39,13,2.0,,Struggles with meeting volume deadlines.,-0.72
+40,14,,30.0,Zero compliance audit findings.,0.81
+41,14,,192.0,Demonstrates exemplary regulatory compliance.,0.6
+42,14,12.0,,Honest and accountable in error reporting.,0.81
+43,15,,153.0,Adapts quickly to new banking software rollouts.,0.87
+44,15,9.0,,Works in isolation and resists group efforts.,-0.34
+45,15,,135.0,Highly resilient during system updates.,0.52
+46,16,,139.0,Upholds ethical standards during audit checks.,0.48
+47,16,15.0,,Behind on quarterly workplan milestones.,-0.42
+48,16,,155.0,Excellent teamwork during month-end reconciliation.,0.81
+49,17,,155.0,Actively assists peers with cross-departmental tasks.,0.68
+50,17,,72.0,Handles branch workflow shifts smoothly.,0.75
+51,17,,128.0,Fosters strong inter-branch collaboration.,0.93
+52,17,,87.0,Completes workplans well ahead of schedule.,0.52
+53,18,,181.0,Minor KYC compliance oversight noted.,-0.3
+54,18,2.0,,Fosters strong inter-branch collaboration.,0.9
+55,18,,6.0,Resistant to adopting updated compliance systems.,-0.66
+56,18,2.0,,Actively assists peers with cross-departmental tasks.,0.62
+57,19,8.0,,Reluctant to share operational workloads.,-0.25
+58,19,8.0,,Minor KYC compliance oversight noted.,-0.67
+59,19,,183.0,Works in isolation and resists group efforts.,-0.44
+60,19,,115.0,Upholds ethical standards during audit checks.,0.89
+61,20,,193.0,Low transaction processing speed.,-0.44
+62,20,13.0,,Adapts quickly to new banking software rollouts.,0.77
+63,21,7.0,,Questionable accountability under pressure.,-0.31
+64,21,,26.0,Actively assists peers with cross-departmental tasks.,0.5
+65,22,,133.0,Reluctant to share operational workloads.,-0.6
+66,22,,162.0,Consistently acts with high integrity and transparency.,0.42
+67,23,3.0,,Upholds ethical standards during audit checks.,0.78
+68,23,,169.0,Honest and accountable in error reporting.,0.95
+69,24,,120.0,Attempts to conceal minor ledger errors.,-0.46
+70,24,11.0,,Excellent teamwork during month-end reconciliation.,0.47
+71,24,,33.0,Questionable accountability under pressure.,-0.43
+72,24,,6.0,Highly resilient during system updates.,0.94
+73,25,8.0,,Frequent audit exceptions flagged.,-0.77
+74,25,8.0,,Upholds ethical standards during audit checks.,0.71
+75,25,,85.0,Frequent audit exceptions flagged.,-0.26
+76,26,,105.0,Zero compliance audit findings.,0.71
+77,26,5.0,,Demonstrates exemplary regulatory compliance.,0.86
+78,26,,194.0,Completes workplans well ahead of schedule.,0.89
+79,26,,155.0,Consistently exceeds monthly volume targets.,0.71
+80,27,,11.0,Completes workplans well ahead of schedule.,0.51
+81,27,,23.0,Resistant to adopting updated compliance systems.,-0.3
+82,27,,22.0,Demonstrates exemplary regulatory compliance.,0.56
+83,28,,110.0,Strictly adheres to KYC protocols.,0.57
+84,28,8.0,,Handles branch workflow shifts smoothly.,0.48
+85,28,8.0,,Fosters strong inter-branch collaboration.,0.9
+86,28,8.0,,Highly resilient during system updates.,0.68
+87,29,,171.0,Minor KYC compliance oversight noted.,-0.87
+88,29,,78.0,Struggles with meeting volume deadlines.,-0.48
+89,29,,153.0,Actively assists peers with cross-departmental tasks.,0.47
+90,29,10.0,,Frequent audit exceptions flagged.,-0.72
+91,30,,104.0,Consistently acts with high integrity and transparency.,0.92
+92,30,10.0,,Low transaction processing speed.,-0.76
+93,30,10.0,,Low transaction processing speed.,-0.64
+94,31,,109.0,Behind on quarterly workplan milestones.,-0.21
+95,31,11.0,,Consistently acts with high integrity and transparency.,0.93
+96,31,,20.0,Excellent teamwork during month-end reconciliation.,0.69
+97,31,11.0,,Fails to verify documentation thoroughly.,-0.45
+98,32,6.0,,Excellent teamwork during month-end reconciliation.,0.88
+99,32,,72.0,Strictly adheres to KYC protocols.,0.61
+100,32,,98.0,Strictly adheres to KYC protocols.,0.5
+101,33,4.0,,Handles branch workflow shifts smoothly.,0.45
+102,33,4.0,,Handles branch workflow shifts smoothly.,0.7
+103,33,,13.0,High output speed on ledger entries.,0.92
+104,33,4.0,,High output speed on ledger entries.,0.84
+105,34,5.0,,Honest and accountable in error reporting.,0.47
+106,34,,177.0,Fails to pivot during operational shifts.,-0.79
+107,34,,38.0,Honest and accountable in error reporting.,0.8
+108,34,,187.0,Fosters strong inter-branch collaboration.,0.83
+109,35,2.0,,Consistently acts with high integrity and transparency.,0.64
+110,35,2.0,,Honest and accountable in error reporting.,0.56
+111,35,2.0,,Highly resilient during system updates.,0.88
+112,35,,80.0,Fails to verify documentation thoroughly.,-0.62
+113,36,,164.0,Strictly adheres to KYC protocols.,0.8
+114,36,,44.0,Adapts quickly to new banking software rollouts.,0.45
+115,36,10.0,,Handles branch workflow shifts smoothly.,0.84
+116,37,15.0,,Highly resilient during system updates.,0.48
+117,37,15.0,,Highly resilient during system updates.,0.95
+118,38,,105.0,Demonstrates exemplary regulatory compliance.,0.5
+119,38,,184.0,Questionable accountability under pressure.,-0.53
+120,38,13.0,,Completes workplans well ahead of schedule.,0.76
+121,38,,157.0,Exhibits inconsistent ethical transparency.,-0.43
+122,39,,46.0,Zero compliance audit findings.,0.86
+123,39,1.0,,Zero compliance audit findings.,0.67
+124,39,,97.0,Zero compliance audit findings.,0.9
+125,39,,140.0,Zero compliance audit findings.,0.56
+126,40,9.0,,Struggles with meeting volume deadlines.,-0.38
+127,40,9.0,,Behind on quarterly workplan milestones.,-0.25
+128,40,,120.0,Handles branch workflow shifts smoothly.,0.43
+129,41,15.0,,Actively assists peers with cross-departmental tasks.,0.59
+130,41,,91.0,Behind on quarterly workplan milestones.,-0.65
+131,42,12.0,,Consistently acts with high integrity and transparency.,0.45
+132,42,,107.0,Fails to verify documentation thoroughly.,-0.9
+133,43,12.0,,Behind on quarterly workplan milestones.,-0.62
+134,43,12.0,,Actively assists peers with cross-departmental tasks.,0.89
+135,43,12.0,,Fails to verify documentation thoroughly.,-0.44
+136,43,12.0,,Struggles with meeting volume deadlines.,-0.65
+137,44,,93.0,Struggles with meeting volume deadlines.,-0.77
+138,44,,35.0,Upholds ethical standards during audit checks.,0.81
+139,44,,42.0,Behind on quarterly workplan milestones.,-0.23
+140,45,,109.0,Honest and accountable in error reporting.,0.67
+141,45,,85.0,Honest and accountable in error reporting.,0.8
+142,45,14.0,,Consistently exceeds monthly volume targets.,0.93
+143,46,,40.0,Reluctant to share operational workloads.,-0.89
+144,46,,14.0,Works in isolation and resists group efforts.,-0.22
+145,47,,113.0,Attempts to conceal minor ledger errors.,-0.7
+146,47,,196.0,Exhibits inconsistent ethical transparency.,-0.47
+147,47,,65.0,Excellent teamwork during month-end reconciliation.,0.88
+148,47,,172.0,Exhibits inconsistent ethical transparency.,-0.57
+149,48,,50.0,Highly resilient during system updates.,0.75
+150,48,,31.0,High output speed on ledger entries.,0.42
+151,49,,111.0,Frequent audit exceptions flagged.,-0.76
+152,49,,99.0,Honest and accountable in error reporting.,0.57
+153,50,,58.0,Actively assists peers with cross-departmental tasks.,0.66
+154,50,15.0,,Fails to verify documentation thoroughly.,-0.82
+155,50,15.0,,Actively assists peers with cross-departmental tasks.,0.79
+156,50,,83.0,Minor KYC compliance oversight noted.,-0.87
+157,51,7.0,,High output speed on ledger entries.,0.66
+158,51,,112.0,High output speed on ledger entries.,0.92
+159,52,11.0,,Excellent teamwork during month-end reconciliation.,0.45
+160,52,,176.0,Struggles to adapt to procedural changes.,-0.67
+161,52,11.0,,Fails to pivot during operational shifts.,-0.48
+162,53,14.0,,Completes workplans well ahead of schedule.,0.61
+163,53,,34.0,Adapts quickly to new banking software rollouts.,0.42
+164,54,,50.0,Consistently acts with high integrity and transparency.,0.44
+165,54,8.0,,Reluctant to share operational workloads.,-0.57
+166,54,,138.0,Struggles with meeting volume deadlines.,-0.81
+167,54,8.0,,Fails to pivot during operational shifts.,-0.72
+168,55,2.0,,Actively assists peers with cross-departmental tasks.,0.75
+169,55,,113.0,Zero compliance audit findings.,0.63
+170,55,,43.0,Handles branch workflow shifts smoothly.,0.78
+171,55,,76.0,Demonstrates exemplary regulatory compliance.,0.43
+172,56,,191.0,Attempts to conceal minor ledger errors.,-0.42
+173,56,,43.0,Questionable accountability under pressure.,-0.63
+174,56,13.0,,Questionable accountability under pressure.,-0.71
+175,56,,1.0,Low transaction processing speed.,-0.75
+176,57,,133.0,Questionable accountability under pressure.,-0.4
+177,57,14.0,,Excellent teamwork during month-end reconciliation.,0.56
+178,57,14.0,,Adapts quickly to new banking software rollouts.,0.49
+179,57,,138.0,Behind on quarterly workplan milestones.,-0.87
+180,58,7.0,,High output speed on ledger entries.,0.88
+181,58,,166.0,Consistently exceeds monthly volume targets.,0.69
+182,59,13.0,,Handles branch workflow shifts smoothly.,0.58
+183,59,13.0,,Behind on quarterly workplan milestones.,-0.27
+184,60,3.0,,Frequent audit exceptions flagged.,-0.33
+185,60,3.0,,Low transaction processing speed.,-0.22
+186,60,,67.0,Frequent audit exceptions flagged.,-0.44
+187,61,,186.0,Questionable accountability under pressure.,-0.72
+188,61,,115.0,Behind on quarterly workplan milestones.,-0.71
+189,61,12.0,,Behind on quarterly workplan milestones.,-0.74
+190,61,12.0,,Excellent teamwork during month-end reconciliation.,0.9
+191,62,4.0,,High output speed on ledger entries.,0.5
+192,62,,49.0,Handles branch workflow shifts smoothly.,0.92
+193,63,6.0,,Zero compliance audit findings.,0.49
+194,63,,102.0,Struggles to adapt to procedural changes.,-0.85
+195,64,3.0,,Behind on quarterly workplan milestones.,-0.26
+196,64,3.0,,Frequent audit exceptions flagged.,-0.53
+197,65,,156.0,Zero compliance audit findings.,0.61
+198,65,,4.0,Strictly adheres to KYC protocols.,0.54
+199,65,,70.0,Completes workplans well ahead of schedule.,0.73
+200,65,,28.0,Highly resilient during system updates.,0.85
+201,66,,52.0,High output speed on ledger entries.,0.82
+202,66,1.0,,High output speed on ledger entries.,0.58
+203,66,,63.0,Demonstrates exemplary regulatory compliance.,0.78
+204,66,,6.0,Strictly adheres to KYC protocols.,0.7
+205,67,5.0,,Struggles with meeting volume deadlines.,-0.26
+206,67,,59.0,Attempts to conceal minor ledger errors.,-0.8
+207,68,3.0,,Completes workplans well ahead of schedule.,0.61
+208,68,,127.0,Consistently exceeds monthly volume targets.,0.52
+209,68,3.0,,Excellent teamwork during month-end reconciliation.,0.74
+210,68,,94.0,Strictly adheres to KYC protocols.,0.73
+211,69,7.0,,Handles branch workflow shifts smoothly.,0.73
+212,69,7.0,,Completes workplans well ahead of schedule.,0.78
+213,70,4.0,,Excellent teamwork during month-end reconciliation.,0.55
+214,70,4.0,,Actively assists peers with cross-departmental tasks.,0.85
+215,70,,1.0,Completes workplans well ahead of schedule.,0.48
+216,70,,101.0,Questionable accountability under pressure.,-0.34
+217,71,,29.0,Handles branch workflow shifts smoothly.,0.93
+218,71,14.0,,Struggles with meeting volume deadlines.,-0.67
+219,71,,47.0,Upholds ethical standards during audit checks.,0.58
+220,72,11.0,,Honest and accountable in error reporting.,0.84
+221,72,11.0,,Completes workplans well ahead of schedule.,0.91
+222,72,11.0,,Honest and accountable in error reporting.,0.67
+223,73,10.0,,Highly resilient during system updates.,0.85
+224,73,10.0,,Frequent audit exceptions flagged.,-0.4
+225,73,,181.0,Minor KYC compliance oversight noted.,-0.65
+226,73,,5.0,Fosters strong inter-branch collaboration.,0.66
+227,74,,16.0,Actively assists peers with cross-departmental tasks.,0.87
+228,74,,77.0,Consistently acts with high integrity and transparency.,0.86
+229,75,2.0,,Consistently exceeds monthly volume targets.,0.86
+230,75,,193.0,Consistently exceeds monthly volume targets.,0.93
+231,75,,98.0,Demonstrates exemplary regulatory compliance.,0.93
+232,75,2.0,,Demonstrates exemplary regulatory compliance.,0.46
+233,76,,124.0,Adapts quickly to new banking software rollouts.,0.42
+234,76,12.0,,Struggles with meeting volume deadlines.,-0.73
+235,76,,147.0,Consistently acts with high integrity and transparency.,0.82
+236,76,12.0,,Low transaction processing speed.,-0.53
+237,77,9.0,,Honest and accountable in error reporting.,0.59
+238,77,,74.0,Minor KYC compliance oversight noted.,-0.86
+239,77,,156.0,Low transaction processing speed.,-0.79
+240,78,14.0,,Honest and accountable in error reporting.,0.79
+241,78,14.0,,Highly resilient during system updates.,0.57
+242,78,,110.0,Behind on quarterly workplan milestones.,-0.22
+243,79,3.0,,Completes workplans well ahead of schedule.,0.52
+244,79,,57.0,Exhibits inconsistent ethical transparency.,-0.32
+245,79,,179.0,Attempts to conceal minor ledger errors.,-0.68
+246,79,3.0,,Exhibits inconsistent ethical transparency.,-0.86
+247,80,14.0,,High output speed on ledger entries.,0.46
+248,80,,94.0,Handles branch workflow shifts smoothly.,0.42
+249,80,14.0,,Completes workplans well ahead of schedule.,0.46
+250,81,,195.0,Excellent teamwork during month-end reconciliation.,0.7
+251,81,,62.0,Excellent teamwork during month-end reconciliation.,0.94
+252,82,,146.0,Consistently acts with high integrity and transparency.,0.43
+253,82,,80.0,Fails to verify documentation thoroughly.,-0.37
+254,82,3.0,,Struggles to adapt to procedural changes.,-0.68
+255,82,3.0,,Excellent teamwork during month-end reconciliation.,0.79
+256,83,12.0,,Honest and accountable in error reporting.,0.68
+257,83,,7.0,Handles branch workflow shifts smoothly.,0.66
+258,84,12.0,,Struggles with meeting volume deadlines.,-0.42
+259,84,,162.0,Frequent audit exceptions flagged.,-0.74
+260,85,,198.0,Low transaction processing speed.,-0.54
+261,85,2.0,,Consistently acts with high integrity and transparency.,0.59
+262,86,9.0,,Frequent audit exceptions flagged.,-0.36
+263,86,9.0,,Struggles with meeting volume deadlines.,-0.2
+264,86,,40.0,Fails to pivot during operational shifts.,-0.2
+265,87,,37.0,Fosters strong inter-branch collaboration.,0.88
+266,87,,129.0,Fails to verify documentation thoroughly.,-0.68
+267,88,,18.0,Fosters strong inter-branch collaboration.,0.6
+268,88,,19.0,Completes workplans well ahead of schedule.,0.82
+269,88,2.0,,Attempts to conceal minor ledger errors.,-0.37
+270,89,,32.0,Handles branch workflow shifts smoothly.,0.42
+271,89,12.0,,Upholds ethical standards during audit checks.,0.87
+272,89,,114.0,Fosters strong inter-branch collaboration.,0.86
+273,90,6.0,,Frequent audit exceptions flagged.,-0.61
+274,90,6.0,,Fosters strong inter-branch collaboration.,0.42
+275,90,,191.0,Low transaction processing speed.,-0.33
+276,91,,27.0,Actively assists peers with cross-departmental tasks.,0.49
+277,91,1.0,,Minor KYC compliance oversight noted.,-0.63
+278,92,,90.0,Upholds ethical standards during audit checks.,0.75
+279,92,5.0,,Minor KYC compliance oversight noted.,-0.77
+280,92,,103.0,Consistently acts with high integrity and transparency.,0.62
+281,93,14.0,,Reluctant to share operational workloads.,-0.56
+282,93,14.0,,Fails to verify documentation thoroughly.,-0.58
+283,94,,122.0,Low transaction processing speed.,-0.75
+284,94,,155.0,Consistently acts with high integrity and transparency.,0.92
+285,94,11.0,,Upholds ethical standards during audit checks.,0.52
+286,94,,6.0,Upholds ethical standards during audit checks.,0.54
+287,95,,37.0,Fails to verify documentation thoroughly.,-0.62
+288,95,2.0,,Attempts to conceal minor ledger errors.,-0.53
+289,96,5.0,,Struggles with meeting volume deadlines.,-0.84
+290,96,5.0,,Actively assists peers with cross-departmental tasks.,0.49
+291,96,5.0,,Upholds ethical standards during audit checks.,0.66
+292,96,,180.0,Upholds ethical standards during audit checks.,0.9
+293,97,4.0,,Frequent audit exceptions flagged.,-0.35
+294,97,,20.0,Fails to pivot during operational shifts.,-0.8
+295,97,4.0,,Minor KYC compliance oversight noted.,-0.27
+296,97,,129.0,Excellent teamwork during month-end reconciliation.,0.84
+297,98,2.0,,Reluctant to share operational workloads.,-0.39
+298,98,2.0,,Completes workplans well ahead of schedule.,0.65
+299,98,,10.0,Completes workplans well ahead of schedule.,0.94
+300,98,2.0,,Adapts quickly to new banking software rollouts.,0.73
+301,99,4.0,,Struggles with meeting volume deadlines.,-0.22
+302,99,,95.0,Excellent teamwork during month-end reconciliation.,0.57
+303,100,,181.0,Honest and accountable in error reporting.,0.95
+304,100,13.0,,Upholds ethical standards during audit checks.,0.59
+305,100,13.0,,Handles branch workflow shifts smoothly.,0.46
+306,101,14.0,,Upholds ethical standards during audit checks.,0.5
+307,101,,140.0,Upholds ethical standards during audit checks.,0.56
+308,102,2.0,,Fosters strong inter-branch collaboration.,0.74
+309,102,,23.0,Strictly adheres to KYC protocols.,0.76
+310,102,2.0,,Zero compliance audit findings.,0.81
+311,102,,164.0,Questionable accountability under pressure.,-0.49
+312,103,2.0,,Consistently acts with high integrity and transparency.,0.52
+313,103,2.0,,Handles branch workflow shifts smoothly.,0.46
+314,104,,90.0,Upholds ethical standards during audit checks.,0.9
+315,104,4.0,,Zero compliance audit findings.,0.83
+316,104,4.0,,Fosters strong inter-branch collaboration.,0.55
+317,105,,2.0,Exhibits inconsistent ethical transparency.,-0.89
+318,105,,96.0,Highly resilient during system updates.,0.73
+319,105,9.0,,Completes workplans well ahead of schedule.,0.95
+320,106,8.0,,Low transaction processing speed.,-0.45
+321,106,,149.0,Consistently acts with high integrity and transparency.,0.92
+322,107,,104.0,Fosters strong inter-branch collaboration.,0.49
+323,107,,26.0,Low transaction processing speed.,-0.82
+324,107,7.0,,Fosters strong inter-branch collaboration.,0.49
+325,108,,24.0,Minor KYC compliance oversight noted.,-0.59
+326,108,,8.0,Highly resilient during system updates.,0.7
+327,108,,148.0,Exhibits inconsistent ethical transparency.,-0.38
+328,109,1.0,,Needs improvement in peer collaboration.,-0.73
+329,109,,77.0,Low transaction processing speed.,-0.31
+330,110,4.0,,Reluctant to share operational workloads.,-0.86
+331,110,,37.0,Frequent audit exceptions flagged.,-0.21
+332,110,,29.0,Questionable accountability under pressure.,-0.81
+333,110,,73.0,Needs improvement in peer collaboration.,-0.84
+334,111,1.0,,High output speed on ledger entries.,0.46
+335,111,,106.0,Fails to verify documentation thoroughly.,-0.23
+336,111,,54.0,Attempts to conceal minor ledger errors.,-0.28
+337,112,4.0,,Struggles with meeting volume deadlines.,-0.69
+338,112,,170.0,Fails to pivot during operational shifts.,-0.48
+339,112,,31.0,Works in isolation and resists group efforts.,-0.56
+340,112,,41.0,Fails to pivot during operational shifts.,-0.72
+341,113,,157.0,Frequent audit exceptions flagged.,-0.88
+342,113,,56.0,Excellent teamwork during month-end reconciliation.,0.89
+343,114,3.0,,Struggles with meeting volume deadlines.,-0.84
+344,114,,69.0,Actively assists peers with cross-departmental tasks.,0.51
+345,115,15.0,,Highly resilient during system updates.,0.56
+346,115,15.0,,Questionable accountability under pressure.,-0.24
+347,116,8.0,,Consistently exceeds monthly volume targets.,0.78
+348,116,8.0,,Exhibits inconsistent ethical transparency.,-0.49
+349,117,14.0,,Consistently exceeds monthly volume targets.,0.92
+350,117,14.0,,Upholds ethical standards during audit checks.,0.63
+351,117,14.0,,Reluctant to share operational workloads.,-0.82
+352,117,14.0,,Consistently acts with high integrity and transparency.,0.71
+353,118,,116.0,Consistently exceeds monthly volume targets.,0.93
+354,118,1.0,,Handles branch workflow shifts smoothly.,0.56
+355,118,1.0,,Consistently acts with high integrity and transparency.,0.46
+356,119,1.0,,Behind on quarterly workplan milestones.,-0.73
+357,119,,170.0,Works in isolation and resists group efforts.,-0.8
+358,119,1.0,,Minor KYC compliance oversight noted.,-0.68
+359,120,15.0,,Behind on quarterly workplan milestones.,-0.5
+360,120,15.0,,Low transaction processing speed.,-0.85
+361,121,,136.0,Consistently exceeds monthly volume targets.,0.71
+362,121,,148.0,Questionable accountability under pressure.,-0.37
+363,121,13.0,,Excellent teamwork during month-end reconciliation.,0.51
+364,122,11.0,,Fails to verify documentation thoroughly.,-0.61
+365,122,,116.0,Low transaction processing speed.,-0.67
+366,122,11.0,,Low transaction processing speed.,-0.89
+367,123,,119.0,Excellent teamwork during month-end reconciliation.,0.86
+368,123,11.0,,Frequent audit exceptions flagged.,-0.26
+369,124,3.0,,Minor KYC compliance oversight noted.,-0.57
+370,124,3.0,,Actively assists peers with cross-departmental tasks.,0.57
+371,125,6.0,,Frequent audit exceptions flagged.,-0.36
+372,125,6.0,,Adapts quickly to new banking software rollouts.,0.62
+373,125,6.0,,Honest and accountable in error reporting.,0.93
+374,126,3.0,,Struggles to adapt to procedural changes.,-0.88
+375,126,,3.0,Struggles with meeting volume deadlines.,-0.2
+376,127,3.0,,Struggles with meeting volume deadlines.,-0.84
+377,127,3.0,,Adapts quickly to new banking software rollouts.,0.91
+378,127,,67.0,Minor KYC compliance oversight noted.,-0.87
+379,127,3.0,,Fails to verify documentation thoroughly.,-0.67
+380,128,15.0,,Reluctant to share operational workloads.,-0.78
+381,128,,151.0,Consistently acts with high integrity and transparency.,0.47
+382,128,,194.0,Resistant to adopting updated compliance systems.,-0.45
+383,128,,135.0,Struggles to adapt to procedural changes.,-0.5
+384,129,5.0,,Actively assists peers with cross-departmental tasks.,0.82
+385,129,5.0,,Struggles with meeting volume deadlines.,-0.72
+386,129,5.0,,Fails to verify documentation thoroughly.,-0.51
+387,129,,170.0,Low transaction processing speed.,-0.85
+388,130,,55.0,Frequent audit exceptions flagged.,-0.75
+389,130,14.0,,Behind on quarterly workplan milestones.,-0.83
+390,130,,153.0,Fails to pivot during operational shifts.,-0.3
+391,131,5.0,,Low transaction processing speed.,-0.83
+392,131,,57.0,Actively assists peers with cross-departmental tasks.,0.94
+393,131,,103.0,Struggles with meeting volume deadlines.,-0.71
+394,132,12.0,,Fails to pivot during operational shifts.,-0.83
+395,132,12.0,,Frequent audit exceptions flagged.,-0.82
+396,133,4.0,,High output speed on ledger entries.,0.42
+397,133,4.0,,Actively assists peers with cross-departmental tasks.,0.47
+398,134,,91.0,Consistently acts with high integrity and transparency.,0.48
+399,134,1.0,,Resistant to adopting updated compliance systems.,-0.86
+400,134,1.0,,Excellent teamwork during month-end reconciliation.,0.43
+401,134,1.0,,Consistently acts with high integrity and transparency.,0.56
+402,135,,154.0,Fosters strong inter-branch collaboration.,0.73
+403,135,7.0,,Demonstrates exemplary regulatory compliance.,0.43
+404,135,,29.0,Consistently exceeds monthly volume targets.,0.43
+405,136,5.0,,Consistently exceeds monthly volume targets.,0.69
+406,136,5.0,,Completes workplans well ahead of schedule.,0.78
+407,137,13.0,,Consistently acts with high integrity and transparency.,0.52
+408,137,13.0,,Consistently acts with high integrity and transparency.,0.49
+409,137,,89.0,Fosters strong inter-branch collaboration.,0.73
+410,138,,25.0,Low transaction processing speed.,-0.26
+411,138,1.0,,Fosters strong inter-branch collaboration.,0.53
+412,138,1.0,,Minor KYC compliance oversight noted.,-0.77
+413,138,1.0,,Struggles with meeting volume deadlines.,-0.43
+414,139,7.0,,Strictly adheres to KYC protocols.,0.94
+415,139,,44.0,Demonstrates exemplary regulatory compliance.,0.59
+416,139,7.0,,Struggles to adapt to procedural changes.,-0.56
+417,140,4.0,,Minor KYC compliance oversight noted.,-0.33
+418,140,4.0,,Low transaction processing speed.,-0.55
+419,141,,26.0,Fosters strong inter-branch collaboration.,0.58
+420,141,1.0,,Fosters strong inter-branch collaboration.,0.54
+421,142,3.0,,Works in isolation and resists group efforts.,-0.89
+422,142,3.0,,Reluctant to share operational workloads.,-0.67
+423,142,3.0,,Fails to verify documentation thoroughly.,-0.42
+424,143,,38.0,Consistently acts with high integrity and transparency.,0.76
+425,143,,92.0,Consistently acts with high integrity and transparency.,0.53
+426,143,11.0,,Excellent teamwork during month-end reconciliation.,0.81
+427,143,,97.0,Fails to verify documentation thoroughly.,-0.29
+428,144,8.0,,Adapts quickly to new banking software rollouts.,0.55
+429,144,8.0,,Actively assists peers with cross-departmental tasks.,0.72
+430,144,8.0,,Excellent teamwork during month-end reconciliation.,0.42
+431,144,8.0,,Adapts quickly to new banking software rollouts.,0.64
+432,145,7.0,,Excellent teamwork during month-end reconciliation.,0.93
+433,145,7.0,,Behind on quarterly workplan milestones.,-0.42
+434,145,7.0,,Fails to pivot during operational shifts.,-0.43
+435,146,11.0,,Excellent teamwork during month-end reconciliation.,0.84
+436,146,,117.0,Minor KYC compliance oversight noted.,-0.7
+437,146,,14.0,Upholds ethical standards during audit checks.,0.4
+438,147,,13.0,Excellent teamwork during month-end reconciliation.,0.59
+439,147,14.0,,Fails to pivot during operational shifts.,-0.23
+440,147,,23.0,Excellent teamwork during month-end reconciliation.,0.95
+441,148,1.0,,Adapts quickly to new banking software rollouts.,0.56
+442,148,,122.0,Excellent teamwork during month-end reconciliation.,0.85
+443,149,11.0,,Upholds ethical standards during audit checks.,0.93
+444,149,,67.0,Fosters strong inter-branch collaboration.,0.57
+445,149,11.0,,Fosters strong inter-branch collaboration.,0.48
+446,149,,65.0,Behind on quarterly workplan milestones.,-0.51
+447,150,3.0,,Fails to verify documentation thoroughly.,-0.5
+448,150,3.0,,Adapts quickly to new banking software rollouts.,0.61
+449,150,3.0,,Minor KYC compliance oversight noted.,-0.53
+450,151,8.0,,Fails to pivot during operational shifts.,-0.4
+451,151,8.0,,Actively assists peers with cross-departmental tasks.,0.66
+452,151,8.0,,Consistently acts with high integrity and transparency.,0.9
+453,151,,198.0,Consistently acts with high integrity and transparency.,0.82
+454,152,13.0,,Low transaction processing speed.,-0.54
+455,152,,160.0,Highly resilient during system updates.,0.88
+456,152,,195.0,Exhibits inconsistent ethical transparency.,-0.62
+457,152,,119.0,Handles branch workflow shifts smoothly.,0.86
+458,153,,70.0,Zero compliance audit findings.,0.73
+459,153,7.0,,Resistant to adopting updated compliance systems.,-0.42
+460,154,,191.0,Fails to pivot during operational shifts.,-0.54
+461,154,,181.0,Completes workplans well ahead of schedule.,0.48
+462,155,9.0,,Consistently exceeds monthly volume targets.,0.89
+463,155,,78.0,Fosters strong inter-branch collaboration.,0.94
+464,155,,125.0,Highly resilient during system updates.,0.51
+465,155,,1.0,Completes workplans well ahead of schedule.,0.88
+466,156,,64.0,Struggles with meeting volume deadlines.,-0.57
+467,156,8.0,,Exhibits inconsistent ethical transparency.,-0.25
+468,156,8.0,,Attempts to conceal minor ledger errors.,-0.21
+469,156,,140.0,Reluctant to share operational workloads.,-0.42
+470,157,,111.0,Completes workplans well ahead of schedule.,0.41
+471,157,,192.0,Consistently exceeds monthly volume targets.,0.68
+472,157,,122.0,Upholds ethical standards during audit checks.,0.56
+473,157,,151.0,Upholds ethical standards during audit checks.,0.77
+474,158,15.0,,Fails to verify documentation thoroughly.,-0.61
+475,158,15.0,,Struggles with meeting volume deadlines.,-0.7
+476,158,,145.0,Exhibits inconsistent ethical transparency.,-0.49
+477,159,12.0,,Fails to verify documentation thoroughly.,-0.23
+478,159,12.0,,Upholds ethical standards during audit checks.,0.41
+479,160,6.0,,Highly resilient during system updates.,0.52
+480,160,6.0,,Adapts quickly to new banking software rollouts.,0.5
+481,161,10.0,,Handles branch workflow shifts smoothly.,0.65
+482,161,,72.0,Actively assists peers with cross-departmental tasks.,0.44
+483,162,14.0,,Attempts to conceal minor ledger errors.,-0.48
+484,162,,148.0,Fails to pivot during operational shifts.,-0.53
+485,162,,180.0,Fosters strong inter-branch collaboration.,0.93
+486,162,14.0,,Fails to pivot during operational shifts.,-0.32
+487,163,,8.0,Consistently exceeds monthly volume targets.,0.45
+488,163,,128.0,Upholds ethical standards during audit checks.,0.82
+489,164,,27.0,Low transaction processing speed.,-0.28
+490,164,13.0,,Minor KYC compliance oversight noted.,-0.47
+491,164,,10.0,Fails to verify documentation thoroughly.,-0.37
+492,164,,45.0,Excellent teamwork during month-end reconciliation.,0.78
+493,165,,164.0,Highly resilient during system updates.,0.51
+494,165,11.0,,Upholds ethical standards during audit checks.,0.77
+495,165,,52.0,Behind on quarterly workplan milestones.,-0.33
+496,166,,150.0,Frequent audit exceptions flagged.,-0.23
+497,166,,53.0,Minor KYC compliance oversight noted.,-0.27
+498,167,10.0,,Highly resilient during system updates.,0.88
+499,167,10.0,,Completes workplans well ahead of schedule.,0.8
+500,167,10.0,,Consistently exceeds monthly volume targets.,0.71
+501,168,8.0,,Fosters strong inter-branch collaboration.,0.89
+502,168,,18.0,Upholds ethical standards during audit checks.,0.74
+503,168,,146.0,Minor KYC compliance oversight noted.,-0.35
+504,169,,31.0,Consistently acts with high integrity and transparency.,0.43
+505,169,2.0,,Minor KYC compliance oversight noted.,-0.33
+506,169,2.0,,Works in isolation and resists group efforts.,-0.41
+507,170,,74.0,Frequent audit exceptions flagged.,-0.5
+508,170,4.0,,Honest and accountable in error reporting.,0.43
+509,171,,150.0,Upholds ethical standards during audit checks.,0.76
+510,171,,87.0,Upholds ethical standards during audit checks.,0.51
+511,171,,36.0,Low transaction processing speed.,-0.33
+512,171,13.0,,Minor KYC compliance oversight noted.,-0.55
+513,172,,89.0,Fails to verify documentation thoroughly.,-0.48
+514,172,,142.0,Consistently acts with high integrity and transparency.,0.55
+515,172,,27.0,Fails to verify documentation thoroughly.,-0.54
+516,172,12.0,,Upholds ethical standards during audit checks.,0.57
+517,173,,15.0,Strictly adheres to KYC protocols.,0.69
+518,173,7.0,,Demonstrates exemplary regulatory compliance.,0.67
+519,174,7.0,,Behind on quarterly workplan milestones.,-0.41
+520,174,,30.0,Exhibits inconsistent ethical transparency.,-0.27
+521,174,7.0,,Excellent teamwork during month-end reconciliation.,0.59
+522,175,,60.0,Frequent audit exceptions flagged.,-0.89
+523,175,6.0,,Highly resilient during system updates.,0.43
+524,176,,15.0,Minor KYC compliance oversight noted.,-0.81
+525,176,,73.0,Fails to verify documentation thoroughly.,-0.66
+526,177,,75.0,Low transaction processing speed.,-0.62
+527,177,,169.0,Minor KYC compliance oversight noted.,-0.72
+528,177,,127.0,Excellent teamwork during month-end reconciliation.,0.64
+529,177,12.0,,Fosters strong inter-branch collaboration.,0.56
+530,178,,135.0,Actively assists peers with cross-departmental tasks.,0.78
+531,178,,14.0,Actively assists peers with cross-departmental tasks.,0.79
+532,178,9.0,,Excellent teamwork during month-end reconciliation.,0.51
+533,178,,134.0,Behind on quarterly workplan milestones.,-0.38
+534,179,,96.0,Struggles with meeting volume deadlines.,-0.22
+535,179,5.0,,Exhibits inconsistent ethical transparency.,-0.89
+536,180,13.0,,Fosters strong inter-branch collaboration.,0.61
+537,180,,16.0,Fosters strong inter-branch collaboration.,0.61
+538,181,8.0,,Upholds ethical standards during audit checks.,0.42
+539,181,,98.0,Low transaction processing speed.,-0.6
+540,182,2.0,,Frequent audit exceptions flagged.,-0.37
+541,182,,156.0,Actively assists peers with cross-departmental tasks.,0.85
+542,183,,195.0,Fails to verify documentation thoroughly.,-0.39
+543,183,2.0,,Questionable accountability under pressure.,-0.25
+544,183,,28.0,Resistant to adopting updated compliance systems.,-0.23
+545,183,2.0,,Resistant to adopting updated compliance systems.,-0.6
+546,184,11.0,,Behind on quarterly workplan milestones.,-0.57
+547,184,,34.0,Fails to verify documentation thoroughly.,-0.34
+548,184,11.0,,Minor KYC compliance oversight noted.,-0.36
+549,184,11.0,,Fosters strong inter-branch collaboration.,0.62
+550,185,2.0,,Actively assists peers with cross-departmental tasks.,0.76
+551,185,,32.0,Fosters strong inter-branch collaboration.,0.76
+552,185,2.0,,Behind on quarterly workplan milestones.,-0.58
+553,185,2.0,,Fails to verify documentation thoroughly.,-0.87
+554,186,12.0,,Adapts quickly to new banking software rollouts.,0.62
+555,186,,71.0,Highly resilient during system updates.,0.57
+556,186,,113.0,Behind on quarterly workplan milestones.,-0.36
+557,187,7.0,,Consistently acts with high integrity and transparency.,0.53
+558,187,,38.0,Highly resilient during system updates.,0.43
+559,187,,168.0,Minor KYC compliance oversight noted.,-0.42
+560,188,9.0,,Frequent audit exceptions flagged.,-0.4
+561,188,,183.0,Actively assists peers with cross-departmental tasks.,0.41
+562,188,9.0,,Highly resilient during system updates.,0.42
+563,189,10.0,,Minor KYC compliance oversight noted.,-0.55
+564,189,,131.0,Minor KYC compliance oversight noted.,-0.76
+565,190,9.0,,Exhibits inconsistent ethical transparency.,-0.45
+566,190,9.0,,Struggles with meeting volume deadlines.,-0.67
+567,190,9.0,,Actively assists peers with cross-departmental tasks.,0.89
+568,190,9.0,,Attempts to conceal minor ledger errors.,-0.46
+569,191,6.0,,Fails to verify documentation thoroughly.,-0.25
+570,191,,28.0,Adapts quickly to new banking software rollouts.,0.84
+571,192,4.0,,Behind on quarterly workplan milestones.,-0.32
+572,192,,169.0,Behind on quarterly workplan milestones.,-0.37
+573,192,,20.0,Low transaction processing speed.,-0.55
+574,192,4.0,,Fails to pivot during operational shifts.,-0.82
+575,193,,156.0,Questionable accountability under pressure.,-0.53
+576,193,13.0,,Actively assists peers with cross-departmental tasks.,0.51
+577,193,13.0,,Behind on quarterly workplan milestones.,-0.73
+578,193,13.0,,Behind on quarterly workplan milestones.,-0.68
+579,194,,114.0,Attempts to conceal minor ledger errors.,-0.84
+580,194,,93.0,Questionable accountability under pressure.,-0.74
+581,195,,146.0,Low transaction processing speed.,-0.73
+582,195,11.0,,Highly resilient during system updates.,0.48
+583,195,11.0,,Actively assists peers with cross-departmental tasks.,0.57
+584,196,13.0,,Questionable accountability under pressure.,-0.21
+585,196,13.0,,Consistently exceeds monthly volume targets.,0.88
+586,197,,31.0,Upholds ethical standards during audit checks.,0.82
+587,197,13.0,,Strictly adheres to KYC protocols.,0.88
+588,198,,177.0,Consistently exceeds monthly volume targets.,0.47
+589,198,1.0,,Upholds ethical standards during audit checks.,0.47
+590,198,,183.0,Excellent teamwork during month-end reconciliation.,0.59
+591,199,,185.0,Strictly adheres to KYC protocols.,0.81
+592,199,13.0,,Attempts to conceal minor ledger errors.,-0.46
+593,199,13.0,,Actively assists peers with cross-departmental tasks.,0.79
+594,200,,186.0,Highly resilient during system updates.,0.45
+595,200,,152.0,Handles branch workflow shifts smoothly.,0.77
+596,200,15.0,,Upholds ethical standards during audit checks.,0.64
+597,200,15.0,,Minor KYC compliance oversight noted.,-0.69

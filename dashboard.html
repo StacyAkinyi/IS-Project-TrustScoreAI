@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrustScoreAI | Secure Login & Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; }
+        header { background-color: #003366; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .container { padding: 2rem; max-width: 1200px; margin: auto; }
+        .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 1.5rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+        
+        /* Login Box Styles */
+        #loginContainer { max-width: 400px; margin: 100px auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; color: #333; }
+        .form-group input { width: 100%; padding: 0.75rem; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+        button { width: 100%; padding: 0.75rem; background-color: #00509e; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
+        button:hover { background-color: #003366; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; }
+        .hidden { display: none !important; }
+        .score-high { color: green; font-weight: bold; font-size: 1.2rem; }
+        .score-risk { color: red; font-weight: bold; font-size: 1.2rem; }
+        .error-msg { color: red; font-size: 0.9rem; margin-top: 0.5rem; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginContainer">
+        <h2 style="text-align: center; color: #003366; margin-top: 0;">TrustScoreAI Login</h2>
+        <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" placeholder="e.g. stacy@trustscoreai.bank.ke" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter password" required>
+        </div>
+        <button onclick="handleLogin()">Sign In</button>
+        <p id="errorMsg" class="error-msg"></p>
+    </div>
+
+    <!-- MAIN DASHBOARD WRAPPER (Hidden until logged in) -->
+    <div id="mainApp" class="hidden">
+        <header>
+            <h2 id="welcomeHeader">TrustScoreAI Dashboard</h2>
+            <button onclick="handleLogout()" style="width: auto; padding: 0.5rem 1rem; background-color: #d9534f;">Logout</button>
+        </header>
+
+        <div class="container">
+            <!-- Employee View Tier -->
+            <div id="employeeDashboard" class="hidden">
+                <h3>My Target-Tracking Summary</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Latest Trust Grade Score</h4>
+                        <p id="empTrustScore">Loading...</p>
+                    </div>
+                    <div class="card">
+                        <h4>My Operational KPIs</h4>
+                        <ul id="empKpiList">Loading...</ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manager / Executive View Tier -->
+            <div id="managerDashboard" class="hidden">
+                <h3 id="managementTitle">Institutional Oversight</h3>
+                <div class="card">
+                    <h4>Subordinate Performance Analytics & Compliance Matrix</h4>
+                    <table id="managerTable">
+                        <thead>
+                            <tr>
+                                <th>Eval Period</th>
+                                <th>Target Achievement (%)</th>
+                                <th>Cash Recon Error (%)</th>
+                                <th>Reliability Score</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Populated dynamically via API -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "http://127.0.0.1:8000";
+
+        async function handleLogin() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const errorElement = document.getElementById("errorMsg");
+            errorElement.innerText = "";
+
+            try {
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (!response.ok) {
+                    throw new Error("Invalid email or password.");
+                }
+
+                const userData = await response.json();
+                
+                // Save session info locally
+                localStorage.setItem("user_id", userData.user_id);
+                localStorage.setItem("role", userData.role);
+                localStorage.setItem("name", userData.first_name);
+
+                // Render respective dashboard view
+                renderDashboard(userData.role, userData.user_id, userData.first_name);
+
+            } catch (error) {
+                errorElement.innerText = error.message;
+            }
+        }
+
+        function renderDashboard(role, userId, firstName) {
+            // Hide login, show main app container
+            document.getElementById("loginContainer").classList.add("hidden");
+            document.getElementById("mainApp").classList.remove("hidden");
+            document.getElementById("welcomeHeader").innerText = `Welcome, ${firstName} (${role} Portal)`;
+
+            if (role === "Employee") {
+                document.getElementById("employeeDashboard").classList.remove("hidden");
+                fetchEmployeeData(userId);
+            } else if (role === "Supervisor" || role === "Executive") {
+                document.getElementById("managerDashboard").classList.remove("hidden");
+                document.getElementById("managementTitle").innerText = `${role} Tier: Institutional Oversight`;
+                fetchManagerData(userId);
+            }
+        }
+
+        async function fetchEmployeeData(userId) {
+            try {
+                const gradeRes = await fetch(`${API_BASE}/api/v1/users/${userId}/trust-grades/`);
+                if (gradeRes.ok) {
+                    const grades = await gradeRes.json();
+                    if(grades.length > 0) {
+                        let latest = grades[grades.length - 1];
+                        document.getElementById("empTrustScore").innerHTML = `<span class="score-high">${latest.final_reliability_score} / 100</span>`;
+                    } else {
+                        document.getElementById("empTrustScore").innerText = "No score generated yet.";
+                    }
+                }
+
+                const kpiRes = await fetch(`${API_BASE}/api/v1/users/${userId}/kpis/`);
+                if (kpiRes.ok) {
+                    const kpis = await kpiRes.json();
+                    let html = "";
+                    kpis.slice(-3).forEach(k => {
+                        html += `<li>${k.evaluation_period}: Achieved ${k.target_achievement_rate}% (Errors: ${k.cash_reconciliation_error_freq}%)</li>`;
+                    });
+                    document.getElementById("empKpiList").innerHTML = html || "No KPIs logged.";
+                }
+            } catch (err) {
+                console.error("Error loading employee metrics", err);
+            }
+        }
+
+        async function fetchManagerData(userId) {
+            try {
+                const kpiRes = await fetch(`${API_BASE}/api/v1/users/${userId}/kpis/`);
+                const gradeRes = await fetch(`${API_BASE}/api/v1/users/${userId}/trust-grades/`);
+                
+                if (kpiRes.ok && gradeRes.ok) {
+                    const kpis = await kpiRes.json();
+                    const grades = await gradeRes.json();
+                    
+                    let tbody = document.getElementById("managerTable").querySelector("tbody");
+                    tbody.innerHTML = "";
+                    
+                    kpis.forEach((kpi, index) => {
+                        let gradeScore = grades[index] ? grades[index].final_reliability_score : "N/A";
+                        let status = gradeScore > 80 ? "Reliable" : (gradeScore !== "N/A" ? "At Risk" : "Pending");
+                        let colorClass = status === "At Risk" ? "score-risk" : "score-high";
+
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${kpi.evaluation_period}</td>
+                                <td>${kpi.target_achievement_rate}%</td>
+                                <td>${kpi.cash_reconciliation_error_freq}%</td>
+                                <td class="${colorClass}">${gradeScore}</td>
+                                <td>${status}</td>
+                            </tr>
+                        `;
+                    });
+                }
+            } catch (err) {
+                console.error("Error loading management oversight matrix", err);
+            }
+        }
+
+        function handleLogout() {
+            localStorage.clear();
+            document.getElementById("mainApp").classList.add("hidden");
+            document.getElementById("loginContainer").classList.remove("hidden");
+            document.getElementById("email").value = "";
+            document.getElementById("password").value = "";
+        }
+    </script>
+</body>
+</html>
