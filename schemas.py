@@ -112,11 +112,19 @@ class AppraisalSourceMappingResponse(BaseModel):
 
 # --- Authentication Schemas ---
 class LoginRequest(BaseModel):
-    username: str
+    email: str
     password: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     role: str
     user_id: int
+    email: str

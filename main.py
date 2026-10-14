@@ -3,9 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Optional, Any
+import hashlib
+import secrets
 import joblib
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pymongo import MongoClient
 from transformers import T5Tokenizer, T5ForConditionalGeneration, AutoModelForSeq2SeqLM, AutoTokenizer
 
@@ -44,10 +46,22 @@ MONGO_URI = "mongodb://localhost:27017/"
 mongo_client = MongoClient(MONGO_URI)
 mongo_db = mongo_client["trustscore_mongo"]
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    token = credentials.credentials
-    payload = auth.decode_access_token(token)
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
+):
+    payload = auth.decode_access_token(credentials.credentials)
     if payload is None:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    employee_id = payload.get("employee_id")
+    employee = db.query(models.Employee).filter(
+        models.Employee.employee_id == employee_id,
+        models.Employee.is_active.is_(True),
+    ).first()
+    if (
+        not employee
+        or payload.get("token_version") != employee.auth_token_version
+    ):
         raise HTTPException(status_code=401, detail="Invalid or expired token")
     return payload
 
@@ -395,29 +409,113 @@ def execute_compliance_override(
     }
 
 # ---------------------------------------------------------
-# 7. Authentication Endpoint
-# ---------------------------------------------------------
+# 7. Authentication
+PASSWORD_RESET_MINUTES = 30
+
+def _password_policy_error(password: str) -> str | None:
+    if len(password) < 12:
+        return "Password must be at least 12 characters long."
+    if len(password.encode("utf-8")) > 72:
+        return "Password must be no more than 72 bytes."
+    if not any(c.islower() for c in password):
+        return "Password must include a lowercase letter."
+    if not any(c.isupper() for c in password):
+        return "Password must include an uppercase letter."
+    if not any(c.isdigit() for c in password):
+        return "Password must include a number."
+    if not any(not c.isalnum() for c in password):
+        return "Password must include a symbol."
+    return None
+
 @app.post("/api/v1/login", response_model=schemas.TokenResponse)
 def login(credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
-    role_tables = [
-        (models.Employee, "employee", "employee_id"),
-        (models.ImmediateSupervisor, "supervisor", "supervisor_id"),
-        (models.ExecutiveManager, "executive", "executive_id"),
-    ]
+    email = credentials.email.strip().lower()
+    user = db.query(models.Employee).filter(
+        models.Employee.email == email,
+        models.Employee.is_active.is_(True),
+    ).first()
+    if not user or not auth.verify_password(credentials.password, user.password_hashed):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    for model_class, role_name, id_attr in role_tables:
-        user = db.query(model_class).filter(model_class.username == credentials.username).first()
-        if user and auth.verify_password(credentials.password, user.hashed_password):
-            user_id = getattr(user, id_attr)
-            token = auth.create_access_token({"user_id": user_id, "role": role_name})
-            return {
-                "access_token": token,
-                "token_type": "bearer",
-                "role": role_name,
-                "user_id": user_id
-            }
+    role, user_id = user.user_type, user.employee_id
+    if role == "supervisor":
+        profile = db.query(models.ImmediateSupervisor).filter_by(emp_id=user.employee_id).first()
+        if not profile:
+            raise HTTPException(status_code=403, detail="Account role is not configured")
+        user_id = profile.supervisor_id
+    elif role == "executive":
+        profile = db.query(models.ExecutiveManager).filter_by(emp_id=user.employee_id).first()
+        if not profile:
+            raise HTTPException(status_code=403, detail="Account role is not configured")
+        user_id = profile.executive_id
 
-    raise HTTPException(status_code=401, detail="Invalid username or password")
+    token = auth.create_access_token({
+        "user_id": user_id, "employee_id": user.employee_id, "role": role,
+        "token_version": user.auth_token_version
+    })
+    return {
+        "access_token": token, "token_type": "bearer",
+        "role": role, "user_id": user_id, "email": user.email,
+    }
+
+@app.post("/api/v1/forgot-password", status_code=status.HTTP_202_ACCEPTED)
+def forgot_password(request: schemas.ForgotPasswordRequest, db: Session = Depends(get_db)):
+    response = {"message": "If an account exists for that email, password reset instructions are available."}
+    email = request.email.strip().lower()
+    user = db.query(models.Employee).filter(
+        models.Employee.email == email, models.Employee.is_active.is_(True)
+    ).first()
+    if not user:
+        return response
+
+    now = datetime.now(timezone.utc)
+    db.query(models.PasswordResetToken).filter(
+        models.PasswordResetToken.employee_id == user.employee_id,
+        models.PasswordResetToken.consumed_at.is_(None),
+    ).update({"consumed_at": now}, synchronize_session=False)
+    raw_token = secrets.token_urlsafe(32)
+    digest = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+    db.add(models.PasswordResetToken(
+        employee_id=user.employee_id,
+        token_hashed=digest,
+        expires_at=now + timedelta(minutes=PASSWORD_RESET_MINUTES),
+    ))
+    db.commit()
+    reset_link = "http://localhost:5173/?reset_token=" + raw_token
+    print("[DEV PASSWORD RESET] Email: " + user.email + " | Link: " + reset_link)
+    return response
+
+@app.post("/api/v1/reset-password")
+def reset_password(request: schemas.ResetPasswordRequest, db: Session = Depends(get_db)):
+    policy_error = _password_policy_error(request.new_password)
+    if policy_error:
+        raise HTTPException(status_code=422, detail=policy_error)
+
+    digest = hashlib.sha256(request.token.encode("utf-8")).hexdigest()
+    now = datetime.now(timezone.utc)
+    reset_record = db.query(models.PasswordResetToken).filter(
+        models.PasswordResetToken.token_hashed == digest,
+        models.PasswordResetToken.consumed_at.is_(None),
+        models.PasswordResetToken.expires_at > now,
+    ).first()
+    if not reset_record:
+        raise HTTPException(status_code=400, detail="Reset link is invalid or expired.")
+    user = db.query(models.Employee).filter(
+        models.Employee.employee_id == reset_record.employee_id,
+        models.Employee.is_active.is_(True),
+    ).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="Reset link is invalid or expired.")
+
+    user.password_hashed = auth.hash_password(request.new_password)
+    user.auth_token_version += 1
+    reset_record.consumed_at = now
+    db.query(models.PasswordResetToken).filter(
+        models.PasswordResetToken.employee_id == user.employee_id,
+        models.PasswordResetToken.consumed_at.is_(None),
+    ).update({"consumed_at": now}, synchronize_session=False)
+    db.commit()
+    return {"message": "Password reset successfully. You can now sign in."}
 
 from typing import Any, Protocol, cast
 
