@@ -1,0 +1,289 @@
+employee_id,full_name,email,department,role,user_type,supervisor_id
+1,Linet Wasike,employee1@trustscore.test,Executive Management,Executive Manager,executive,
+2,Nyambura Kiplimo,employee2@trustscore.test,Executive Management,Executive Manager,executive,
+3,Atieno Muthama,employee3@trustscore.test,Executive Management,Executive Manager,executive,
+4,Asha Njuguna,employee4@trustscore.test,Executive Management,Executive Manager,executive,
+5,Kibet Sang,employee5@trustscore.test,Executive Management,Executive Manager,executive,
+6,Mwangangi Mumo,employee6@trustscore.test,Executive Management,Executive Manager,executive,
+7,Zawadi Mboya,employee7@trustscore.test,Executive Management,Executive Manager,executive,
+8,Akinyi Mumo,employee8@trustscore.test,Executive Management,Executive Manager,executive,
+9,Zawadi Abdi,employee9@trustscore.test,Compliance,Immediate Supervisor,supervisor,
+10,Atieno Barasa,employee10@trustscore.test,Corporate Banking,Immediate Supervisor,supervisor,
+11,Kiplagat Mwende,employee11@trustscore.test,Digital Banking,Immediate Supervisor,supervisor,
+12,Mwangi Chepkirui,employee12@trustscore.test,Retail Banking,Immediate Supervisor,supervisor,
+13,Kibet Kipchumba,employee13@trustscore.test,Customer Service,Immediate Supervisor,supervisor,
+14,Nyakio Mboya,employee14@trustscore.test,Compliance,Immediate Supervisor,supervisor,
+15,Kipchoge Karanja,employee15@trustscore.test,Retail Banking,Immediate Supervisor,supervisor,
+16,Kariuki Chepkirui,employee16@trustscore.test,Retail Banking,Immediate Supervisor,supervisor,
+17,Njoroge Njuguna,employee17@trustscore.test,Retail Banking,Immediate Supervisor,supervisor,
+18,Wambui Wekesa,employee18@trustscore.test,Customer Service,Immediate Supervisor,supervisor,
+19,Zawadi Nyambura,employee19@trustscore.test,Risk and Audit,Immediate Supervisor,supervisor,
+20,Zawadi Nyambura,employee20@trustscore.test,Branch Operations,Immediate Supervisor,supervisor,
+21,Kibet Barasa,employee21@trustscore.test,Retail Banking,Immediate Supervisor,supervisor,
+22,Zawadi Kipchumba,employee22@trustscore.test,Retail Banking,Immediate Supervisor,supervisor,
+23,Zawadi Mwangangi,employee23@trustscore.test,Risk and Audit,Immediate Supervisor,supervisor,
+24,Muriuki Abdi,employee24@trustscore.test,Retail Banking,Immediate Supervisor,supervisor,
+25,Muli Auma,employee25@trustscore.test,Customer Service,Immediate Supervisor,supervisor,
+26,Muriuki Muriuki,employee26@trustscore.test,Corporate Banking,Immediate Supervisor,supervisor,
+27,Maina Kimutai,employee27@trustscore.test,Credit Processing,Immediate Supervisor,supervisor,
+28,Nyambura Mwende,employee28@trustscore.test,Compliance,Immediate Supervisor,supervisor,
+29,Jelagat Mwangangi,employee29@trustscore.test,Risk and Audit,Immediate Supervisor,supervisor,
+30,Ochieng Otieno,employee30@trustscore.test,Corporate Banking,Immediate Supervisor,supervisor,
+31,Maina Karanja,employee31@trustscore.test,Credit Processing,Immediate Supervisor,supervisor,
+32,Mariam Kiptoo,employee32@trustscore.test,Corporate Banking,Immediate Supervisor,supervisor,
+33,Nyakio Abdi,employee33@trustscore.test,Credit Processing,Immediate Supervisor,supervisor,
+34,Kilonzo Kimutai,employee34@trustscore.test,Credit Processing,Immediate Supervisor,supervisor,
+35,Muriuki Wekesa,employee35@trustscore.test,Credit Processing,Immediate Supervisor,supervisor,
+36,Cheruiyot Naliaka,employee36@trustscore.test,Digital Banking,Immediate Supervisor,supervisor,
+37,Nyambura Onyango,employee37@trustscore.test,Digital Banking,Immediate Supervisor,supervisor,
+38,Linet Wanjiru,employee38@trustscore.test,Corporate Banking,Immediate Supervisor,supervisor,
+39,Kamau Wanjala,employee39@trustscore.test,Digital Banking,Immediate Supervisor,supervisor,
+40,Mwangi Cheruiyot,employee40@trustscore.test,Credit Processing,Immediate Supervisor,supervisor,
+41,Asha Waithera,employee41@trustscore.test,Risk and Audit,Immediate Supervisor,supervisor,
+42,Otieno Chepkirui,employee42@trustscore.test,Credit Processing,Immediate Supervisor,supervisor,
+43,Wanjiku Karanja,employee43@trustscore.test,Branch Operations,Immediate Supervisor,supervisor,
+44,Akinyi Mwende,employee44@trustscore.test,Digital Banking,Immediate Supervisor,supervisor,
+45,Wambui Kilonzo,employee45@trustscore.test,Customer Service,Immediate Supervisor,supervisor,
+46,Kamau Barasa,employee46@trustscore.test,Compliance,Immediate Supervisor,supervisor,
+47,Adhiambo Naliaka,employee47@trustscore.test,Risk and Audit,Immediate Supervisor,supervisor,
+48,Kiptoo Otieno,employee48@trustscore.test,Corporate Banking,Immediate Supervisor,supervisor,
+49,Muriuki Kipchumba,employee49@trustscore.test,Credit Processing,Customer Service Officer,employee,1
+50,Nyambura Karanja,employee50@trustscore.test,Retail Banking,Credit Officer,employee,1
+51,Asha Naliaka,employee51@trustscore.test,Corporate Banking,Customer Service Officer,employee,1
+52,Njeri Adan,employee52@trustscore.test,Digital Banking,Customer Service Officer,employee,1
+53,Otieno Mwende,employee53@trustscore.test,Compliance,Teller,employee,1
+54,Jelagat Wanjala,employee54@trustscore.test,Compliance,Relationship Officer,employee,1
+55,Nyakio Moraa,employee55@trustscore.test,Credit Processing,Relationship Officer,employee,2
+56,Adhiambo Chepkirui,employee56@trustscore.test,Customer Service,Customer Service Officer,employee,2
+57,Saidi Waithera,employee57@trustscore.test,Digital Banking,Relationship Officer,employee,2
+58,Wairimu Chepkirui,employee58@trustscore.test,Compliance,Customer Service Officer,employee,2
+59,Saidi Mwangangi,employee59@trustscore.test,Branch Operations,Relationship Officer,employee,2
+60,Barasa Mwende,employee60@trustscore.test,Corporate Banking,Teller,employee,2
+61,Kipchoge Muriuki,employee61@trustscore.test,Digital Banking,Relationship Officer,employee,3
+62,Mutua Kimutai,employee62@trustscore.test,Digital Banking,Customer Service Officer,employee,3
+63,Mutua Koech,employee63@trustscore.test,Digital Banking,Relationship Officer,employee,3
+64,Abdi Nyongesa,employee64@trustscore.test,Digital Banking,Customer Service Officer,employee,3
+65,Nyakio Onyango,employee65@trustscore.test,Risk and Audit,Credit Officer,employee,3
+66,Mwangi Barasa,employee66@trustscore.test,Branch Operations,Customer Service Officer,employee,3
+67,Nyakio Waithera,employee67@trustscore.test,Retail Banking,Operations Analyst,employee,4
+68,Maina Wanjiru,employee68@trustscore.test,Customer Service,Teller,employee,4
+69,Kibet Abdalla,employee69@trustscore.test,Corporate Banking,Teller,employee,4
+70,Barasa Mwangangi,employee70@trustscore.test,Digital Banking,Operations Analyst,employee,4
+71,Wairimu Mwakio,employee71@trustscore.test,Retail Banking,Relationship Officer,employee,4
+72,Zawadi Wasike,employee72@trustscore.test,Compliance,Customer Service Officer,employee,4
+73,Wairimu Onyango,employee73@trustscore.test,Customer Service,Credit Officer,employee,5
+74,Linet Onyango,employee74@trustscore.test,Customer Service,Credit Officer,employee,5
+75,Muriuki Kiplimo,employee75@trustscore.test,Risk and Audit,Operations Analyst,employee,5
+76,Akinyi Moraa,employee76@trustscore.test,Branch Operations,Operations Analyst,employee,5
+77,Cheruiyot Kiptoo,employee77@trustscore.test,Compliance,Operations Analyst,employee,5
+78,Mwangi Kiptoo,employee78@trustscore.test,Corporate Banking,Teller,employee,5
+79,Wairimu Karanja,employee79@trustscore.test,Compliance,Operations Analyst,employee,6
+80,Wafula Mwende,employee80@trustscore.test,Corporate Banking,Relationship Officer,employee,6
+81,Munyua Kipchumba,employee81@trustscore.test,Compliance,Operations Analyst,employee,6
+82,Njoroge Wanjala,employee82@trustscore.test,Credit Processing,Relationship Officer,employee,6
+83,Munyua Auma,employee83@trustscore.test,Corporate Banking,Credit Officer,employee,6
+84,Linet Waithera,employee84@trustscore.test,Digital Banking,Teller,employee,6
+85,Omondi Kiplimo,employee85@trustscore.test,Credit Processing,Relationship Officer,employee,7
+86,Mwangi Ouma,employee86@trustscore.test,Corporate Banking,Relationship Officer,employee,7
+87,Cheruiyot Kipchumba,employee87@trustscore.test,Credit Processing,Operations Analyst,employee,7
+88,Jelagat Omondi,employee88@trustscore.test,Compliance,Relationship Officer,employee,7
+89,Omondi Kimutai,employee89@trustscore.test,Digital Banking,Relationship Officer,employee,7
+90,Wanjiku Musyoka,employee90@trustscore.test,Corporate Banking,Credit Officer,employee,7
+91,Njoroge Sang,employee91@trustscore.test,Digital Banking,Operations Analyst,employee,8
+92,Nyambura Naliaka,employee92@trustscore.test,Credit Processing,Operations Analyst,employee,8
+93,Wambui Koech,employee93@trustscore.test,Compliance,Teller,employee,8
+94,Hassan Adan,employee94@trustscore.test,Corporate Banking,Credit Officer,employee,8
+95,Nyambura Mumo,employee95@trustscore.test,Digital Banking,Teller,employee,8
+96,Ochieng Wanjiru,employee96@trustscore.test,Corporate Banking,Teller,employee,8
+97,Kibet Munyoki,employee97@trustscore.test,Compliance,Customer Service Officer,employee,9
+98,Kipchoge Nyambura,employee98@trustscore.test,Compliance,Teller,employee,9
+99,Kilonzo Njuguna,employee99@trustscore.test,Retail Banking,Credit Officer,employee,9
+100,Kibet Barasa,employee100@trustscore.test,Corporate Banking,Operations Analyst,employee,9
+101,Adhiambo Barasa,employee101@trustscore.test,Corporate Banking,Customer Service Officer,employee,9
+102,Njoroge Cheruiyot,employee102@trustscore.test,Digital Banking,Customer Service Officer,employee,9
+103,Asha Mwangangi,employee103@trustscore.test,Branch Operations,Credit Officer,employee,10
+104,Hassan Mumo,employee104@trustscore.test,Compliance,Relationship Officer,employee,10
+105,Muli Kipkemoi,employee105@trustscore.test,Digital Banking,Relationship Officer,employee,10
+106,Njoroge Wanjiru,employee106@trustscore.test,Branch Operations,Credit Officer,employee,10
+107,Zawadi Munyoki,employee107@trustscore.test,Customer Service,Relationship Officer,employee,10
+108,Mwangangi Munyoki,employee108@trustscore.test,Digital Banking,Operations Analyst,employee,10
+109,Kiplagat Mwangangi,employee109@trustscore.test,Digital Banking,Teller,employee,11
+110,Muli Wekesa,employee110@trustscore.test,Branch Operations,Relationship Officer,employee,11
+111,Chebet Abdalla,employee111@trustscore.test,Corporate Banking,Operations Analyst,employee,11
+112,Muthoni Muthama,employee112@trustscore.test,Corporate Banking,Relationship Officer,employee,11
+113,Kamau Nyongesa,employee113@trustscore.test,Risk and Audit,Customer Service Officer,employee,11
+114,Saidi Mumo,employee114@trustscore.test,Corporate Banking,Credit Officer,employee,11
+115,Cheruiyot Njuguna,employee115@trustscore.test,Compliance,Customer Service Officer,employee,12
+116,Kibet Mumo,employee116@trustscore.test,Customer Service,Operations Analyst,employee,12
+117,Nyakio Koech,employee117@trustscore.test,Compliance,Credit Officer,employee,12
+118,Omondi Abdi,employee118@trustscore.test,Credit Processing,Teller,employee,12
+119,Wanjiku Kipchumba,employee119@trustscore.test,Corporate Banking,Operations Analyst,employee,12
+120,Saidi Wanjala,employee120@trustscore.test,Credit Processing,Credit Officer,employee,12
+121,Kariuki Karanja,employee121@trustscore.test,Retail Banking,Teller,employee,13
+122,Chebet Achieng,employee122@trustscore.test,Branch Operations,Credit Officer,employee,13
+123,Akinyi Kimutai,employee123@trustscore.test,Branch Operations,Relationship Officer,employee,13
+124,Munyua Kimutai,employee124@trustscore.test,Digital Banking,Relationship Officer,employee,13
+125,Chebet Mwende,employee125@trustscore.test,Compliance,Relationship Officer,employee,13
+126,Hassan Mwende,employee126@trustscore.test,Credit Processing,Teller,employee,13
+127,Otieno Karanja,employee127@trustscore.test,Retail Banking,Customer Service Officer,employee,14
+128,Munyua Kipkemoi,employee128@trustscore.test,Retail Banking,Operations Analyst,employee,14
+129,Ochieng Abdi,employee129@trustscore.test,Risk and Audit,Credit Officer,employee,14
+130,Moraa Kiptoo,employee130@trustscore.test,Branch Operations,Relationship Officer,employee,14
+131,Wekesa Auma,employee131@trustscore.test,Corporate Banking,Operations Analyst,employee,14
+132,Abdi Waithera,employee132@trustscore.test,Compliance,Teller,employee,14
+133,Otieno Achieng,employee133@trustscore.test,Credit Processing,Operations Analyst,employee,15
+134,Muriuki Muriuki,employee134@trustscore.test,Risk and Audit,Relationship Officer,employee,15
+135,Moraa Waithera,employee135@trustscore.test,Compliance,Credit Officer,employee,15
+136,Munyua Chepkirui,employee136@trustscore.test,Corporate Banking,Customer Service Officer,employee,15
+137,Kibet Wanjala,employee137@trustscore.test,Digital Banking,Credit Officer,employee,15
+138,Akinyi Nyambura,employee138@trustscore.test,Corporate Banking,Operations Analyst,employee,15
+139,Adhiambo Njuguna,employee139@trustscore.test,Branch Operations,Credit Officer,employee,16
+140,Mwangi Muriuki,employee140@trustscore.test,Credit Processing,Relationship Officer,employee,16
+141,Kiptoo Mumo,employee141@trustscore.test,Corporate Banking,Operations Analyst,employee,16
+142,Njeri Chepkirui,employee142@trustscore.test,Customer Service,Relationship Officer,employee,16
+143,Zawadi Omondi,employee143@trustscore.test,Customer Service,Customer Service Officer,employee,16
+144,Kipchoge Wekesa,employee144@trustscore.test,Branch Operations,Credit Officer,employee,16
+145,Wekesa Nyongesa,employee145@trustscore.test,Credit Processing,Credit Officer,employee,17
+146,Njeri Moraa,employee146@trustscore.test,Digital Banking,Teller,employee,17
+147,Cheruiyot Cheruiyot,employee147@trustscore.test,Digital Banking,Teller,employee,17
+148,Otieno Munyoki,employee148@trustscore.test,Risk and Audit,Customer Service Officer,employee,17
+149,Kamau Wanjiru,employee149@trustscore.test,Digital Banking,Credit Officer,employee,17
+150,Zawadi Mwende,employee150@trustscore.test,Corporate Banking,Credit Officer,employee,17
+151,Wambui Onyango,employee151@trustscore.test,Branch Operations,Credit Officer,employee,18
+152,Barasa Onyango,employee152@trustscore.test,Corporate Banking,Credit Officer,employee,18
+153,Hassan Kipchumba,employee153@trustscore.test,Corporate Banking,Customer Service Officer,employee,18
+154,Muthoni Omondi,employee154@trustscore.test,Branch Operations,Operations Analyst,employee,18
+155,Njoroge Omondi,employee155@trustscore.test,Corporate Banking,Credit Officer,employee,18
+156,Moraa Mwende,employee156@trustscore.test,Compliance,Teller,employee,18
+157,Cheruiyot Wanjiru,employee157@trustscore.test,Retail Banking,Operations Analyst,employee,19
+158,Kipchoge Wekesa,employee158@trustscore.test,Compliance,Operations Analyst,employee,19
+159,Mwangangi Cheruiyot,employee159@trustscore.test,Branch Operations,Operations Analyst,employee,19
+160,Munyua Onyango,employee160@trustscore.test,Retail Banking,Customer Service Officer,employee,19
+161,Saidi Munyoki,employee161@trustscore.test,Customer Service,Teller,employee,19
+162,Hassan Abdalla,employee162@trustscore.test,Digital Banking,Teller,employee,19
+163,Maina Adan,employee163@trustscore.test,Retail Banking,Customer Service Officer,employee,20
+164,Mutua Kiplimo,employee164@trustscore.test,Branch Operations,Relationship Officer,employee,20
+165,Maina Mwende,employee165@trustscore.test,Digital Banking,Credit Officer,employee,20
+166,Moraa Kipchumba,employee166@trustscore.test,Corporate Banking,Operations Analyst,employee,20
+167,Wairimu Mumo,employee167@trustscore.test,Retail Banking,Operations Analyst,employee,20
+168,Kariuki Githinji,employee168@trustscore.test,Retail Banking,Operations Analyst,employee,20
+169,Wekesa Mboya,employee169@trustscore.test,Compliance,Relationship Officer,employee,21
+170,Mwangangi Wekesa,employee170@trustscore.test,Corporate Banking,Customer Service Officer,employee,21
+171,Zawadi Mumo,employee171@trustscore.test,Corporate Banking,Relationship Officer,employee,21
+172,Barasa Wasike,employee172@trustscore.test,Compliance,Relationship Officer,employee,21
+173,Mwangangi Nyambura,employee173@trustscore.test,Corporate Banking,Credit Officer,employee,21
+174,Wafula Karanja,employee174@trustscore.test,Risk and Audit,Teller,employee,21
+175,Maina Cheruiyot,employee175@trustscore.test,Retail Banking,Relationship Officer,employee,22
+176,Kamau Cheruiyot,employee176@trustscore.test,Retail Banking,Teller,employee,22
+177,Muthoni Kiplimo,employee177@trustscore.test,Branch Operations,Teller,employee,22
+178,Cheruiyot Kariuki,employee178@trustscore.test,Customer Service,Operations Analyst,employee,22
+179,Mwangangi Kipkemoi,employee179@trustscore.test,Compliance,Relationship Officer,employee,22
+180,Barasa Mwende,employee180@trustscore.test,Corporate Banking,Teller,employee,22
+181,Moraa Muthama,employee181@trustscore.test,Branch Operations,Relationship Officer,employee,23
+182,Akinyi Naliaka,employee182@trustscore.test,Branch Operations,Teller,employee,23
+183,Zawadi Kilonzo,employee183@trustscore.test,Compliance,Operations Analyst,employee,23
+184,Maina Mwende,employee184@trustscore.test,Customer Service,Relationship Officer,employee,23
+185,Linet Githinji,employee185@trustscore.test,Risk and Audit,Operations Analyst,employee,23
+186,Wekesa Sang,employee186@trustscore.test,Retail Banking,Credit Officer,employee,23
+187,Barasa Githinji,employee187@trustscore.test,Retail Banking,Relationship Officer,employee,24
+188,Wafula Karanja,employee188@trustscore.test,Risk and Audit,Credit Officer,employee,24
+189,Hassan Achieng,employee189@trustscore.test,Compliance,Teller,employee,24
+190,Wekesa Sang,employee190@trustscore.test,Risk and Audit,Credit Officer,employee,24
+191,Linet Kariuki,employee191@trustscore.test,Credit Processing,Credit Officer,employee,24
+192,Atieno Githinji,employee192@trustscore.test,Retail Banking,Customer Service Officer,employee,24
+193,Ochieng Adan,employee193@trustscore.test,Risk and Audit,Customer Service Officer,employee,25
+194,Cheruiyot Achieng,employee194@trustscore.test,Digital Banking,Operations Analyst,employee,25
+195,Maina Kariuki,employee195@trustscore.test,Customer Service,Credit Officer,employee,25
+196,Kiplagat Wasike,employee196@trustscore.test,Risk and Audit,Credit Officer,employee,25
+197,Moraa Abdalla,employee197@trustscore.test,Branch Operations,Teller,employee,25
+198,Muthoni Njuguna,employee198@trustscore.test,Corporate Banking,Credit Officer,employee,25
+199,Linet Mwende,employee199@trustscore.test,Compliance,Credit Officer,employee,26
+200,Wanjiku Otieno,employee200@trustscore.test,Risk and Audit,Customer Service Officer,employee,26
+201,Njeri Cheruiyot,employee201@trustscore.test,Risk and Audit,Operations Analyst,employee,26
+202,Zawadi Koech,employee202@trustscore.test,Branch Operations,Credit Officer,employee,26
+203,Akinyi Mwakio,employee203@trustscore.test,Risk and Audit,Credit Officer,employee,26
+204,Muriuki Mwangangi,employee204@trustscore.test,Digital Banking,Operations Analyst,employee,26
+205,Barasa Kiptoo,employee205@trustscore.test,Credit Processing,Teller,employee,27
+206,Zawadi Wanjiru,employee206@trustscore.test,Retail Banking,Customer Service Officer,employee,27
+207,Wambui Chepkirui,employee207@trustscore.test,Credit Processing,Credit Officer,employee,27
+208,Mariam Wanjiru,employee208@trustscore.test,Retail Banking,Customer Service Officer,employee,27
+209,Mariam Mwangangi,employee209@trustscore.test,Credit Processing,Customer Service Officer,employee,27
+210,Atieno Barasa,employee210@trustscore.test,Branch Operations,Teller,employee,27
+211,Mariam Njuguna,employee211@trustscore.test,Compliance,Credit Officer,employee,28
+212,Jelagat Githinji,employee212@trustscore.test,Compliance,Customer Service Officer,employee,28
+213,Kariuki Omondi,employee213@trustscore.test,Corporate Banking,Operations Analyst,employee,28
+214,Asha Omondi,employee214@trustscore.test,Corporate Banking,Teller,employee,28
+215,Kibet Wekesa,employee215@trustscore.test,Customer Service,Relationship Officer,employee,28
+216,Kamau Omondi,employee216@trustscore.test,Credit Processing,Customer Service Officer,employee,28
+217,Barasa Auma,employee217@trustscore.test,Customer Service,Credit Officer,employee,29
+218,Ochieng Koech,employee218@trustscore.test,Corporate Banking,Relationship Officer,employee,29
+219,Chebet Auma,employee219@trustscore.test,Corporate Banking,Relationship Officer,employee,29
+220,Kamau Barasa,employee220@trustscore.test,Retail Banking,Operations Analyst,employee,29
+221,Kariuki Muthama,employee221@trustscore.test,Digital Banking,Credit Officer,employee,29
+222,Wafula Sang,employee222@trustscore.test,Customer Service,Teller,employee,29
+223,Mwangangi Auma,employee223@trustscore.test,Credit Processing,Customer Service Officer,employee,30
+224,Kiptoo Muthama,employee224@trustscore.test,Compliance,Customer Service Officer,employee,30
+225,Kariuki Abdi,employee225@trustscore.test,Customer Service,Operations Analyst,employee,30
+226,Kariuki Ouma,employee226@trustscore.test,Credit Processing,Operations Analyst,employee,30
+227,Wambui Kiplimo,employee227@trustscore.test,Corporate Banking,Customer Service Officer,employee,30
+228,Wambui Mwakio,employee228@trustscore.test,Credit Processing,Credit Officer,employee,30
+229,Muriuki Mwakio,employee229@trustscore.test,Digital Banking,Relationship Officer,employee,31
+230,Barasa Kariuki,employee230@trustscore.test,Customer Service,Operations Analyst,employee,31
+231,Kariuki Sang,employee231@trustscore.test,Credit Processing,Operations Analyst,employee,31
+232,Mwangangi Wekesa,employee232@trustscore.test,Credit Processing,Customer Service Officer,employee,31
+233,Kilonzo Nyambura,employee233@trustscore.test,Retail Banking,Operations Analyst,employee,31
+234,Njeri Njuguna,employee234@trustscore.test,Branch Operations,Teller,employee,31
+235,Wanjiku Munyoki,employee235@trustscore.test,Retail Banking,Customer Service Officer,employee,32
+236,Mwangangi Wanjala,employee236@trustscore.test,Branch Operations,Credit Officer,employee,32
+237,Kiptoo Moraa,employee237@trustscore.test,Corporate Banking,Customer Service Officer,employee,32
+238,Mwangi Abdalla,employee238@trustscore.test,Retail Banking,Credit Officer,employee,32
+239,Otieno Wanjala,employee239@trustscore.test,Risk and Audit,Credit Officer,employee,32
+240,Kariuki Mumo,employee240@trustscore.test,Customer Service,Operations Analyst,employee,32
+241,Linet Wanjiru,employee241@trustscore.test,Retail Banking,Teller,employee,33
+242,Njeri Nyambura,employee242@trustscore.test,Digital Banking,Customer Service Officer,employee,33
+243,Akinyi Auma,employee243@trustscore.test,Compliance,Relationship Officer,employee,33
+244,Akinyi Munyoki,employee244@trustscore.test,Customer Service,Customer Service Officer,employee,33
+245,Mariam Munyoki,employee245@trustscore.test,Credit Processing,Relationship Officer,employee,33
+246,Mutua Mumo,employee246@trustscore.test,Compliance,Customer Service Officer,employee,33
+247,Chebet Kiplimo,employee247@trustscore.test,Compliance,Relationship Officer,employee,34
+248,Maina Mwende,employee248@trustscore.test,Risk and Audit,Operations Analyst,employee,34
+249,Kariuki Barasa,employee249@trustscore.test,Risk and Audit,Teller,employee,34
+250,Jelagat Sang,employee250@trustscore.test,Digital Banking,Operations Analyst,employee,34
+251,Muriuki Kilonzo,employee251@trustscore.test,Branch Operations,Customer Service Officer,employee,34
+252,Kiplagat Auma,employee252@trustscore.test,Retail Banking,Teller,employee,34
+253,Omondi Njuguna,employee253@trustscore.test,Customer Service,Teller,employee,35
+254,Zawadi Omondi,employee254@trustscore.test,Retail Banking,Teller,employee,35
+255,Kiptoo Nyongesa,employee255@trustscore.test,Customer Service,Credit Officer,employee,35
+256,Wafula Kiplimo,employee256@trustscore.test,Credit Processing,Relationship Officer,employee,35
+257,Njoroge Mwende,employee257@trustscore.test,Compliance,Teller,employee,35
+258,Nyambura Kimutai,employee258@trustscore.test,Credit Processing,Customer Service Officer,employee,35
+259,Cheruiyot Kilonzo,employee259@trustscore.test,Corporate Banking,Credit Officer,employee,36
+260,Munyua Kilonzo,employee260@trustscore.test,Credit Processing,Customer Service Officer,employee,36
+261,Zawadi Kilonzo,employee261@trustscore.test,Digital Banking,Relationship Officer,employee,36
+262,Wambui Githinji,employee262@trustscore.test,Digital Banking,Teller,employee,36
+263,Muli Kipchumba,employee263@trustscore.test,Branch Operations,Operations Analyst,employee,36
+264,Njoroge Koech,employee264@trustscore.test,Customer Service,Customer Service Officer,employee,36
+265,Linet Chepkirui,employee265@trustscore.test,Compliance,Credit Officer,employee,37
+266,Otieno Wanjala,employee266@trustscore.test,Compliance,Operations Analyst,employee,37
+267,Munyua Cheruiyot,employee267@trustscore.test,Branch Operations,Operations Analyst,employee,37
+268,Kiplagat Mumo,employee268@trustscore.test,Compliance,Relationship Officer,employee,37
+269,Asha Waithera,employee269@trustscore.test,Compliance,Operations Analyst,employee,37
+270,Maina Wanjala,employee270@trustscore.test,Compliance,Credit Officer,employee,37
+271,Saidi Abdalla,employee271@trustscore.test,Credit Processing,Relationship Officer,employee,38
+272,Ochieng Sang,employee272@trustscore.test,Retail Banking,Customer Service Officer,employee,38
+273,Njeri Sang,employee273@trustscore.test,Risk and Audit,Operations Analyst,employee,38
+274,Kiptoo Githinji,employee274@trustscore.test,Credit Processing,Relationship Officer,employee,38
+275,Kipchoge Kipchumba,employee275@trustscore.test,Corporate Banking,Relationship Officer,employee,38
+276,Mwangi Kariuki,employee276@trustscore.test,Customer Service,Customer Service Officer,employee,38
+277,Nyambura Njuguna,employee277@trustscore.test,Digital Banking,Operations Analyst,employee,39
+278,Kibet Kariuki,employee278@trustscore.test,Branch Operations,Teller,employee,39
+279,Atieno Mumo,employee279@trustscore.test,Digital Banking,Operations Analyst,employee,39
+280,Omondi Achieng,employee280@trustscore.test,Compliance,Operations Analyst,employee,39
+281,Wafula Musyoka,employee281@trustscore.test,Digital Banking,Teller,employee,39
+282,Abdi Nyambura,employee282@trustscore.test,Corporate Banking,Operations Analyst,employee,39
+283,Mwangangi Kariuki,employee283@trustscore.test,Retail Banking,Relationship Officer,employee,40
+284,Wairimu Wanjala,employee284@trustscore.test,Corporate Banking,Customer Service Officer,employee,40
+285,Njeri Omondi,employee285@trustscore.test,Customer Service,Relationship Officer,employee,40
+286,Zawadi Wekesa,employee286@trustscore.test,Compliance,Operations Analyst,employee,40
+287,Muthoni Kiptoo,employee287@trustscore.test,Credit Processing,Teller,employee,40
+288,Omondi Nyambura,employee288@trustscore.test,Corporate Banking,Credit Officer,employee,40

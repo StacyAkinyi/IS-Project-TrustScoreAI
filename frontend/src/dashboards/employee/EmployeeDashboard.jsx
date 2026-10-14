@@ -130,7 +130,7 @@ export default function EmployeeDashboard({ userId }) {
 
           <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
             <h3 className="text-lg font-bold text-blue-900 mb-4">Historical Appraisal Reports Log</h3>
-            </>{reports.length === 0 ? (
+            {reports.length === 0 ? (
               <p className="text-slate-500 text-sm">No appraisal history recorded yet.</p>
             ) : (
               <div className="overflow-x-auto">

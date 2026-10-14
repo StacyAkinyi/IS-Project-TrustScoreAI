@@ -46,7 +46,19 @@ def load_base_data(reset: bool = False) -> None:
 
     if reset:
         print("Resetting all TrustScoreAI tables as requested...")
-        Base.metadata.drop_all(bind=engine)
+        trustscoreai_tables = (
+            "appraisal_source_mappings",
+            "password_reset_tokens",
+            "appraisal_reports",
+            "performance_records",
+            "unstructured_feedback",
+            "immediate_supervisors",
+            "executive_managers",
+            "employees",
+        )
+        with engine.begin() as connection:
+            for table_name in trustscoreai_tables:
+                connection.execute(text(f'DROP TABLE IF EXISTS "{table_name}" CASCADE'))
     Base.metadata.create_all(bind=engine)
 
     with SessionLocal() as session:
