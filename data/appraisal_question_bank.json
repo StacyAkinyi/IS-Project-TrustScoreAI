@@ -1,0 +1,31 @@
+{
+  "safe": [
+    "{metric} is in the Safe review band at {value}. What actions or conditions helped you maintain this result?",
+    "Your {metric} is currently in the Safe band ({value}). What part of your approach would you like to continue?",
+    "This measure is in the Safe review band ({value}). What team or process practices may have supported it?",
+    "At {value}, {metric} is in the Safe review band. Is there a practice from this work that could be shared with colleagues?"
+  ],
+  "warning": [
+    "{metric} is in the Warning review band at {value}. What factors may be contributing, and what support or adjustment could help?",
+    "Your {metric} is currently in the Warning band ({value}). Are workload, tools, or process changes affecting this measure?",
+    "This measure is in the Warning review band ({value}). What would help you move it toward the Safe band?",
+    "At {value}, {metric} is in the Warning review band. Is there context that would help explain this result?"
+  ],
+  "danger": [
+    "{metric} is in the Danger review band at {value}. What workload, process, system, or data context should be considered?",
+    "Your {metric} is currently in the Danger band ({value}). What conditions may be contributing, and what support would help?",
+    "This measure is in the Danger review band ({value}). Is there a system or workflow issue that should be addressed?",
+    "At {value}, {metric} is in the Danger review band. What context should be reviewed before drawing conclusions about this measure?"
+  ],
+  "no_data": [
+    "What recent work accomplishment are you most proud of, and what helped you achieve it?",
+    "What work challenges or process conditions affected your results during this period?",
+    "What support or resources would help you do your best work next month?",
+    "Is there important context that you would like your manager to consider during this appraisal?"
+  ],
+  "context": [
+    "What workload or system conditions should be considered alongside these measures?",
+    "Is there important context or a data limitation you would like considered in this discussion?",
+    "What support or process adjustment would help you next month?"
+  ]
+}

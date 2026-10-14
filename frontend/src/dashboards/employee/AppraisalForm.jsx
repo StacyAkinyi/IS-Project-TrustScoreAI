@@ -20,11 +20,11 @@ export default function AppraisalForm({ userId }) {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        if (!response.ok) throw new Error('Failed to connect to the AI generation engine.');
+        if (!response.ok) throw new Error('Failed to load the appraisal question bank.');
 
         const data = await response.json();
-        // 1. Log the exact data arriving from the backend to your browser console
-        console.log("Raw AI Data Received:", data);
+        // Keep the exact questions returned for this appraisal response.
+        console.log("Appraisal questions received:", data);
 
         // 2. Bulletproof state setting: Handle both new 'questions' array and old 'prompt' string
         if (data.questions && Array.isArray(data.questions)) {
@@ -102,11 +102,10 @@ export default function AppraisalForm({ userId }) {
             <div className="animate-spin inline-block w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full"></div>
             <div>
               <p className="italic text-indigo-800 font-bold text-lg animate-pulse">
-                ✨ Analysing live telemetry...
+                Reviewing recent telemetry...
               </p>
               <p className="text-sm text-indigo-600 mt-2">
-                The AI is generating 3 custom evaluation questions based on your latest metrics. <br/>
-                <strong>Please wait up to 30 seconds for the local model to finish processing.</strong>
+                Preparing three reflection questions from your latest monthly reading and its Safe, Warning, or Danger bands. These prompts support discussion; they do not produce an appraisal score.
               </p>
             </div>
           </div>
@@ -125,7 +124,7 @@ export default function AppraisalForm({ userId }) {
           <div className="space-y-6">
             <div className="bg-indigo-50 border border-indigo-200 p-6 rounded-lg shadow-sm">
               <h4 className="text-xs font-extrabold text-indigo-800 uppercase tracking-wider mb-4 border-b border-indigo-200 pb-2">
-                Performance-Triggered Appraisal Questions
+                Telemetry-informed reflection questions
               </h4>
               <ul className="space-y-3">
                 {aiQuestions.map((q, index) => (

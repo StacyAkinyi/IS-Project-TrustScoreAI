@@ -4,12 +4,14 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Optional, Any
 import hashlib
+import json
+import random
+from pathlib import Path
 import secrets
 import joblib
 import numpy as np
 from datetime import datetime, timedelta, timezone
 from pymongo import MongoClient
-from transformers import T5Tokenizer, T5ForConditionalGeneration, AutoModelForSeq2SeqLM, AutoTokenizer
 
 import models
 from models import Base
@@ -76,231 +78,95 @@ except FileNotFoundError:
     print("Warning: .pkl files not found. Ensure models are saved in the root directory.")
 
 
-# Load your trained model at startup
-nlp_tokenizer = T5Tokenizer.from_pretrained("./trustscore_question_model")
-nlp_model = T5ForConditionalGeneration.from_pretrained("./trustscore_question_model")
 
 
-@app.get("/api/v1/employees/{employee_id}/generate-prompt")
-def generate_appraisal_prompt(employee_id: int, db: Session = Depends(get_db)):
-    # 1. Fetch live telemetry from PostgreSQL
-    record = db.query(models.PerformanceRecord).filter(models.PerformanceRecord.employee_id == employee_id).order_by(models.PerformanceRecord.recorded_at.desc()).first()
-    
-    if not record:
-        return {"prompt": "How would you describe your overall performance and challenges this quarter?"}
-
-    # 2. Format telemetry for the model
-    input_text = f"loans: {record.loan_volumes}, accuracy: {record.transaction_accuracy}%, errors: {record.error_frequencies}"
-    
-    # 3. Generate the dynamic question
-    inputs = nlp_tokenizer(input_text, return_tensors="pt")
-
-    generator = cast(SupportsGenerate, nlp_model)
-    outputs = generator.generate(**inputs, max_new_tokens=50)
-
-    generated_question = nlp_tokenizer.decode(outputs[0], skip_special_tokens=True)
-    
-    return {"prompt": generated_question}    
+QUESTION_METRICS = [
+    {"key": "transaction_accuracy", "label": "transaction accuracy", "unit": "%", "max": 100, "direction": "high", "decimals": 1},
+    {"key": "workplan_completion", "label": "workplan completion", "unit": "%", "max": 120, "direction": "high", "decimals": 1},
+    {"key": "task_deadline_fulfillment_pct", "label": "tasks completed on time", "unit": "%", "max": 100, "direction": "high", "decimals": 1},
+    {"key": "complaint_resolution_rate_pct", "label": "complaint resolution", "unit": "%", "max": 100, "direction": "high", "decimals": 1},
+    {"key": "customer_satisfaction", "label": "customer satisfaction", "unit": " / 5", "max": 5, "direction": "high", "decimals": 2},
+    {"key": "error_frequencies", "label": "processing errors", "unit": "", "max": 15, "direction": "low", "decimals": 0},
+    {"key": "loan_processing_turnaround_hours", "label": "loan processing time", "unit": " hours", "max": 96, "direction": "low", "decimals": 1},
+    {"key": "non_performing_credit_pct", "label": "non-performing credit", "unit": "%", "max": 18, "direction": "low", "decimals": 1},
+    {"key": "cash_reconciliation_errors", "label": "cash reconciliation errors", "unit": "", "max": 10, "direction": "low", "decimals": 0},
+    {"key": "compliance_incidents", "label": "compliance incidents", "unit": "", "max": 4, "direction": "low", "decimals": 0},
+]
 
 
-model_path = "./trustscore_question_model"
-print("Loading AI Model into memory... This might take a few seconds.")
-tokenizer = AutoTokenizer.from_pretrained(model_path)
-model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
-print("Model loaded successfully!")
+def _metric_value(record, metric):
+    value = getattr(record, metric["key"], None)
+    return float(value) if value is not None else None
 
 
-class MetricsPayload(BaseModel):
-    employee_id: int
-    loan_volumes: int
-    transaction_accuracy: float
-    workplan_completion: float
+def _format_metric_value(value, metric):
+    return f"{value:.{metric['decimals']}f}{metric['unit']}"
 
 
-@app.post("/api/v1/employees/{employee_id}/generate-questions")
-async def generate_appraisal_questions(employee_id: int, metrics: MetricsPayload):
-    try:
-        # Construct the prompt using the employee's metrics
-        prompt = f"Given an employee with {metrics.loan_volumes} loan volumes, {metrics.transaction_accuracy}% accuracy, and {metrics.workplan_completion}% completion, generate 3 performance appraisal questions:"
-        
-        # Tokenize and generate output
-        inputs = tokenizer(prompt, return_tensors="pt")
-        outputs = model.generate(**inputs, max_new_tokens=150, do_sample=True, temperature=0.7, top_p=0.9, repetition_penalty=1.2)
-        generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        
-        # Return the AI-generated questions to the React frontend
-        return {"employee_id": employee_id, "questions": generated_text}
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+def _metric_status(record, metric):
+    value = _metric_value(record, metric)
+    if value is None:
+        return None
+    normalized = value / metric["max"]
+    if metric["direction"] == "high":
+        return "Danger" if normalized < 1 / 3 else "Warning" if normalized < 2 / 3 else "Safe"
+    return "Safe" if normalized <= 1 / 3 else "Warning" if normalized <= 2 / 3 else "Danger"
 
 
-# ---------------------------------------------------------
-# 2. Incoming Request Payloads
-# ---------------------------------------------------------
-class ComprehensiveAppraisalRequest(BaseModel):
-    employee_id: int
-    supervisor_id: int
-    loan_volumes: int
-    transaction_accuracy: float
-    workplan_completion: float
-    error_frequencies: int
-    narrative_text: str
-
-class ExecutiveOverrideRequest(BaseModel):
-    report_id: int
-    executive_id: int
-    compliance_override_status: bool
-
-# ---------------------------------------------------------
-# 3. Appraisal & AI Inference Endpoints
-# ---------------------------------------------------------
-@app.get("/")
-def health_check():
-    return {"status": "TrustScoreAI System API is active and running."}
+QUESTION_BANK_PATH = Path(__file__).resolve().parent / "data" / "appraisal_question_bank.json"
+with QUESTION_BANK_PATH.open(encoding="utf-8-sig") as question_bank_file:
+    APPRAISAL_QUESTION_BANK = json.load(question_bank_file)
 
 
-@app.post("/api/v1/submit-appraisal")
-def submit_appraisal(payload: ComprehensiveAppraisalRequest, db: Session = Depends(get_db)):
-    try:
-        # 1. Machine Learning & NLP Inference Pipeline
-        if 'rf_model' in globals() and 'tfidf_vectorizer' in globals():
-            # Structure numerical array
-            X_num = np.array([[
-                payload.loan_volumes,
-                payload.transaction_accuracy,
-                payload.workplan_completion,
-                payload.error_frequencies
-            ]])
-            
-            # Vectorize the unstructured text
-            X_text = tfidf_vectorizer.transform([payload.narrative_text]).toarray()
-            
-            # Concatenate and predict
-            X_combined = np.hstack((X_num, X_text))
-            ml_pred = float(rf_model.predict(X_combined)[0])
-        else:
-            # Fallback logic if models fail to load
-            ml_pred = (payload.transaction_accuracy + payload.workplan_completion) / 2.0
+def _build_reflection_questions(record):
+    if record is None:
+        return random.sample(APPRAISAL_QUESTION_BANK["no_data"], k=3)
 
-        unified_score = round(ml_pred, 2)
-        reliability_target = 1 if unified_score >= 70.0 else 0
+    candidates = []
+    for metric in QUESTION_METRICS:
+        value = _metric_value(record, metric)
+        state = _metric_status(record, metric)
+        if value is not None and state:
+            candidates.append({"metric": metric, "value": value, "state": state.lower()})
 
-        # 2. SQL Persistence: Performance Record (DBschema compliant)
-        perf_record = models.PerformanceRecord(
-            employee_id=payload.employee_id,
-            loan_volumes=payload.loan_volumes,
-            transaction_accuracy=payload.transaction_accuracy,
-            workplan_completion=payload.workplan_completion,
-            error_frequencies=payload.error_frequencies,
-            feedback_text=payload.narrative_text,
-            truthfulness_weight=1.0,
-            reliability_target=reliability_target
-        )
-        db.add(perf_record)
-        db.commit()
-        db.refresh(perf_record)
+    if not candidates:
+        return random.sample(APPRAISAL_QUESTION_BANK["no_data"], k=3)
 
-        # 3. SQL Persistence: Appraisal Report (DBschema compliant)
-        report = models.AppraisalReport(
-            employee_id=payload.employee_id,
-            unified_trust_score=unified_score,
-            compliance_override_status=False
-        )
-        db.add(report)
-        db.commit()
-        db.refresh(report)
+    # Sampling metrics without replacement makes the mix of question states
+    # reflect the employee's current Safe/Warning/Danger distribution.
+    selected = random.sample(candidates, k=min(3, len(candidates)))
+    questions = []
+    for item in selected:
+        state = item["state"]
+        template = random.choice(APPRAISAL_QUESTION_BANK[state])
+        questions.append(template.format(
+            metric=item["metric"]["label"],
+            value=_format_metric_value(item["value"], item["metric"]),
+        ))
 
-        # 4. Safe Mongo Logging (Prevents 500 error if Mongo is offline during tests)
-        try:
-            if 'mongo_db' in globals() and mongo_db is not None:
-                mongo_db["unstructured_feedback"].insert_one({
-                    "employee_id": payload.employee_id,
-                    "supervisor_id": payload.supervisor_id,
-                    "narrative_text": payload.narrative_text,
-                    "report_id": report.report_id
-                })
-        except Exception:
-            pass  # Fall back gracefully in test environment
-
-        return {
-            "status": "success",
-            "employee_id": payload.employee_id,
-            "report_id": report.report_id,
-            "unified_trust_score": unified_score,
-            "reliability_target": bool(reliability_target)
-        }
-
-    except Exception as e:
-        db.rollback() # Rollback SQL transaction on failure
-        raise HTTPException(status_code=500, detail=str(e))
-
-# ---------------------------------------------------------
-# 4. Employee Dashboard Endpoints
-# ---------------------------------------------------------
-@app.get("/api/v1/employees/{employee_id}", response_model=schemas.EmployeeResponse)
-def get_employee(
-    employee_id: int,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    if current_user["role"] == "employee" and current_user["user_id"] != employee_id:
-        raise HTTPException(status_code=403, detail="Access denied")
-
-    employee = db.query(models.Employee).filter(models.Employee.employee_id == employee_id).first()
-    if not employee:
-        raise HTTPException(status_code=404, detail="Employee not found")
-    return employee
-
-@app.get("/api/v1/employees/{employee_id}/performance", response_model=List[schemas.PerformanceRecordResponse])
-def get_employee_performance(
-    employee_id: int,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    if current_user["role"] == "employee" and current_user["user_id"] != employee_id:
-        raise HTTPException(status_code=403, detail="Access denied")
-
-    return db.query(models.PerformanceRecord).filter(
-        models.PerformanceRecord.employee_id == employee_id
-    ).all()
-
-@app.get("/api/v1/employees/{employee_id}/reports", response_model=List[schemas.AppraisalReportResponse])
-def get_employee_reports(
-    employee_id: int,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    if current_user["role"] == "employee" and current_user["user_id"] != employee_id:
-        raise HTTPException(status_code=403, detail="Access denied")
-
-    return db.query(models.AppraisalReport).filter(
-        models.AppraisalReport.employee_id == employee_id
-    ).all()
+    while len(questions) < 3:
+        questions.append(random.choice(APPRAISAL_QUESTION_BANK["context"]))
+    return questions[:3]
 
 @app.get("/api/v1/employees/{employee_id}/generate-prompt")
-def generate_appraisal_prompt(employee_id: int, db: Session = Depends(get_db)):
-    if not nlp_model or not nlp_tokenizer:
-        return {"questions": ["What were your main achievements?", "What challenges did you face?", "What support do you need?"]}
+def generate_appraisal_prompt(
+    employee_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    if current_user.get("employee_id") != employee_id:
+        raise HTTPException(status_code=403, detail="Access denied")
 
-    record = db.query(models.PerformanceRecord).filter(
+    latest_record = db.query(models.PerformanceRecord).filter(
         models.PerformanceRecord.employee_id == employee_id
     ).order_by(models.PerformanceRecord.recorded_at.desc()).first()
-    
-    if not record:
-        return {"questions": ["What are your initial goals?", "What resources do you need?", "How are you adapting to the workflows?"]}
+    return {
+        "employee_id": employee_id,
+        "questions": _build_reflection_questions(latest_record),
+        "based_on_latest_record": latest_record is not None,
+        "method": "random question-bank sampling weighted by current KPI states",
+    }
 
-    input_text = f"loans: {record.loan_volumes}, accuracy: {record.transaction_accuracy}%, errors: {record.error_frequencies}"
-    
-    input_ids = nlp_tokenizer(input_text, return_tensors="pt").input_ids
-    # Increased max_length to 150 to accommodate 3 full questions
-    outputs = nlp_model.generate(input_ids, max_length=150, num_beams=4, early_stopping=True)
-    generated_text = nlp_tokenizer.decode(outputs[0], skip_special_tokens=True)
-    
-    # Split the output string into a list of 3 questions
-    question_list = [q.strip() for q in generated_text.split('|') if q.strip()]
-    
-    return {"questions": question_list}    
 
 # ---------------------------------------------------------
 # 5. Supervisor Dashboard Endpoints
@@ -522,3 +388,4 @@ from typing import Any, Protocol, cast
 class SupportsGenerate(Protocol):
     def generate(self, *args: Any, **kwargs: Any) -> Any:
         ...
+

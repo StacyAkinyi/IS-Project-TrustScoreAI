@@ -106,7 +106,7 @@ export default function EmployeeDashboard({ userId }) {
               className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 hover:border-blue-500 cursor-pointer transition text-center space-y-2"
             >
               <h3 className="text-lg font-bold text-blue-900">AI-Driven Appraisals</h3>
-              <p className="text-slate-500 text-sm">Submit self-appraisals and reflections for automated machine learning evaluation.</p>
+              <p className="text-slate-500 text-sm">Respond to reflection questions based on recent telemetry and add context for your appraisal discussion.</p>
             </div>
 
             <div 
@@ -170,7 +170,7 @@ export default function EmployeeDashboard({ userId }) {
       {activeView === 'appraisals' && (
         <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
           <h3 className="text-xl font-bold text-blue-900 mb-2">Submit & Complete Self-Appraisals</h3>
-          <p className="text-slate-600 text-sm mb-6">Input your operational metrics and reflection text below to trigger the backend machine learning and NLP scoring pipeline.</p>
+          <p className="text-slate-600 text-sm mb-6">Review three follow-up questions based on your recent telemetry, then add your perspective. Your responses provide context for discussion.</p>
           {activeView === 'appraisals' && (
             <AppraisalForm 
               employee={employeeData}  
