@@ -114,7 +114,7 @@ export default function EmployeeDashboard({ userId }) {
               className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 hover:border-blue-500 cursor-pointer transition text-center space-y-2"
             >
               <h3 className="text-lg font-bold text-blue-900">AI Coaching Chatbot</h3>
-              <p className="text-slate-500 text-sm">Chat 24/7 with the assistant for personalized behavioral guidance.</p>
+              <p className="text-slate-500 text-sm">Get practical help with skill building, career development, compliance awareness, wellbeing, and prioritization.</p>
             </div>
           </div>
         </div>
@@ -183,8 +183,8 @@ export default function EmployeeDashboard({ userId }) {
       {/* 4. Sub-Page: AI Chatbot */}
       {activeView === 'chatbot' && (
         <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-          <h3 className="text-xl font-bold text-blue-900 mb-2">24/7 AI Coaching Assistant</h3>
-          <p className="text-slate-600 text-sm mb-4">Query your metrics or ask for behavioral guidance based on your recent score fluctuations.</p>
+          <h3 className="text-xl font-bold text-blue-900 mb-2">AI Coaching Assistant</h3>
+          <p className="text-slate-600 text-sm mb-4">Choose a coaching topic and get practical guidance tailored to your role.</p>
           <CoachingChatbot userId={userId} />
         </div>
       )}

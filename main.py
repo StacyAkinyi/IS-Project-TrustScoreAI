@@ -2,8 +2,11 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from typing import List, Optional, Any
+from dotenv import load_dotenv
+from openai import OpenAI, OpenAIError
+from typing import List, Optional, Any, Literal
 import hashlib
+import os
 import json
 import random
 from pathlib import Path
@@ -19,6 +22,8 @@ import schemas
 import auth
 from database import engine, get_db
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 security = HTTPBearer()
 
@@ -232,6 +237,113 @@ def save_self_appraisal(
         "message": "Your reflection and the three questions shown are saved together in PostgreSQL.",
     }
 
+
+COACHING_TOPICS = {
+    "skills": "practical skill development and practice",
+    "role": "understanding role expectations and day-to-day responsibilities",
+    "career": "career path exploration and continuous development",
+    "compliance": "general compliance awareness and ethical decision-making",
+    "wellbeing": "work stress, workload, and sustainable wellbeing",
+    "prioritization": "time management and task prioritization",
+}
+
+
+class CoachingMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+
+class CoachingChatRequest(BaseModel):
+    topic: str
+    messages: List[CoachingMessage]
+
+
+@app.post("/api/v1/coaching/chat")
+def coaching_chat(
+    payload: CoachingChatRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    if current_user.get("role") != "employee":
+        raise HTTPException(status_code=403, detail="Only employees can use the coaching chat")
+    if payload.topic not in COACHING_TOPICS:
+        raise HTTPException(status_code=422, detail="Choose one of the available coaching topics")
+    if not payload.messages or len(payload.messages) > 12:
+        raise HTTPException(status_code=422, detail="Send between one and twelve recent chat messages")
+    if payload.messages[-1].role != "user":
+        raise HTTPException(status_code=422, detail="The latest chat message must be from you")
+    if any(not message.content.strip() or len(message.content) > 2000 for message in payload.messages):
+        raise HTTPException(status_code=422, detail="Each message must contain 1 to 2,000 characters")
+
+    employee = db.query(models.Employee).filter(
+        models.Employee.employee_id == current_user["employee_id"],
+        models.Employee.is_active.is_(True),
+    ).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee account not found")
+
+    latest_message = payload.messages[-1].content.lower()
+    urgent_phrases = ("suicid", "kill myself", "end my life", "hurt myself", "self-harm", "self harm")
+    if any(phrase in latest_message for phrase in urgent_phrases):
+        return {
+            "reply": (
+                "I’m sorry you’re facing this. I’m a work-coaching tool, not emergency or clinical support. "
+                "If you may be in immediate danger, contact local emergency services now and reach out to "
+                "someone you trust who can stay with you. You can also contact a qualified health professional "
+                "or your organization’s wellbeing support."
+            ),
+            "topic": payload.topic,
+        }
+
+    if payload.topic == "compliance":
+        return {
+            "reply": (
+                "I can help you think through a compliance concern in general terms, but your organization’s "
+                "approved policies and procedures are not connected to this coach yet. Please check the current "
+                "policy or contact your Compliance team before acting. Avoid sharing customer, account, or other "
+                "confidential details here. If you describe the situation without identifying details, I can help "
+                "you prepare questions to ask."
+            ),
+            "topic": payload.topic,
+        }
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="The coaching service is not configured yet. Add OPENAI_API_KEY to the backend .env file.",
+        )
+
+    instructions = (
+        "You are a supportive workplace learning coach for a bank employee. "
+        f"The employee chose this topic: {COACHING_TOPICS[payload.topic]}. "
+        f"Their stated role is {employee.role!r} in the {employee.department!r} department. "
+        "Give practical, respectful coaching that helps the employee build skills and make their own decisions. "
+        "Use plain language, suggest a small number of concrete next steps, and ask at most one useful follow-up question. "
+        "Do not estimate, predict, or try to improve an employee score; do not make hiring, promotion, discipline, or other employment decisions. "
+        "Do not claim knowledge of the bank's internal policy. For specific policy or legal questions, direct the employee to approved policy material or Compliance. "
+        "For stress or burnout, be empathetic, do not diagnose or replace professional care, and suggest appropriate human support when needed. "
+        "Do not request or repeat customer identifiers, account details, passwords, or other confidential information."
+    )
+    client = OpenAI(api_key=api_key)
+    try:
+        response = client.responses.create(
+            model=os.getenv("OPENAI_MODEL", "gpt-6-luna"),
+            instructions=instructions,
+            input=[
+                {"role": message.role, "content": message.content.strip()}
+                for message in payload.messages[-12:]
+            ],
+            max_output_tokens=500,
+            store=False,
+        )
+    except OpenAIError:
+        raise HTTPException(status_code=502, detail="The coaching service could not answer right now. Please try again shortly")
+
+    reply = response.output_text.strip()
+    if not reply:
+        raise HTTPException(status_code=502, detail="The coaching service returned an empty response")
+    return {"reply": reply, "topic": payload.topic}
 
 # ---------------------------------------------------------
 # 5. Supervisor Dashboard Endpoints

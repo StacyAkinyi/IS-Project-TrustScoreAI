@@ -4,3 +4,6 @@ results/
 *.pkl
 *.h5
 *.pt
+.env
+.env.*
+!.env.example
