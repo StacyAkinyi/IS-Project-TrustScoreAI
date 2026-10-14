@@ -11,6 +11,7 @@ from sqlalchemy import (
     String,
     Text,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -165,6 +166,7 @@ class UnstructuredFeedback(Base):
     supervisor_id = Column(Integer, ForeignKey("immediate_supervisors.sup_id"), nullable=True)
     author_employee_id = Column(Integer, ForeignKey("employees.employee_id"), nullable=True)
     narrative_text = Column(Text, nullable=False)
+    question_snapshot = Column(JSONB, nullable=True)
     sentiment_polarity_value = Column(Float, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
 

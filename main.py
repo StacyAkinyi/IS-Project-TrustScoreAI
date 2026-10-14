@@ -119,8 +119,18 @@ with QUESTION_BANK_PATH.open(encoding="utf-8-sig") as question_bank_file:
 
 
 def _build_reflection_questions(record):
+    def make_question(text, state="no_data", metric=None, value=None):
+        return {
+            "text": text,
+            "state": state,
+            "metric_key": metric["key"] if metric else None,
+            "metric_label": metric["label"] if metric else None,
+            "value": _format_metric_value(value, metric) if metric and value is not None else None,
+            "bank_version": 1,
+        }
+
     if record is None:
-        return random.sample(APPRAISAL_QUESTION_BANK["no_data"], k=3)
+        return [make_question(text) for text in random.sample(APPRAISAL_QUESTION_BANK["no_data"], k=3)]
 
     candidates = []
     for metric in QUESTION_METRICS:
@@ -130,24 +140,21 @@ def _build_reflection_questions(record):
             candidates.append({"metric": metric, "value": value, "state": state.lower()})
 
     if not candidates:
-        return random.sample(APPRAISAL_QUESTION_BANK["no_data"], k=3)
+        return [make_question(text) for text in random.sample(APPRAISAL_QUESTION_BANK["no_data"], k=3)]
 
-    # Sampling metrics without replacement makes the mix of question states
-    # reflect the employee's current Safe/Warning/Danger distribution.
     selected = random.sample(candidates, k=min(3, len(candidates)))
     questions = []
     for item in selected:
-        state = item["state"]
-        template = random.choice(APPRAISAL_QUESTION_BANK[state])
-        questions.append(template.format(
-            metric=item["metric"]["label"],
-            value=_format_metric_value(item["value"], item["metric"]),
-        ))
+        state, metric, value = item["state"], item["metric"], item["value"]
+        text = random.choice(APPRAISAL_QUESTION_BANK[state]).format(
+            metric=metric["label"],
+            value=_format_metric_value(value, metric),
+        )
+        questions.append(make_question(text, state, metric, value))
 
     while len(questions) < 3:
-        questions.append(random.choice(APPRAISAL_QUESTION_BANK["context"]))
+        questions.append(make_question(random.choice(APPRAISAL_QUESTION_BANK["context"])))
     return questions[:3]
-
 @app.get("/api/v1/employees/{employee_id}/generate-prompt")
 def generate_appraisal_prompt(
     employee_id: int,
@@ -160,11 +167,69 @@ def generate_appraisal_prompt(
     latest_record = db.query(models.PerformanceRecord).filter(
         models.PerformanceRecord.employee_id == employee_id
     ).order_by(models.PerformanceRecord.recorded_at.desc()).first()
+    question_snapshot = _build_reflection_questions(latest_record)
     return {
         "employee_id": employee_id,
-        "questions": _build_reflection_questions(latest_record),
+        "questions": [item["text"] for item in question_snapshot],
+        "question_snapshot": question_snapshot,
         "based_on_latest_record": latest_record is not None,
         "method": "random question-bank sampling weighted by current KPI states",
+    }
+
+
+class SelfAppraisalSubmission(BaseModel):
+    generated_questions: List[str]
+    question_snapshot: List[dict]
+    feedback_text: str
+
+
+@app.post("/evaluate-employee/")
+def save_self_appraisal(
+    payload: SelfAppraisalSubmission,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    if current_user.get("role") != "employee":
+        raise HTTPException(status_code=403, detail="Only employees can submit a self-appraisal")
+    if len(payload.generated_questions) != 3 or len(payload.question_snapshot) != 3:
+        raise HTTPException(status_code=422, detail="Exactly three reflection questions are required")
+    snapshot_texts = [item.get("text") for item in payload.question_snapshot]
+    if snapshot_texts != payload.generated_questions:
+        raise HTTPException(status_code=422, detail="The saved questions must match the questions shown")
+
+    response_text = payload.feedback_text.strip()
+    if not response_text:
+        raise HTTPException(status_code=422, detail="Please enter your reflection before submitting")
+    if len(response_text) > 10000:
+        raise HTTPException(status_code=422, detail="Your reflection must be 10,000 characters or fewer")
+
+    employee_id = current_user["employee_id"]
+    employee = db.query(models.Employee).filter(
+        models.Employee.employee_id == employee_id,
+        models.Employee.is_active.is_(True),
+    ).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee account not found")
+
+    feedback = models.UnstructuredFeedback(
+        employee_id=employee_id,
+        supervisor_id=employee.supervisor_id,
+        author_employee_id=employee_id,
+        narrative_text=response_text,
+        question_snapshot=payload.question_snapshot,
+    )
+    try:
+        db.add(feedback)
+        db.commit()
+        db.refresh(feedback)
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="The reflection could not be saved. Please try again")
+
+    return {
+        "status": "saved",
+        "feedback_id": feedback.feedback_id,
+        "message": "Your reflection and the three questions shown are saved together in PostgreSQL.",
     }
 
 

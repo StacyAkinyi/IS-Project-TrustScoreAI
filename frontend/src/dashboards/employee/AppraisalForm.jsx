@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 
-export default function AppraisalForm({ userId }) {
+export default function AppraisalForm({ userId, employee }) {
+  const employeeId = userId ?? employee?.employee_id;
   const [aiQuestions, setAiQuestions] = useState([]);
+  const [questionSnapshot, setQuestionSnapshot] = useState([]);
   const [formData, setFormData] = useState({ narrative_feedback: '' });
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -16,9 +18,17 @@ export default function AppraisalForm({ userId }) {
         setLoading(true);
         setError('');
 
-        const response = await fetch(`http://127.0.0.1:8000/api/v1/employees/${userId}/generate-prompt`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 10000);
+        let response;
+        try {
+          response = await fetch(`http://127.0.0.1:8000/api/v1/employees/${employeeId}/generate-prompt`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            signal: controller.signal,
+          });
+        } finally {
+          window.clearTimeout(timeoutId);
+        }
 
         if (!response.ok) throw new Error('Failed to load the appraisal question bank.');
 
@@ -29,6 +39,7 @@ export default function AppraisalForm({ userId }) {
         // 2. Bulletproof state setting: Handle both new 'questions' array and old 'prompt' string
         if (data.questions && Array.isArray(data.questions)) {
           setAiQuestions(data.questions);
+          setQuestionSnapshot(Array.isArray(data.question_snapshot) ? data.question_snapshot : data.questions.map((text) => ({ text, state: "unknown", metric_key: null, metric_label: null, value: null, bank_version: 1 })));
         } else if (data.prompt) {
           // Fallback just in case the backend hasn't updated properly
           const splitQuestions = data.prompt.split('|').map(q => q.trim()).filter(q => q);
@@ -39,14 +50,21 @@ export default function AppraisalForm({ userId }) {
 
       } catch (err) {
         console.error(err);
-        setError('Could not load AI prompts. Please check your FastAPI terminal for errors.');
+        setError(err.name === 'AbortError'
+          ? 'Loading questions timed out. Check that FastAPI and PostgreSQL are running, then reopen this page.'
+          : 'Could not load the appraisal questions. Check that FastAPI and PostgreSQL are running.');
       } finally {
         setLoading(false);
       }
     };
 
-    if (userId) getDynamicPrompt();
-  }, [userId, token]);
+    if (employeeId) {
+      getDynamicPrompt();
+    } else {
+      setError('The employee ID is missing, so appraisal questions cannot be loaded.');
+      setLoading(false);
+    }
+  }, [employeeId, token]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -59,8 +77,8 @@ export default function AppraisalForm({ userId }) {
 
     try {
       const payload = {
-        employee_code: `EMP-${userId}`,
         generated_questions: aiQuestions,
+        question_snapshot: questionSnapshot,
         feedback_text: formData.narrative_feedback
       };
 
@@ -74,7 +92,7 @@ export default function AppraisalForm({ userId }) {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || 'Failed to process qualitative feedback.');
+      if (!response.ok) throw new Error(data.detail || 'Failed to save your reflection.');
 
       setResult(data);
       setFormData({ narrative_feedback: '' });
@@ -91,7 +109,7 @@ export default function AppraisalForm({ userId }) {
       {result && (
         <div className="bg-green-50 border border-green-200 p-5 rounded-lg space-y-2 mb-4">
           <h4 className="font-extrabold text-green-900 text-lg">Appraisal Successfully Logged</h4>
-          <p className="text-sm text-slate-700">Your Q&A data has been securely saved to the unstructured document database.</p>
+          <p className="text-sm text-slate-700">{result.message}</p>
         </div>
       )}
 
