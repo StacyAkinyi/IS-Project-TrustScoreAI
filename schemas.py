@@ -73,8 +73,19 @@ class PerformanceRecordResponse(BaseModel):
     transaction_accuracy: float
     workplan_completion: float
     error_frequencies: int
+    loan_processing_turnaround_hours: float
+    accounts_opened: int
+    non_performing_credit_pct: float
+    task_deadline_fulfillment_pct: float
+    cash_reconciliation_errors: int
+    customer_satisfaction: float
+    compliance_incidents: int
+    complaint_resolution_rate_pct: float
+    digital_channel_adoption_pct: float
     feedback_text: Optional[str] = None
+    truthfulness_weight: float
     reliability_target: int
+    recorded_at: datetime
 
     class Config:
         from_attributes = True

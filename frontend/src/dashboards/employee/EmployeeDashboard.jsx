@@ -124,7 +124,7 @@ export default function EmployeeDashboard({ userId }) {
       {activeView === 'kpis' && (
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-            <h3 className="text-xl font-bold text-blue-900 mb-4">Monthly Performance & Regression Forecasts</h3>
+            <h3 className="text-xl font-bold text-blue-900 mb-4">Performance Overview & KPI Traffic Light</h3>
             <PerformanceCharts performanceRecords={performanceRecords} />
           </div>
 
