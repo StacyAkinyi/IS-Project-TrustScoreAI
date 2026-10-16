@@ -123,6 +123,13 @@ class AppraisalSourceMappingResponse(BaseModel):
         from_attributes = True
 
 # --- Authentication Schemas ---
+class SupervisorAppraisalSubmission(BaseModel):
+    employee_id: int
+    answers: list[dict]
+
+class ReviewClarificationRequest(BaseModel):
+    message: str
+
 class ExecutiveOverrideRequest(BaseModel):
     report_id: int
     executive_id: int

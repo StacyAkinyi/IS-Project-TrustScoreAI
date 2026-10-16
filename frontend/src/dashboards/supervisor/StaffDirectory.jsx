@@ -42,7 +42,7 @@ export default function StaffDirectory({ teamMembers, onSelectEmployee, onSchedu
                     onClick={() => onSelectEmployee(member)}
                     className="bg-teal-500 hover:bg-teal-600 text-slate-950 font-bold px-3 py-1.5 rounded text-xs transition"
                   >
-                    Input Qualitative Review
+                    Start Semiannual Appraisal
                   </button>
                 </td>
               </tr>

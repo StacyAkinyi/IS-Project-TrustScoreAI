@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PerformanceCharts from './PerformanceCharts';
 import AppraisalForm from './AppraisalForm';
 import CoachingChatbot from './CoachingChatbot';
+import SupervisorAppraisalInbox from './SupervisorAppraisalInbox';
 import AIQuestionGenerator from './AIQuestionGenerator';
 
 
@@ -9,6 +10,7 @@ import AIQuestionGenerator from './AIQuestionGenerator';
 export default function EmployeeDashboard({ userId }) {
   const [employeeData, setEmployeeData] = useState(null);
   const [performanceRecords, setPerformanceRecords] = useState([]);
+  const [reviewCount, setReviewCount] = useState(0);
   const [reports, setReports] = useState([]);
   const [activeView, setActiveView] = useState('home'); 
   const [loading, setLoading] = useState(true);
@@ -31,6 +33,10 @@ export default function EmployeeDashboard({ userId }) {
         if (!empRes.ok) throw new Error(empJson.detail || `Profile request failed (${empRes.status})`);
         setEmployeeData(empJson);
         const employeeId = empJson.employee_id;
+        try {
+          const reviewRes = await fetch(`http://127.0.0.1:8000/api/v1/employees/${employeeId}/supervisor-appraisals`, { headers });
+          if (reviewRes.ok) { const reviewData = await reviewRes.json(); setReviewCount(reviewData.length); }
+        } catch (reviewError) { console.warn('Could not load appraisal notice count:', reviewError); }
 
         // 2. Fetch Performance Records
         const perfRes = await fetch(`http://127.0.0.1:8000/api/v1/employees/${employeeId}/performance`, { headers });
@@ -94,7 +100,7 @@ export default function EmployeeDashboard({ userId }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             <div 
               onClick={() => setActiveView('kpis')}
               className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 hover:border-blue-500 cursor-pointer transition text-center space-y-2"
@@ -109,6 +115,11 @@ export default function EmployeeDashboard({ userId }) {
             >
               <h3 className="text-lg font-bold text-blue-900">AI-Driven Appraisals</h3>
               <p className="text-slate-500 text-sm">Respond to reflection questions based on recent telemetry and add context for your appraisal discussion.</p>
+            </div>
+
+            <div onClick={() => setActiveView('reviews')} className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 hover:border-blue-500 cursor-pointer transition text-center space-y-2">
+              <h3 className="text-lg font-bold text-blue-900">Supervisor Reviews {reviewCount > 0 ? `(${reviewCount})` : ''}</h3>
+              <p className="text-slate-500 text-sm">Read your semiannual appraisal and ask your supervisor for clarification.</p>
             </div>
 
             <div 
@@ -180,6 +191,10 @@ export default function EmployeeDashboard({ userId }) {
             />
           )}
         </div>
+      )}
+
+      {activeView === 'reviews' && (
+        <section className="space-y-4"><h3 className="text-xl font-bold text-blue-900">Supervisor appraisals</h3><p className="text-sm text-slate-600">A submitted review is tied to your employee record. You can ask your supervisor to clarify any part.</p><SupervisorAppraisalInbox employeeId={employeeData?.employee_id} /></section>
       )}
 
       {/* 4. Sub-Page: AI Chatbot */}

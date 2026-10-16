@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
+from zoneinfo import ZoneInfo
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from openai import OpenAI, OpenAIError
@@ -112,6 +114,25 @@ except FileNotFoundError:
     print("Warning: .pkl files not found. Ensure models are saved in the root directory.")
 
 
+
+
+SUPERVISOR_APPRAISAL_QUESTIONS = [
+    {"id": "procedure_adherence", "type": "yes_no", "prompt": "Did the employee follow the documented procedures relevant to their role during this review period?"},
+    {"id": "accuracy_expectations", "type": "yes_no", "prompt": "Did the employee meet the agreed accuracy expectations, based on available work evidence?"},
+    {"id": "timeliness_expectations", "type": "yes_no", "prompt": "Did the employee meet agreed deadlines for assigned work?"},
+    {"id": "risk_escalation", "type": "yes_no", "prompt": "Did the employee escalate material errors, customer concerns, or compliance risks through the expected channels?"},
+    {"id": "team_contribution", "type": "yes_no", "prompt": "Did the employee meet the agreed expectations for respectful collaboration and customer service?"},
+    {"id": "evidence_achievements", "type": "open", "prompt": "What are up to two specific achievements from this period, and what evidence supports them?"},
+    {"id": "evidence_strengths", "type": "open", "prompt": "Which role-related strengths did you observe? Give a specific work example for each."},
+    {"id": "context_barriers", "type": "open", "prompt": "What work-related barriers or changing conditions affected results, and what context should be considered?"},
+    {"id": "development_goal", "type": "open", "prompt": "What is one practical development goal for the next six months, and how will progress be observed?"},
+    {"id": "support_needed", "type": "open", "prompt": "What support, coaching, tools, or workload changes would help the employee succeed?"},
+]
+
+
+def current_review_period():
+    today = datetime.now(ZoneInfo("Africa/Nairobi"))
+    return f"{today.year}-H{1 if today.month <= 6 else 2}"
 
 
 QUESTION_METRICS = [
@@ -386,13 +407,42 @@ def coaching_chat(
             detail="The coaching service is not configured yet. Add OPENAI_API_KEY to the backend .env file.",
         )
 
+    latest_record = db.query(models.PerformanceRecord).filter_by(
+        employee_id=employee.employee_id
+    ).order_by(models.PerformanceRecord.recorded_at.desc()).first()
+    latest_report = db.query(models.AppraisalReport).filter_by(
+        employee_id=employee.employee_id
+    ).order_by(models.AppraisalReport.generation_date.desc()).first()
+    supervisor_profile = db.query(models.ImmediateSupervisor).filter_by(
+        supervisor_id=employee.supervisor_id
+    ).first() if employee.supervisor_id is not None else None
+    employee_context = {
+        "employee": employee.full_name,
+        "role": employee.role,
+        "department": employee.department,
+        "supervisor": supervisor_profile.full_name if supervisor_profile else None,
+        "branch": employee.branch_location,
+        "latest_trust_score": latest_report.unified_trust_score if latest_report else None,
+        "latest_score_date": latest_report.generation_date.isoformat() if latest_report else None,
+        "latest_telemetry": [
+            {"metric": metric["label"], "value": _metric_value(latest_record, metric),
+             "unit": metric["unit"], "state": _metric_status(latest_record, metric)}
+            for metric in QUESTION_METRICS
+        ] if latest_record else [],
+        "schedule_data_available": False,
+    }
+
     instructions = (
         "You are a supportive workplace learning coach for a bank employee. "
         f"The employee chose this topic: {COACHING_TOPICS[payload.topic]}. "
         f"Their stated role is {employee.role!r} in the {employee.department!r} department. "
+        f"Verified profile, latest score, and telemetry context: {json.dumps(employee_context, ensure_ascii=False)}. "
         "Give practical, respectful coaching that helps the employee build skills and make their own decisions. "
         "Use plain language, suggest a small number of concrete next steps, and ask at most one useful follow-up question. "
         "Do not estimate, predict, or try to improve an employee score; do not make hiring, promotion, discipline, or other employment decisions. "
+        "If asked about a schedule, say no schedule data is currently connected. Do not invent a score, supervisor, telemetry value, or schedule. "
+        "Treat KPI colors as demonstration bands and scores as historical information, not employment decisions or predictions. "
+        "Do not infer burnout, mental health, character, or causes from metrics. "
         "Do not claim knowledge of the bank's internal policy. For specific policy or legal questions, direct the employee to approved policy material or Compliance. "
         "For stress or burnout, be empathetic, do not diagnose or replace professional care, and suggest appropriate human support when needed. "
         "Do not request or repeat customer identifiers, account details, passwords, or other confidential information."
@@ -417,7 +467,325 @@ def coaching_chat(
         raise HTTPException(status_code=502, detail="The coaching service returned an empty response")
     return {"reply": reply, "topic": payload.topic}
 
+@app.get("/api/v1/supervisors/{supervisor_id}/appraisal-template")
+def get_supervisor_appraisal_template(
+    supervisor_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    ensure_supervisor_access(db, current_user, supervisor_id)
+    if current_user.get("role") != "supervisor":
+        raise HTTPException(status_code=403, detail="Only the assigned supervisor can issue this appraisal")
+    return {"period_code": current_review_period(), "questions": SUPERVISOR_APPRAISAL_QUESTIONS}
+
+
+@app.post("/api/v1/supervisors/{supervisor_id}/appraisals")
+def submit_supervisor_appraisal(
+    supervisor_id: int,
+    payload: schemas.SupervisorAppraisalSubmission,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    ensure_supervisor_access(db, current_user, supervisor_id)
+    if current_user.get("role") != "supervisor":
+        raise HTTPException(status_code=403, detail="Only the assigned supervisor can submit this appraisal")
+    employee = db.query(models.Employee).filter_by(
+        employee_id=payload.employee_id, supervisor_id=supervisor_id
+    ).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee is not assigned to this supervisor")
+    if len(payload.answers) != 10:
+        raise HTTPException(status_code=422, detail="The semiannual form requires exactly 10 answers")
+    answers_by_id = {answer.get("question_id"): answer.get("answer") for answer in payload.answers}
+    expected_ids = {question["id"] for question in SUPERVISOR_APPRAISAL_QUESTIONS}
+    if set(answers_by_id) != expected_ids:
+        raise HTTPException(status_code=422, detail="The form answers do not match the current appraisal questions")
+    snapshot = []
+    yes_count = 0
+    for question in SUPERVISOR_APPRAISAL_QUESTIONS:
+        answer = answers_by_id[question["id"]]
+        if question["type"] == "yes_no":
+            if not isinstance(answer, bool):
+                raise HTTPException(status_code=422, detail="Answer each yes/no question with Yes or No")
+            yes_count += int(answer)
+        else:
+            if not isinstance(answer, str) or len(answer.strip()) < 10 or len(answer) > 3000:
+                raise HTTPException(status_code=422, detail="Each open response must contain 10 to 3,000 characters")
+            answer = answer.strip()
+        snapshot.append({**question, "answer": answer})
+    record = models.SupervisorAppraisal(
+        employee_id=employee.employee_id,
+        supervisor_id=supervisor_id,
+        period_code=current_review_period(),
+        answers_snapshot=snapshot,
+        yes_count=yes_count,
+    )
+    try:
+        db.add(record)
+        db.commit()
+        db.refresh(record)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="A supervisor appraisal is already submitted for this employee in this half-year period")
+    return {"appraisal_id": record.appraisal_id, "employee_id": record.employee_id,
+            "period_code": record.period_code, "yes_count": record.yes_count,
+            "employee_notified_at": record.employee_notified_at,
+            "message": "The appraisal is saved and available in the employee dashboard."}
+
+
+@app.get("/api/v1/supervisors/{supervisor_id}/appraisals")
+def get_supervisor_appraisals(
+    supervisor_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    ensure_supervisor_access(db, current_user, supervisor_id)
+    rows = db.query(models.SupervisorAppraisal, models.Employee.full_name).join(
+        models.Employee, models.Employee.employee_id == models.SupervisorAppraisal.employee_id
+    ).filter(models.SupervisorAppraisal.supervisor_id == supervisor_id).order_by(
+        models.SupervisorAppraisal.created_at.desc()
+    ).all()
+    return [{"appraisal_id": row.appraisal_id, "employee_id": row.employee_id,
+             "employee_name": full_name, "period_code": row.period_code,
+             "answers": row.answers_snapshot, "yes_count": row.yes_count,
+             "review_request_text": row.review_request_text,
+             "review_requested_at": row.review_requested_at,
+             "created_at": row.created_at} for row, full_name in rows]
+
+
+@app.get("/api/v1/employees/{employee_id}/supervisor-appraisals")
+def get_employee_supervisor_appraisals(
+    employee_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    if current_user.get("role") != "employee" or current_user.get("employee_id") != employee_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    rows = db.query(models.SupervisorAppraisal).filter_by(employee_id=employee_id).order_by(
+        models.SupervisorAppraisal.created_at.desc()
+    ).all()
+    return [{"appraisal_id": row.appraisal_id, "period_code": row.period_code,
+             "answers": row.answers_snapshot, "yes_count": row.yes_count,
+             "employee_notified_at": row.employee_notified_at,
+             "review_request_text": row.review_request_text,
+             "review_requested_at": row.review_requested_at,
+             "created_at": row.created_at} for row in rows]
+
+
+@app.post("/api/v1/employees/{employee_id}/supervisor-appraisals/{appraisal_id}/review-request")
+def request_appraisal_clarification(
+    employee_id: int,
+    appraisal_id: int,
+    payload: schemas.ReviewClarificationRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    if current_user.get("role") != "employee" or current_user.get("employee_id") != employee_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    message = payload.message.strip()
+    if len(message) < 10 or len(message) > 2000:
+        raise HTTPException(status_code=422, detail="Please enter 10 to 2,000 characters describing what needs clarification")
+    record = db.query(models.SupervisorAppraisal).filter_by(
+        appraisal_id=appraisal_id, employee_id=employee_id
+    ).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Supervisor appraisal not found")
+    if record.review_requested_at:
+        raise HTTPException(status_code=409, detail="A clarification request has already been sent for this appraisal")
+    record.review_request_text = message
+    record.review_requested_at = datetime.now(timezone.utc)
+    db.commit()
+    return {"status": "sent", "message": "Your clarification request is now visible to your supervisor."}
+
+
+@app.get("/api/v1/supervisors/{supervisor_id}/team-overview")
+def get_supervisor_team_overview(
+    supervisor_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    ensure_supervisor_access(db, current_user, supervisor_id)
+    employees = db.query(models.Employee).filter_by(supervisor_id=supervisor_id).order_by(
+        models.Employee.full_name.asc()
+    ).all()
+    employee_ids = [employee.employee_id for employee in employees]
+    latest_records = {}
+    if employee_ids:
+        records = db.query(models.PerformanceRecord).filter(
+            models.PerformanceRecord.employee_id.in_(employee_ids)
+        ).order_by(models.PerformanceRecord.recorded_at.desc()).all()
+        for record in records:
+            latest_records.setdefault(record.employee_id, record)
+    latest_reports = {}
+    if employee_ids:
+        reports = db.query(models.AppraisalReport).filter(
+            models.AppraisalReport.employee_id.in_(employee_ids)
+        ).order_by(models.AppraisalReport.generation_date.desc()).all()
+        for report in reports:
+            latest_reports.setdefault(report.employee_id, report)
+    overview = []
+    for employee in employees:
+        record = latest_records.get(employee.employee_id)
+        metrics = []
+        if record:
+            for metric in QUESTION_METRICS:
+                value = _metric_value(record, metric)
+                if value is not None:
+                    metrics.append({"key": metric["key"], "label": metric["label"],
+                                    "value": value, "unit": metric["unit"],
+                                    "state": _metric_status(record, metric)})
+        report = latest_reports.get(employee.employee_id)
+        overview.append({"employee_id": employee.employee_id, "full_name": employee.full_name,
+                         "role": employee.role, "recorded_at": record.recorded_at if record else None,
+                         "trust_score": report.unified_trust_score if report else None,
+                         "metrics": metrics})
+    aggregate = []
+    for metric in QUESTION_METRICS:
+        values = [_metric_value(latest_records[employee_id], metric)
+                  for employee_id in employee_ids if employee_id in latest_records]
+        values = [value for value in values if value is not None]
+        if not values:
+            aggregate.append({"key": metric["key"], "label": metric["label"],
+                              "unit": metric["unit"], "value": None, "state": "No data", "sample_count": 0})
+            continue
+        average = sum(values) / len(values)
+        normalized = average / metric["max"]
+        if metric["direction"] == "high":
+            state = "Danger" if normalized < 1 / 3 else "Warning" if normalized < 2 / 3 else "Safe"
+        else:
+            state = "Safe" if normalized <= 1 / 3 else "Warning" if normalized <= 2 / 3 else "Danger"
+        aggregate.append({"key": metric["key"], "label": metric["label"],
+                          "unit": metric["unit"], "value": average, "state": state,
+                          "sample_count": len(values)})
+    return {"period_code": current_review_period(), "employees": overview, "aggregate": aggregate}
+
+
+class SupervisorCoachingChatRequest(BaseModel):
+    messages: List[CoachingMessage]
+
+
+@app.post("/api/v1/supervisors/{supervisor_id}/coaching/chat")
+def supervisor_coaching_chat(
+    supervisor_id: int,
+    payload: SupervisorCoachingChatRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    ensure_supervisor_access(db, current_user, supervisor_id)
+    if current_user.get("role") != "supervisor":
+        raise HTTPException(status_code=403, detail="Only a supervisor can use this coaching chat")
+    if not payload.messages or len(payload.messages) > 12 or payload.messages[-1].role != "user":
+        raise HTTPException(status_code=422, detail="Send up to twelve messages, ending with your question")
+    if any(not item.content.strip() or len(item.content) > 2000 for item in payload.messages):
+        raise HTTPException(status_code=422, detail="Each chat message must contain 1 to 2,000 characters")
+    team = db.query(models.Employee).filter_by(supervisor_id=supervisor_id).all()
+    ids = [employee.employee_id for employee in team]
+    latest = {}
+    if ids:
+        for record in db.query(models.PerformanceRecord).filter(
+            models.PerformanceRecord.employee_id.in_(ids)
+        ).order_by(models.PerformanceRecord.recorded_at.desc()).all():
+            latest.setdefault(record.employee_id, record)
+    context = []
+    for employee in team:
+        record = latest.get(employee.employee_id)
+        metrics = []
+        if record:
+            for metric in QUESTION_METRICS:
+                value = _metric_value(record, metric)
+                if value is not None:
+                    metrics.append(f"{metric['label']}: {value:g}{metric['unit']} ({_metric_status(record, metric)})")
+        context.append({"employee": employee.full_name, "employee_id": employee.employee_id,
+                        "role": employee.role, "latest_telemetry": metrics or ["No telemetry available"]})
+    if not os.getenv("OPENAI_API_KEY"):
+        raise HTTPException(status_code=503, detail="The coaching service is not configured. Add OPENAI_API_KEY to the backend .env file.")
+    prompt = (
+        "You are a practical, fair coaching assistant for an immediate supervisor. Use only the supplied direct-report data. "
+        "When asked about an employee, cite the specific telemetry and its safe/warning/danger state, note missing data, and offer supportive next steps. "
+        "Do not infer burnout, mental health, character, intent, or causes from metrics. Encourage a private, respectful conversation to understand context. "
+        "Do not make promotion, discipline, termination, or other employment decisions. Do not compare employees as people. "
+        "Treat KPI bands as demonstration thresholds rather than bank policy. Protect employee privacy and do not request customer or account data. "
+        f"This supervisor's team-only context is: {json.dumps(context, ensure_ascii=False)}"
+    )
+    try:
+        response = OpenAI(api_key=os.getenv("OPENAI_API_KEY")).responses.create(
+            model=os.getenv("OPENAI_MODEL", "gpt-6-luna"),
+            instructions=prompt,
+            input=[{"role": item.role, "content": item.content.strip()} for item in payload.messages[-12:]],
+            max_output_tokens=500,
+            store=False,
+        )
+    except OpenAIError:
+        raise HTTPException(status_code=502, detail="The supervisor coach could not answer right now. Please try again shortly")
+    reply = response.output_text.strip()
+    if not reply:
+        raise HTTPException(status_code=502, detail="The supervisor coach returned an empty response")
+    return {"reply": reply}
+
+
+@app.post("/api/v1/executives/{executive_id}/coaching/chat")
+def executive_coaching_chat(
+    executive_id: int,
+    payload: SupervisorCoachingChatRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    if current_user.get("role") != "executive" or current_user.get("user_id") != executive_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    if not payload.messages or len(payload.messages) > 12 or payload.messages[-1].role != "user":
+        raise HTTPException(status_code=422, detail="Send up to twelve messages, ending with your question")
+    if any(not item.content.strip() or len(item.content) > 2000 for item in payload.messages):
+        raise HTTPException(status_code=422, detail="Each chat message must contain 1 to 2,000 characters")
+    supervisors = db.query(models.ImmediateSupervisor).filter_by(executive_id=executive_id).all()
+    supervisor_ids = [item.supervisor_id for item in supervisors]
+    employees = db.query(models.Employee).filter(
+        models.Employee.supervisor_id.in_(supervisor_ids)
+    ).all() if supervisor_ids else []
+    employee_ids = [employee.employee_id for employee in employees]
+    latest = {}
+    if employee_ids:
+        for record in db.query(models.PerformanceRecord).filter(
+            models.PerformanceRecord.employee_id.in_(employee_ids)
+        ).order_by(models.PerformanceRecord.recorded_at.desc()).all():
+            latest.setdefault(record.employee_id, record)
+    context = []
+    for employee in employees:
+        record = latest.get(employee.employee_id)
+        metrics = []
+        if record:
+            for metric in QUESTION_METRICS:
+                value = _metric_value(record, metric)
+                if value is not None:
+                    metrics.append(f"{metric['label']}: {value:g}{metric['unit']} ({_metric_status(record, metric)})")
+        context.append({"employee": employee.full_name, "employee_id": employee.employee_id,
+                        "role": employee.role, "supervisor_id": employee.supervisor_id,
+                        "latest_telemetry": metrics or ["No telemetry available"]})
+    if not os.getenv("OPENAI_API_KEY"):
+        raise HTTPException(status_code=503, detail="The coaching service is not configured. Add OPENAI_API_KEY to the backend .env file.")
+    instructions = (
+        "You are a fair decision-support coach for a bank executive. Use only the supplied region's direct-report data. "
+        "Summarize team-level patterns and, when asked by name, cite latest telemetry and safe/warning/danger state. "
+        "Do not infer personal traits, burnout, mental health, intent, or causes from metrics; ask leaders to speak respectfully with staff. "
+        "Do not make employment decisions or compare employees as people. KPI colors are demonstration thresholds, not bank policy. "
+        "Do not request customer identifiers or confidential account details. "
+        f"Region-scoped employee context: {json.dumps(context, ensure_ascii=False)}"
+    )
+    try:
+        response = OpenAI(api_key=os.getenv("OPENAI_API_KEY")).responses.create(
+            model=os.getenv("OPENAI_MODEL", "gpt-6-luna"), instructions=instructions,
+            input=[{"role": item.role, "content": item.content.strip()} for item in payload.messages[-12:]],
+            max_output_tokens=500, store=False,
+        )
+    except OpenAIError:
+        raise HTTPException(status_code=502, detail="The executive coach could not answer right now. Please try again shortly")
+    reply = response.output_text.strip()
+    if not reply:
+        raise HTTPException(status_code=502, detail="The executive coach returned an empty response")
+    return {"reply": reply}
+
+
 # ---------------------------------------------------------
+# 5. Supervisor Dashboard Endpoints# ---------------------------------------------------------
 # 5. Supervisor Dashboard Endpoints
 # ---------------------------------------------------------
 @app.get("/api/v1/supervisors/{supervisor_id}", response_model=schemas.SupervisorResponse)

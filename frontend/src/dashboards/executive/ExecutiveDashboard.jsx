@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import ExecutiveCoachingChat from './ExecutiveCoachingChat';
 
 const API = 'http://127.0.0.1:8000/api/v1';
 
@@ -96,6 +97,7 @@ export default function ExecutiveDashboard({ executiveId }) {
           <p className="mt-3 text-xs text-slate-500">Compliance overrides applied: {overrideCount}</p>
         </div>
       </section>
+      <ExecutiveCoachingChat executiveId={executiveId} />
     </div>
   );
 }

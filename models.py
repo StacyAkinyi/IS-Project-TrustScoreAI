@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+from sqlalchemy import UniqueConstraint
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -178,6 +179,25 @@ class UnstructuredFeedback(Base):
     appraisal_mappings = relationship(
         "AppraisalSourceMapping", back_populates="unstructured_feedback"
     )
+
+
+class SupervisorAppraisal(Base):
+    __tablename__ = "supervisor_appraisals"
+    __table_args__ = (
+        UniqueConstraint("employee_id", "period_code", name="uq_supervisor_appraisal_employee_period"),
+        CheckConstraint("yes_count BETWEEN 0 AND 5", name="ck_supervisor_appraisal_yes_count"),
+    )
+
+    appraisal_id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.employee_id"), nullable=False, index=True)
+    supervisor_id = Column(Integer, ForeignKey("immediate_supervisors.sup_id"), nullable=False, index=True)
+    period_code = Column(String(7), nullable=False)
+    answers_snapshot = Column(JSONB, nullable=False)
+    yes_count = Column(Integer, nullable=False)
+    employee_notified_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
+    review_request_text = Column(Text, nullable=True)
+    review_requested_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
 
 
 class AppraisalReport(Base):
