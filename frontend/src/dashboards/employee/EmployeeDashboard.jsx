@@ -25,14 +25,15 @@ export default function EmployeeDashboard({ userId }) {
           'Content-Type': 'application/json'
         };
 
-        // 1. Fetch Profile Data
-        const empRes = await fetch(`http://127.0.0.1:8000/api/v1/employees/${userId}`, { headers });
-        if (!empRes.ok) throw new Error('Failed to fetch employee profile');
+        // Resolve the database employee ID from the validated token, not stale browser state.
+        const empRes = await fetch('http://127.0.0.1:8000/api/v1/auth/me', { headers });
         const empJson = await empRes.json();
+        if (!empRes.ok) throw new Error(empJson.detail || `Profile request failed (${empRes.status})`);
         setEmployeeData(empJson);
+        const employeeId = empJson.employee_id;
 
         // 2. Fetch Performance Records
-        const perfRes = await fetch(`http://127.0.0.1:8000/api/v1/employees/${userId}/performance`, { headers });
+        const perfRes = await fetch(`http://127.0.0.1:8000/api/v1/employees/${employeeId}/performance`, { headers });
         if (perfRes.ok) {
           const perfJson = await perfRes.json();
           // Extract array even if backend wraps it in { data: [...] }
@@ -43,7 +44,7 @@ export default function EmployeeDashboard({ userId }) {
         }
 
         // 3. Fetch Reports
-        const repRes = await fetch(`http://127.0.0.1:8000/api/v1/employees/${userId}/reports`, { headers });
+        const repRes = await fetch(`http://127.0.0.1:8000/api/v1/employees/${employeeId}/reports`, { headers });
         if (repRes.ok) {
           const repJson = await repRes.json();
           setReports(Array.isArray(repJson) ? repJson : repJson.data || []);
@@ -84,8 +85,9 @@ export default function EmployeeDashboard({ userId }) {
           <div className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 text-center space-y-3">
             <h2 className="text-3xl font-extrabold text-blue-900">Welcome, {employeeData?.full_name}</h2>
             <p className="text-slate-600 text-sm">
-              Role: <span className="font-semibold text-slate-800">{employeeData?.role}</span> | Branch: <span className="font-semibold text-slate-800">{employeeData?.branch_location}</span>
+              Role: <span className="font-semibold text-slate-800">{employeeData?.job_title || employeeData?.role}</span> | Branch: <span className="font-semibold text-slate-800">{employeeData?.branch_location || 'Not assigned'}</span>
             </p>
+            <p className="text-slate-600 text-sm">Supervisor: <span className="font-semibold text-slate-800">{employeeData?.supervisor_name || 'Not assigned'}</span></p>
             <div className="inline-block mt-2 bg-blue-50 border border-blue-200 px-6 py-2 rounded-full">
               <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Latest Trust Score: </span>
               <span className="text-lg font-extrabold text-blue-900">{latestScore} {latestScore !== 'N/A' && '%'}</span>

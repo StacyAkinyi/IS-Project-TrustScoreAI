@@ -21,10 +21,10 @@ class EmployeeCreate(BaseModel):
 # --- Response Schemas (Primary Keys Aligned with DB Schema) ---
 class EmployeeResponse(BaseModel):
     employee_id: int
-    supervisor_id: int
+    supervisor_id: Optional[int] = None
     full_name: str
     role: str
-    branch_location: str
+    branch_location: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -34,6 +34,7 @@ class SupervisorResponse(BaseModel):
     executive_id: int
     full_name: str
     department_code: str
+    branch_code: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -122,6 +123,11 @@ class AppraisalSourceMappingResponse(BaseModel):
         from_attributes = True
 
 # --- Authentication Schemas ---
+class ExecutiveOverrideRequest(BaseModel):
+    report_id: int
+    executive_id: int
+    compliance_override_status: bool
+
 class LoginRequest(BaseModel):
     email: str
     password: str

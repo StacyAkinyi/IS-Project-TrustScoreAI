@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function StaffDirectory({ teamMembers, onSelectEmployee, onScheduleMeeting }) {
+export default function StaffDirectory({ teamMembers, onSelectEmployee, onScheduleMeeting, branchCode }) {
   return (
     <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-md">
       <div className="flex justify-between items-center mb-4">
@@ -9,7 +9,7 @@ export default function StaffDirectory({ teamMembers, onSelectEmployee, onSchedu
           <p className="text-xs text-slate-400">Direct reports and qualitative assessment triggers</p>
         </div>
         <span className="bg-slate-900 border border-slate-700 px-3 py-1 rounded text-xs text-teal-300 font-mono">
-          Branch: BR-001
+          Branch: {branchCode || 'Not assigned'}
         </span>
       </div>
 
@@ -33,7 +33,7 @@ export default function StaffDirectory({ teamMembers, onSelectEmployee, onSchedu
                 <td className="p-3">{member.branch_location || 'Main Branch'}</td>
                 <td className="p-3 text-right space-x-2">
                   <button
-                    onClick={() => onScheduleMeeting(member)}
+                    onClick={() => onScheduleMeeting?.(member)}
                     className="bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold px-3 py-1.5 rounded text-xs transition"
                   >
                     Schedule Meeting

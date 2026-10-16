@@ -72,6 +72,35 @@ def get_current_user(
         raise HTTPException(status_code=401, detail="Invalid or expired token")
     return payload
 
+
+def ensure_employee_access(db: Session, current_user: dict, employee: models.Employee) -> None:
+    role = current_user.get("role")
+    user_id = current_user.get("user_id")
+    if role == "employee" and current_user.get("employee_id") == employee.employee_id:
+        return
+    if role == "supervisor" and user_id == employee.supervisor_id:
+        return
+    if role == "executive":
+        supervisor = db.query(models.ImmediateSupervisor).filter_by(
+            supervisor_id=employee.supervisor_id, executive_id=user_id
+        ).first()
+        if supervisor:
+            return
+    raise HTTPException(status_code=403, detail="Access denied")
+
+
+def ensure_supervisor_access(db: Session, current_user: dict, supervisor_id: int):
+    supervisor = db.query(models.ImmediateSupervisor).filter_by(supervisor_id=supervisor_id).first()
+    if not supervisor:
+        raise HTTPException(status_code=404, detail="Supervisor not found")
+    role = current_user.get("role")
+    user_id = current_user.get("user_id")
+    if (role == "supervisor" and user_id == supervisor_id) or (
+        role == "executive" and user_id == supervisor.executive_id
+    ):
+        return supervisor
+    raise HTTPException(status_code=403, detail="Access denied")
+
 # ---------------------------------------------------------
 # 1. Load Pre-Trained Machine Learning Models
 # ---------------------------------------------------------
@@ -160,6 +189,49 @@ def _build_reflection_questions(record):
     while len(questions) < 3:
         questions.append(make_question(random.choice(APPRAISAL_QUESTION_BANK["context"])))
     return questions[:3]
+@app.get("/api/v1/employees/{employee_id}", response_model=schemas.EmployeeResponse)
+def get_employee(
+    employee_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    employee = db.query(models.Employee).filter_by(employee_id=employee_id).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    ensure_employee_access(db, current_user, employee)
+    return employee
+
+
+@app.get("/api/v1/employees/{employee_id}/performance", response_model=List[schemas.PerformanceRecordResponse])
+def get_employee_performance(
+    employee_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    employee = db.query(models.Employee).filter_by(employee_id=employee_id).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    ensure_employee_access(db, current_user, employee)
+    return db.query(models.PerformanceRecord).filter_by(employee_id=employee_id).order_by(
+        models.PerformanceRecord.recorded_at.asc()
+    ).all()
+
+
+@app.get("/api/v1/employees/{employee_id}/reports", response_model=List[schemas.AppraisalReportResponse])
+def get_employee_reports(
+    employee_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    employee = db.query(models.Employee).filter_by(employee_id=employee_id).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    ensure_employee_access(db, current_user, employee)
+    return db.query(models.AppraisalReport).filter_by(employee_id=employee_id).order_by(
+        models.AppraisalReport.generation_date.asc()
+    ).all()
+
+
 @app.get("/api/v1/employees/{employee_id}/generate-prompt")
 def generate_appraisal_prompt(
     employee_id: int,
@@ -354,15 +426,7 @@ def get_supervisor(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    if current_user["role"] == "employee":
-        raise HTTPException(status_code=403, detail="Access denied")
-
-    supervisor = db.query(models.ImmediateSupervisor).filter(
-        models.ImmediateSupervisor.supervisor_id == supervisor_id
-    ).first()
-    if not supervisor:
-        raise HTTPException(status_code=404, detail="Supervisor not found")
-    return supervisor
+    return ensure_supervisor_access(db, current_user, supervisor_id)
 
 @app.get("/api/v1/supervisors/{supervisor_id}/employees", response_model=List[schemas.EmployeeResponse])
 def get_supervisor_employees(
@@ -370,12 +434,20 @@ def get_supervisor_employees(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    if current_user["role"] == "employee":
-        raise HTTPException(status_code=403, detail="Access denied")
-
+    ensure_supervisor_access(db, current_user, supervisor_id)
     return db.query(models.Employee).filter(
         models.Employee.supervisor_id == supervisor_id
     ).all()
+
+@app.get("/api/v1/supervisors/{supervisor_id}/team", response_model=List[schemas.EmployeeResponse])
+def get_supervisor_team(
+    supervisor_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    ensure_supervisor_access(db, current_user, supervisor_id)
+    return db.query(models.Employee).filter_by(supervisor_id=supervisor_id).all()
+
 
 @app.get("/api/v1/supervisors/{supervisor_id}/team-reports", response_model=List[schemas.AppraisalReportResponse])
 def get_supervisor_team_reports(
@@ -383,9 +455,7 @@ def get_supervisor_team_reports(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    if current_user["role"] == "employee":
-        raise HTTPException(status_code=403, detail="Access denied")
-
+    ensure_supervisor_access(db, current_user, supervisor_id)
     return db.query(models.AppraisalReport).join(
         models.Employee, models.AppraisalReport.employee_id == models.Employee.employee_id
     ).filter(
@@ -401,7 +471,7 @@ def get_executive(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    if current_user["role"] in ("employee", "supervisor"):
+    if current_user["role"] != "executive" or current_user.get("user_id") != executive_id:
         raise HTTPException(status_code=403, detail="Access denied")
 
     executive = db.query(models.ExecutiveManager).filter(
@@ -417,7 +487,7 @@ def get_executive_reports(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    if current_user["role"] in ("employee", "supervisor"):
+    if current_user["role"] != "executive" or current_user.get("user_id") != executive_id:
         raise HTTPException(status_code=403, detail="Access denied")
 
     return db.query(models.AppraisalReport).join(
@@ -428,17 +498,50 @@ def get_executive_reports(
         models.ImmediateSupervisor.executive_id == executive_id
     ).all()
 
+@app.get("/api/v1/executives/{executive_id}/supervisors", response_model=List[schemas.SupervisorResponse])
+def get_executive_supervisors(
+    executive_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    if current_user["role"] != "executive" or current_user.get("user_id") != executive_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    return db.query(models.ImmediateSupervisor).filter_by(executive_id=executive_id).all()
+
+
 @app.post("/api/v1/executives/override-compliance")
 def execute_compliance_override(
-    payload: ExecutiveOverrideRequest, 
+    payload: schemas.ExecutiveOverrideRequest, 
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
     if current_user["role"] != "executive":
         raise HTTPException(status_code=403, detail="Only executives can trigger compliance overrides")
+    if current_user.get("user_id") != payload.executive_id:
+        raise HTTPException(status_code=403, detail="Access denied")
 
     report = db.query(models.AppraisalReport).filter_by(report_id=payload.report_id).first()
     if not report:
+        raise HTTPException(status_code=404, detail="Appraisal report not found")
+    belongs_to_region = db.query(models.AppraisalReport).join(
+        models.Employee, models.AppraisalReport.employee_id == models.Employee.employee_id
+    ).join(
+        models.ImmediateSupervisor, models.Employee.supervisor_id == models.ImmediateSupervisor.supervisor_id
+    ).filter(
+        models.AppraisalReport.report_id == payload.report_id,
+        models.ImmediateSupervisor.executive_id == payload.executive_id,
+    ).first()
+    if not belongs_to_region:
+        raise HTTPException(status_code=404, detail="Appraisal report not found")
+    belongs_to_region = db.query(models.AppraisalReport).join(
+        models.Employee, models.AppraisalReport.employee_id == models.Employee.employee_id
+    ).join(
+        models.ImmediateSupervisor, models.Employee.supervisor_id == models.ImmediateSupervisor.supervisor_id
+    ).filter(
+        models.AppraisalReport.report_id == payload.report_id,
+        models.ImmediateSupervisor.executive_id == payload.executive_id,
+    ).first()
+    if not belongs_to_region:
         raise HTTPException(status_code=404, detail="Appraisal report not found")
 
     report.compliance_override_status = payload.compliance_override_status
@@ -500,6 +603,31 @@ def login(credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
         "access_token": token, "token_type": "bearer",
         "role": role, "user_id": user_id, "email": user.email,
     }
+
+@app.get("/api/v1/auth/me")
+def get_authenticated_profile(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    employee = db.query(models.Employee).filter_by(employee_id=current_user.get("employee_id")).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee profile not found for this account")
+    supervisor = db.query(models.ImmediateSupervisor).filter_by(
+        supervisor_id=employee.supervisor_id
+    ).first() if employee.supervisor_id is not None else None
+    return {
+        "employee_id": employee.employee_id,
+        "user_id": current_user.get("user_id"),
+        "role": current_user.get("role"),
+        "full_name": employee.full_name,
+        "email": employee.email,
+        "department": employee.department,
+        "job_title": employee.role,
+        "supervisor_id": employee.supervisor_id,
+        "supervisor_name": supervisor.full_name if supervisor else None,
+        "branch_location": employee.branch_location,
+    }
+
 
 @app.post("/api/v1/forgot-password", status_code=status.HTTP_202_ACCEPTED)
 def forgot_password(request: schemas.ForgotPasswordRequest, db: Session = Depends(get_db)):

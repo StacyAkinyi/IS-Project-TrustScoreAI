@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import EmployeeDashboard from './dashboards/employee/EmployeeDashboard'; 
 import SupervisorDashboard from './dashboards/supervisor/SupervisorDashboard';
+import ExecutiveDashboard from './dashboards/executive/ExecutiveDashboard';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -55,12 +56,7 @@ export default function App() {
         {/* Render the real Employee Dashboard component here */}
         {userRole === 'employee' && <EmployeeDashboard userId={userId} />}
         {userRole === 'supervisor' && <SupervisorDashboard supervisorId={userId} />}
-        {userRole === 'executive' && (
-          <div className="bg-white p-6 rounded shadow border border-slate-200">
-            <h2 className="text-lg font-bold text-blue-900">Executive Macro-Analytics Portal</h2>
-            <p className="text-slate-600 mt-2">Executive dashboard view is active for ID: {userId}.</p>
-          </div>
-        )}
+        {userRole === 'executive' && <ExecutiveDashboard executiveId={userId} />}
       </main>
     </div>
   );
