@@ -574,6 +574,28 @@ def _meeting_summary(db: Session, appraisal_id: int):
     }
 
 
+def _enforce_supervisor_meeting_spacing(db: Session, supervisor_id: int, scheduled_at: datetime) -> None:
+    # Lock the supervisor row so simultaneous booking requests for this supervisor
+    # cannot both pass the spacing check before either one commits.
+    supervisor = db.query(models.ImmediateSupervisor).filter_by(
+        supervisor_id=supervisor_id
+    ).with_for_update().first()
+    if not supervisor:
+        raise HTTPException(status_code=404, detail="Supervisor not found")
+
+    minimum_gap = timedelta(minutes=30)
+    conflict = db.query(models.AppraisalMeeting).filter(
+        models.AppraisalMeeting.supervisor_id == supervisor_id,
+        models.AppraisalMeeting.scheduled_at > scheduled_at - minimum_gap,
+        models.AppraisalMeeting.scheduled_at < scheduled_at + minimum_gap,
+    ).first()
+    if conflict:
+        raise HTTPException(
+            status_code=409,
+            detail="This supervisor already has a meeting within 30 minutes of that time. Choose a slot at least 30 minutes before or after it.",
+        )
+
+
 def _pdf_literal(value: str) -> bytes:
     safe = str(value).encode("cp1252", errors="replace").decode("cp1252")
     safe = "".join(char if char >= " " else " " for char in safe)
@@ -672,6 +694,7 @@ def schedule_appraisal_meeting(
         scheduled_at = scheduled_at.replace(tzinfo=ZoneInfo("Africa/Nairobi"))
     if scheduled_at <= datetime.now(timezone.utc):
         raise HTTPException(status_code=422, detail="Choose a future meeting date and time")
+    _enforce_supervisor_meeting_spacing(db, supervisor_id, scheduled_at)
     meeting = models.AppraisalMeeting(
         appraisal_id=appraisal.appraisal_id,
         employee_id=appraisal.employee_id,
@@ -711,6 +734,7 @@ def schedule_employee_meeting(
         scheduled_at = scheduled_at.replace(tzinfo=ZoneInfo("Africa/Nairobi"))
     if scheduled_at <= datetime.now(timezone.utc):
         raise HTTPException(status_code=422, detail="Choose a future meeting date and time")
+    _enforce_supervisor_meeting_spacing(db, supervisor_id, scheduled_at)
     meeting = models.AppraisalMeeting(
         appraisal_id=None,
         employee_id=employee_id,

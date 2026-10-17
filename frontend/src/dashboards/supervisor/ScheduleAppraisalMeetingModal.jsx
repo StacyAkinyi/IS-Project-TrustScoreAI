@@ -11,7 +11,7 @@ function initialMeetingDate() {
   return asDateKey(tomorrow);
 }
 
-export default function ScheduleAppraisalMeetingModal({ employee, appraisal = null, supervisorId, onClose, onSuccess }) {
+export default function ScheduleAppraisalMeetingModal({ employee, appraisal = null, existingMeetings = [], supervisorId, onClose, onSuccess }) {
   const [selectedDate, setSelectedDate] = useState(initialMeetingDate);
   const [time, setTime] = useState('10:00');
   const [saving, setSaving] = useState(false);
@@ -56,6 +56,13 @@ export default function ScheduleAppraisalMeetingModal({ employee, appraisal = nu
       const meetingDate = new Date(`${selectedDate}T${time}:00`);
       if (Number.isNaN(meetingDate.getTime())) throw new Error('Choose a valid meeting date and time.');
       if (meetingDate <= new Date()) throw new Error('Choose a future date and time.');
+      const tooClose = existingMeetings.find((meeting) =>
+        Math.abs(new Date(meeting.scheduled_at).getTime() - meetingDate.getTime()) < 30 * 60 * 1000
+      );
+      if (tooClose) {
+        const existingTime = new Date(tooClose.scheduled_at).toLocaleString();
+        throw new Error(`This supervisor already has a meeting at ${existingTime}. Choose a time at least 30 minutes before or after it.`);
+      }
       const endpoint = appraisal
         ? `http://127.0.0.1:8000/api/v1/supervisors/${supervisorId}/appraisals/${appraisal.appraisal_id}/meetings`
         : `http://127.0.0.1:8000/api/v1/supervisors/${supervisorId}/employees/${employee.employee_id}/meetings`;
@@ -90,7 +97,7 @@ export default function ScheduleAppraisalMeetingModal({ employee, appraisal = nu
         </div>
         <button type="button" onClick={onClose} aria-label="Close" className="text-slate-500 hover:text-slate-900">✕</button>
       </div>
-      <p className="mb-4 rounded-lg bg-blue-50 p-3 text-sm text-blue-900">Select a future date below. The booking will appear in the employee’s appraisal section for confirmation.</p>
+      <p className="mb-4 rounded-lg bg-blue-50 p-3 text-sm text-blue-900">Select a future date below. Leave at least 30 minutes between this meeting and the supervisor’s other meetings. The employee can confirm the booking from their dashboard.</p>
       {error && <p role="alert" className="mb-4 rounded bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
       <form onSubmit={(event) => event.preventDefault()} className="space-y-4">
         <div className="rounded-xl border border-slate-200 p-4">
