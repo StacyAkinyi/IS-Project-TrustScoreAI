@@ -197,6 +197,8 @@ class SupervisorAppraisal(Base):
     employee_notified_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
     review_request_text = Column(Text, nullable=True)
     review_requested_at = Column(DateTime(timezone=True), nullable=True)
+    review_edit_count = Column(Integer, nullable=False, default=0)
+    satisfied_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
 
 

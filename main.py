@@ -550,6 +550,9 @@ def get_supervisor_appraisals(
              "answers": row.answers_snapshot, "yes_count": row.yes_count,
              "review_request_text": row.review_request_text,
              "review_requested_at": row.review_requested_at,
+             "review_edit_count": row.review_edit_count,
+             "satisfied_at": row.satisfied_at,
+             "status": "satisfied" if row.satisfied_at else ("review_requested" if row.review_requested_at and row.review_edit_count == 0 else ("reviewed" if row.review_edit_count else "awaiting_employee")),
              "created_at": row.created_at} for row, full_name in rows]
 
 
@@ -569,6 +572,9 @@ def get_employee_supervisor_appraisals(
              "employee_notified_at": row.employee_notified_at,
              "review_request_text": row.review_request_text,
              "review_requested_at": row.review_requested_at,
+             "review_edit_count": row.review_edit_count,
+             "satisfied_at": row.satisfied_at,
+             "status": "satisfied" if row.satisfied_at else ("review_requested" if row.review_requested_at and row.review_edit_count == 0 else ("reviewed" if row.review_edit_count else "awaiting_employee")),
              "created_at": row.created_at} for row in rows]
 
 
@@ -590,12 +596,77 @@ def request_appraisal_clarification(
     ).first()
     if not record:
         raise HTTPException(status_code=404, detail="Supervisor appraisal not found")
-    if record.review_requested_at:
-        raise HTTPException(status_code=409, detail="A clarification request has already been sent for this appraisal")
+    if record.satisfied_at:
+        raise HTTPException(status_code=409, detail="This appraisal is closed because you marked it satisfied")
+    if record.review_requested_at or record.review_edit_count >= 1:
+        raise HTTPException(status_code=409, detail="This appraisal has already used its one review opportunity")
     record.review_request_text = message
     record.review_requested_at = datetime.now(timezone.utc)
     db.commit()
-    return {"status": "sent", "message": "Your clarification request is now visible to your supervisor."}
+    return {"status": "review_requested", "message": "Your one-time review request is now visible to your supervisor."}
+
+
+@app.post("/api/v1/employees/{employee_id}/supervisor-appraisals/{appraisal_id}/satisfied")
+def mark_supervisor_appraisal_satisfied(
+    employee_id: int,
+    appraisal_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    if current_user.get("role") != "employee" or current_user.get("employee_id") != employee_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    record = db.query(models.SupervisorAppraisal).filter_by(appraisal_id=appraisal_id, employee_id=employee_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Supervisor appraisal not found")
+    if record.review_requested_at and record.review_edit_count == 0:
+        raise HTTPException(status_code=409, detail="Your review request is still awaiting a supervisor response")
+    if not record.satisfied_at:
+        record.satisfied_at = datetime.now(timezone.utc)
+        db.commit()
+    return {"status": "satisfied", "message": "Appraisal marked satisfied and closed. It can no longer be changed."}
+
+
+@app.put("/api/v1/supervisors/{supervisor_id}/appraisals/{appraisal_id}")
+def revise_supervisor_appraisal(
+    supervisor_id: int,
+    appraisal_id: int,
+    payload: schemas.SupervisorAppraisalSubmission,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    ensure_supervisor_access(db, current_user, supervisor_id)
+    if current_user.get("role") != "supervisor":
+        raise HTTPException(status_code=403, detail="Only the assigned supervisor can revise this appraisal")
+    record = db.query(models.SupervisorAppraisal).filter_by(appraisal_id=appraisal_id, supervisor_id=supervisor_id).with_for_update().first()
+    if not record or record.employee_id != payload.employee_id:
+        raise HTTPException(status_code=404, detail="Supervisor appraisal not found")
+    if record.satisfied_at:
+        raise HTTPException(status_code=409, detail="This appraisal is closed because the employee marked it satisfied")
+    if not record.review_requested_at or record.review_edit_count >= 1:
+        raise HTTPException(status_code=409, detail="A pending one-time employee review request is required")
+    if len(payload.answers) != 10:
+        raise HTTPException(status_code=422, detail="The semiannual form requires exactly 10 answers")
+    answers_by_id = {answer.get("question_id"): answer.get("answer") for answer in payload.answers}
+    if set(answers_by_id) != {question["id"] for question in SUPERVISOR_APPRAISAL_QUESTIONS}:
+        raise HTTPException(status_code=422, detail="The form answers do not match the current appraisal questions")
+    snapshot = []
+    yes_count = 0
+    for question in SUPERVISOR_APPRAISAL_QUESTIONS:
+        answer = answers_by_id[question["id"]]
+        if question["type"] == "yes_no":
+            if not isinstance(answer, bool):
+                raise HTTPException(status_code=422, detail="Answer each yes/no question with Yes or No")
+            yes_count += int(answer)
+        else:
+            if not isinstance(answer, str) or len(answer.strip()) < 10 or len(answer) > 3000:
+                raise HTTPException(status_code=422, detail="Each open response must contain 10 to 3,000 characters")
+            answer = answer.strip()
+        snapshot.append({**question, "answer": answer})
+    record.answers_snapshot = snapshot
+    record.yes_count = yes_count
+    record.review_edit_count = 1
+    db.commit()
+    return {"status": "reviewed", "message": "The appraisal was revised once and returned to the employee."}
 
 
 @app.get("/api/v1/supervisors/{supervisor_id}/team-overview")
