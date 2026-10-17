@@ -690,6 +690,41 @@ def schedule_appraisal_meeting(
             "message": "Meeting booked and shown in the employee appraisal section for confirmation."}
 
 
+@app.post("/api/v1/supervisors/{supervisor_id}/employees/{employee_id}/meetings")
+def schedule_employee_meeting(
+    supervisor_id: int,
+    employee_id: int,
+    payload: schemas.ScheduleAppraisalMeeting,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    ensure_supervisor_access(db, current_user, supervisor_id)
+    if current_user.get("role") != "supervisor":
+        raise HTTPException(status_code=403, detail="Only the assigned supervisor can schedule this meeting")
+    employee = db.query(models.Employee).filter_by(
+        employee_id=employee_id, supervisor_id=supervisor_id
+    ).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee is not assigned to this supervisor")
+    scheduled_at = payload.scheduled_at
+    if scheduled_at.tzinfo is None:
+        scheduled_at = scheduled_at.replace(tzinfo=ZoneInfo("Africa/Nairobi"))
+    if scheduled_at <= datetime.now(timezone.utc):
+        raise HTTPException(status_code=422, detail="Choose a future meeting date and time")
+    meeting = models.AppraisalMeeting(
+        appraisal_id=None,
+        employee_id=employee_id,
+        supervisor_id=supervisor_id,
+        scheduled_at=scheduled_at,
+    )
+    db.add(meeting)
+    db.commit()
+    db.refresh(meeting)
+    return {"meeting_id": meeting.meeting_id, "status": meeting.status,
+            "scheduled_at": meeting.scheduled_at,
+            "message": "Meeting booked and shown in the employee’s appraisal section for confirmation."}
+
+
 @app.post("/api/v1/employees/{employee_id}/appraisal-meetings/{meeting_id}/confirm")
 def confirm_appraisal_meeting(
     employee_id: int,
@@ -721,16 +756,40 @@ def get_supervisor_appraisal_meetings(
     rows = db.query(models.AppraisalMeeting, models.Employee.full_name,
                     models.SupervisorAppraisal.period_code).join(
         models.Employee, models.Employee.employee_id == models.AppraisalMeeting.employee_id
-    ).join(
+    ).outerjoin(
         models.SupervisorAppraisal, models.SupervisorAppraisal.appraisal_id == models.AppraisalMeeting.appraisal_id
     ).filter(models.AppraisalMeeting.supervisor_id == supervisor_id).order_by(
         models.AppraisalMeeting.scheduled_at.asc()
     ).all()
     return [{"meeting_id": meeting.meeting_id, "appraisal_id": meeting.appraisal_id,
              "employee_id": meeting.employee_id, "employee_name": employee_name,
-             "period_code": period_code, "scheduled_at": meeting.scheduled_at,
+             "period_code": period_code,
+             "meeting_type": "appraisal" if meeting.appraisal_id else "check_in",
+             "scheduled_at": meeting.scheduled_at,
              "status": meeting.status, "confirmed_at": meeting.confirmed_at}
             for meeting, employee_name, period_code in rows]
+
+
+@app.get("/api/v1/employees/{employee_id}/appraisal-meetings")
+def get_employee_appraisal_meetings(
+    employee_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    if current_user.get("role") != "employee" or current_user.get("employee_id") != employee_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    rows = db.query(models.AppraisalMeeting, models.SupervisorAppraisal.period_code).outerjoin(
+        models.SupervisorAppraisal,
+        models.SupervisorAppraisal.appraisal_id == models.AppraisalMeeting.appraisal_id,
+    ).filter(models.AppraisalMeeting.employee_id == employee_id).order_by(
+        models.AppraisalMeeting.scheduled_at.asc()
+    ).all()
+    return [{"meeting_id": meeting.meeting_id, "appraisal_id": meeting.appraisal_id,
+             "employee_id": meeting.employee_id, "supervisor_id": meeting.supervisor_id,
+             "period_code": period_code, "meeting_type": "appraisal" if meeting.appraisal_id else "check_in",
+             "scheduled_at": meeting.scheduled_at, "status": meeting.status,
+             "confirmed_at": meeting.confirmed_at}
+            for meeting, period_code in rows]
 
 
 @app.get("/api/v1/executives/{executive_id}/supervisors/{supervisor_id}/appraisals")

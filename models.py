@@ -216,7 +216,7 @@ class AppraisalMeeting(Base):
     )
 
     meeting_id = Column(Integer, primary_key=True, index=True)
-    appraisal_id = Column(Integer, ForeignKey("supervisor_appraisals.appraisal_id"), nullable=False, index=True)
+    appraisal_id = Column(Integer, ForeignKey("supervisor_appraisals.appraisal_id"), nullable=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.employee_id"), nullable=False, index=True)
     supervisor_id = Column(Integer, ForeignKey("immediate_supervisors.sup_id"), nullable=False, index=True)
     scheduled_at = Column(DateTime(timezone=True), nullable=False)

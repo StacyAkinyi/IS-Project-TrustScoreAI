@@ -17,6 +17,7 @@ async function downloadAppraisal(appraisalId) {
 
 export default function SupervisorAppraisalInbox({ employeeId }) {
   const [items, setItems] = useState([]);
+  const [meetings, setMeetings] = useState([]);
   const [drafts, setDrafts] = useState({});
   const [expanded, setExpanded] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -25,10 +26,18 @@ export default function SupervisorAppraisalInbox({ employeeId }) {
   const [notice, setNotice] = useState('');
 
   const load = async () => {
-    const response = await fetch(`${API}/employees/${employeeId}/supervisor-appraisals`, { headers: authHeaders() });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.detail || 'Could not load supervisor appraisals');
-    setItems(data);
+    const [appraisalResponse, meetingResponse] = await Promise.all([
+      fetch(`${API}/employees/${employeeId}/supervisor-appraisals`, { headers: authHeaders() }),
+      fetch(`${API}/employees/${employeeId}/appraisal-meetings`, { headers: authHeaders() }),
+    ]);
+    const [appraisals, meetingRows] = await Promise.all([
+      appraisalResponse.json(),
+      meetingResponse.json(),
+    ]);
+    if (!appraisalResponse.ok) throw new Error(appraisals.detail || 'Could not load supervisor appraisals');
+    if (!meetingResponse.ok) throw new Error(meetingRows.detail || 'Could not load meeting bookings');
+    setItems(appraisals);
+    setMeetings(meetingRows);
   };
 
   useEffect(() => {
@@ -84,11 +93,11 @@ export default function SupervisorAppraisalInbox({ employeeId }) {
   };
 
   if (loading) return <p className="p-4 text-slate-600">Loading supervisor reviews…</p>;
-  const bookings = items.filter((item) => item.meeting).sort((a, b) => new Date(a.meeting.scheduled_at) - new Date(b.meeting.scheduled_at));
+  const bookings = [...meetings].sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
   return <div className="space-y-4">
     {notice && <p role="status" className="rounded bg-green-50 p-3 text-sm text-green-800">{notice}</p>}
     {error && <p role="alert" className="rounded bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
-    {bookings.length > 0 && <section className="rounded-xl border-2 border-blue-200 bg-blue-50 p-4"><h3 className="mb-3 font-bold text-blue-900">Meeting bookings · please review first</h3><div className="space-y-3">{bookings.map((item) => <article key={item.meeting.meeting_id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-100 bg-white p-3"><div><p className="font-semibold text-slate-800">Supervisor appraisal · {item.period_code}</p><p className="text-sm text-slate-600">{new Date(item.meeting.scheduled_at).toLocaleString()}</p><p className="text-xs font-semibold text-blue-800">{item.meeting.status === 'confirmed' ? `Confirmed${item.meeting.confirmed_at ? ` · ${new Date(item.meeting.confirmed_at).toLocaleString()}` : ''}` : 'Waiting for your confirmation'}</p></div>{item.meeting.status !== 'confirmed' && <button type="button" onClick={() => confirmMeeting(item.meeting)} disabled={busyId === item.meeting.meeting_id} className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{busyId === item.meeting.meeting_id ? 'Confirming…' : 'Confirm meeting'}</button>}</article>)}</div></section>}
+    {bookings.length > 0 && <section className="rounded-xl border-2 border-blue-200 bg-blue-50 p-4"><h3 className="mb-3 font-bold text-blue-900">Meeting bookings · please review first</h3><div className="space-y-3">{bookings.map((meeting) => <article key={meeting.meeting_id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-100 bg-white p-3"><div><p className="font-semibold text-slate-800">{meeting.meeting_type === 'appraisal' ? `Supervisor appraisal · ${meeting.period_code}` : 'Check-in with your supervisor'}</p><p className="text-sm text-slate-600">{new Date(meeting.scheduled_at).toLocaleString()}</p><p className="text-xs font-semibold text-blue-800">{meeting.status === 'confirmed' ? `Confirmed${meeting.confirmed_at ? ` · ${new Date(meeting.confirmed_at).toLocaleString()}` : ''}` : 'Waiting for your confirmation'}</p></div>{meeting.status !== 'confirmed' && <button type="button" onClick={() => confirmMeeting(meeting)} disabled={busyId === meeting.meeting_id} className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{busyId === meeting.meeting_id ? 'Confirming…' : 'Confirm meeting'}</button>}</article>)}</div></section>}
     {items.length === 0 && !error ? <p className="rounded-lg bg-white p-5 text-sm text-slate-600">No supervisor appraisal has been submitted for you yet.</p> : items.length > 0 ?
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-[700px] text-left text-sm">

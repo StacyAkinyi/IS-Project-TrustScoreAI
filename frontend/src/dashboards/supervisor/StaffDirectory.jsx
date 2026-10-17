@@ -33,6 +33,7 @@ export default function StaffDirectory({ teamMembers, onSelectEmployee, onSchedu
                 <td className="p-3">{member.branch_location || 'Main Branch'}</td>
                 <td className="p-3 text-right space-x-2">
                   <button
+                    type="button"
                     onClick={() => onScheduleMeeting?.(member)}
                     className="bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold px-3 py-1.5 rounded text-xs transition"
                   >
