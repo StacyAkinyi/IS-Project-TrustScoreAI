@@ -55,7 +55,7 @@ export default function SupervisorAppraisalInbox({ employeeId }) {
   return <div className="space-y-4">
     {notice && <p role="status" className="rounded bg-green-50 p-3 text-sm text-green-800">{notice}</p>}
     {error && <p role="alert" className="rounded bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
-    {items.length === 0 ? <p className="rounded-lg bg-white p-5 text-sm text-slate-600">No supervisor appraisal has been submitted for you yet.</p> :
+    {items.length === 0 && !error ? <p className="rounded-lg bg-white p-5 text-sm text-slate-600">No supervisor appraisal has been submitted for you yet.</p> : items.length > 0 ?
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-[620px] text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="p-3">Appraisal</th><th className="p-3">Submitted</th><th className="p-3">Score</th><th className="p-3">Status</th><th className="p-3">Action</th></tr></thead>
@@ -85,6 +85,6 @@ export default function SupervisorAppraisalInbox({ employeeId }) {
             </React.Fragment>;
           })}</tbody>
         </table>
-      </div>}
+      </div> : null}
   </div>;
 }

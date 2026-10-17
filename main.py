@@ -590,7 +590,7 @@ def get_employee_supervisor_appraisals(
     current_user: dict = Depends(get_current_user),
 ):
     if current_user.get("role") != "employee" or current_user.get("employee_id") != employee_id:
-        raise HTTPException(status_code=403, detail="Access denied")
+        raise HTTPException(status_code=403, detail="Only the matching base employee account can access these appraisals")
     rows = db.query(models.SupervisorAppraisal).filter_by(employee_id=employee_id).order_by(
         models.SupervisorAppraisal.created_at.desc()
     ).all()
@@ -614,7 +614,7 @@ def request_appraisal_clarification(
     current_user: dict = Depends(get_current_user),
 ):
     if current_user.get("role") != "employee" or current_user.get("employee_id") != employee_id:
-        raise HTTPException(status_code=403, detail="Access denied")
+        raise HTTPException(status_code=403, detail="Only the matching base employee account can access these appraisals")
     message = payload.message.strip()
     if len(message) < 10 or len(message) > 2000:
         raise HTTPException(status_code=422, detail="Please enter 10 to 2,000 characters describing what needs clarification")
@@ -641,7 +641,7 @@ def mark_supervisor_appraisal_satisfied(
     current_user: dict = Depends(get_current_user),
 ):
     if current_user.get("role") != "employee" or current_user.get("employee_id") != employee_id:
-        raise HTTPException(status_code=403, detail="Access denied")
+        raise HTTPException(status_code=403, detail="Only the matching base employee account can access these appraisals")
     record = db.query(models.SupervisorAppraisal).filter_by(appraisal_id=appraisal_id, employee_id=employee_id).first()
     if not record:
         raise HTTPException(status_code=404, detail="Supervisor appraisal not found")
@@ -1096,9 +1096,13 @@ def get_authenticated_profile(
     employee = db.query(models.Employee).filter_by(employee_id=current_user.get("employee_id")).first()
     if not employee:
         raise HTTPException(status_code=404, detail="Employee profile not found for this account")
+    # Only base employees belong to an immediate-supervisor reporting line.
+    # Supervisor and executive identities are employee rows for authentication,
+    # but use their role-specific profiles and hierarchy instead.
+    is_base_employee = current_user.get("role") == "employee"
     supervisor = db.query(models.ImmediateSupervisor).filter_by(
         supervisor_id=employee.supervisor_id
-    ).first() if employee.supervisor_id is not None else None
+    ).first() if is_base_employee and employee.supervisor_id is not None else None
     return {
         "employee_id": employee.employee_id,
         "user_id": current_user.get("user_id"),
@@ -1107,9 +1111,9 @@ def get_authenticated_profile(
         "email": employee.email,
         "department": employee.department,
         "job_title": employee.role,
-        "supervisor_id": employee.supervisor_id,
+        "supervisor_id": employee.supervisor_id if is_base_employee else None,
         "supervisor_name": supervisor.full_name if supervisor else None,
-        "branch_location": employee.branch_location,
+        "branch_location": supervisor.branch_code if supervisor else None,
     }
 
 

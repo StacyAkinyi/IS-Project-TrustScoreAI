@@ -38,6 +38,9 @@ class Employee(Base):
     department = Column(String(100), nullable=False)
     role = Column(String(100), nullable=False)
     user_type = Column(String(20), nullable=False, default="employee")
+    # Set only for base employees. Supervisor and executive accounts are also
+    # employee identity rows, but their reporting relationships use their own
+    # role-specific profile tables rather than this employee-to-supervisor link.
     # The FK is added after table creation because supervisor profiles also
     # point back to their Employee row through ImmediateSupervisor.emp_id.
     supervisor_id = Column(
