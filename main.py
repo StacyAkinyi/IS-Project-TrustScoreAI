@@ -168,6 +168,33 @@ def _metric_status(record, metric):
     return "Safe" if normalized <= 1 / 3 else "Warning" if normalized <= 2 / 3 else "Danger"
 
 
+def _aggregate_team_kpis(latest_records, employee_ids):
+    """Average each KPI across each employee's latest telemetry row and apply the shared bands."""
+    aggregate = []
+    for metric in QUESTION_METRICS:
+        values = [
+            value for employee_id in employee_ids
+            if employee_id in latest_records
+            for value in [_metric_value(latest_records[employee_id], metric)]
+            if value is not None
+        ]
+        if not values:
+            aggregate.append({"key": metric["key"], "label": metric["label"],
+                              "unit": metric["unit"], "value": None,
+                              "state": "No data", "sample_count": 0})
+            continue
+        average = sum(values) / len(values)
+        normalized = average / metric["max"]
+        if metric["direction"] == "high":
+            state = "Danger" if normalized < 1 / 3 else "Warning" if normalized < 2 / 3 else "Safe"
+        else:
+            state = "Safe" if normalized <= 1 / 3 else "Warning" if normalized <= 2 / 3 else "Danger"
+        aggregate.append({"key": metric["key"], "label": metric["label"],
+                          "unit": metric["unit"], "value": average,
+                          "state": state, "sample_count": len(values)})
+    return aggregate
+
+
 QUESTION_BANK_PATH = Path(__file__).resolve().parent / "data" / "appraisal_question_bank.json"
 with QUESTION_BANK_PATH.open(encoding="utf-8-sig") as question_bank_file:
     APPRAISAL_QUESTION_BANK = json.load(question_bank_file)
@@ -710,24 +737,7 @@ def get_supervisor_team_overview(
                          "role": employee.role, "recorded_at": record.recorded_at if record else None,
                          "trust_score": report.unified_trust_score if report else None,
                          "metrics": metrics})
-    aggregate = []
-    for metric in QUESTION_METRICS:
-        values = [_metric_value(latest_records[employee_id], metric)
-                  for employee_id in employee_ids if employee_id in latest_records]
-        values = [value for value in values if value is not None]
-        if not values:
-            aggregate.append({"key": metric["key"], "label": metric["label"],
-                              "unit": metric["unit"], "value": None, "state": "No data", "sample_count": 0})
-            continue
-        average = sum(values) / len(values)
-        normalized = average / metric["max"]
-        if metric["direction"] == "high":
-            state = "Danger" if normalized < 1 / 3 else "Warning" if normalized < 2 / 3 else "Safe"
-        else:
-            state = "Safe" if normalized <= 1 / 3 else "Warning" if normalized <= 2 / 3 else "Danger"
-        aggregate.append({"key": metric["key"], "label": metric["label"],
-                          "unit": metric["unit"], "value": average, "state": state,
-                          "sample_count": len(values)})
+    aggregate = _aggregate_team_kpis(latest_records, employee_ids)
     return {"period_code": current_review_period(), "employees": overview, "aggregate": aggregate}
 
 
@@ -945,7 +955,42 @@ def get_executive_supervisors(
 ):
     if current_user["role"] != "executive" or current_user.get("user_id") != executive_id:
         raise HTTPException(status_code=403, detail="Access denied")
-    return db.query(models.ImmediateSupervisor).filter_by(executive_id=executive_id).all()
+    supervisors = db.query(models.ImmediateSupervisor).filter_by(
+        executive_id=executive_id
+    ).order_by(models.ImmediateSupervisor.supervisor_id.asc()).all()
+    supervisor_ids = [supervisor.supervisor_id for supervisor in supervisors]
+    employees_by_supervisor = {supervisor_id: [] for supervisor_id in supervisor_ids}
+    latest_records = {}
+    if supervisor_ids:
+        employees = db.query(
+            models.Employee.employee_id, models.Employee.supervisor_id
+        ).filter(models.Employee.supervisor_id.in_(supervisor_ids)).all()
+        for employee_id, supervisor_id in employees:
+            employees_by_supervisor.setdefault(supervisor_id, []).append(employee_id)
+        record_rows = db.query(models.PerformanceRecord).join(
+            models.Employee, models.Employee.employee_id == models.PerformanceRecord.employee_id
+        ).filter(
+            models.Employee.supervisor_id.in_(supervisor_ids)
+        ).order_by(
+            models.PerformanceRecord.recorded_at.desc(), models.PerformanceRecord.record_id.desc()
+        ).all()
+        for record in record_rows:
+            latest_records.setdefault(record.employee_id, record)
+    return [{
+        "supervisor_id": supervisor.supervisor_id,
+        "executive_id": supervisor.executive_id,
+        "full_name": supervisor.full_name or f"Supervisor #{supervisor.supervisor_id}",
+        "department_code": supervisor.department_code or "Not assigned",
+        "branch_code": supervisor.branch_code,
+        "team_size": len(employees_by_supervisor.get(supervisor.supervisor_id, [])),
+        "employees_with_telemetry": sum(
+            employee_id in latest_records
+            for employee_id in employees_by_supervisor.get(supervisor.supervisor_id, [])
+        ),
+        "team_kpi_averages": _aggregate_team_kpis(
+            latest_records, employees_by_supervisor.get(supervisor.supervisor_id, [])
+        ),
+    } for supervisor in supervisors]
 
 
 @app.post("/api/v1/executives/override-compliance")

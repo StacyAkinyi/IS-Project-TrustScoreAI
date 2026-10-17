@@ -35,6 +35,9 @@ class SupervisorResponse(BaseModel):
     full_name: str
     department_code: str
     branch_code: Optional[str] = None
+    team_kpi_averages: list[dict] = []
+    team_size: int = 0
+    employees_with_telemetry: int = 0
 
     class Config:
         from_attributes = True
