@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PerformanceCharts from './PerformanceCharts';
 import AppraisalForm from './AppraisalForm';
-import CoachingChatbot from './CoachingChatbot';
+import AIPerformanceReportGenerator from '../../components/AIPerformanceReportGenerator';
 import SupervisorAppraisalInbox from './SupervisorAppraisalInbox';
 import AIQuestionGenerator from './AIQuestionGenerator';
 
@@ -126,8 +126,8 @@ export default function EmployeeDashboard({ userId }) {
               onClick={() => setActiveView('chatbot')}
               className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 hover:border-blue-500 cursor-pointer transition text-center space-y-2"
             >
-              <h3 className="text-lg font-bold text-blue-900">AI Coaching Chatbot</h3>
-              <p className="text-slate-500 text-sm">Get practical help with skill building, career development, compliance awareness, wellbeing, and prioritization.</p>
+              <h3 className="text-lg font-bold text-blue-900">AI Performance Report</h3>
+              <p className="text-slate-500 text-sm">Generate a period report from telemetry and feedback dimensions.</p>
             </div>
           </div>
         </div>
@@ -200,9 +200,9 @@ export default function EmployeeDashboard({ userId }) {
       {/* 4. Sub-Page: AI Chatbot */}
       {activeView === 'chatbot' && (
         <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-          <h3 className="text-xl font-bold text-blue-900 mb-2">AI Coaching Assistant</h3>
-          <p className="text-slate-600 text-sm mb-4">Choose a coaching topic and get practical guidance tailored to your role.</p>
-          <CoachingChatbot userId={userId} />
+          <h3 className="text-xl font-bold text-blue-900 mb-2">AI Performance Report Generator</h3>
+          <p className="text-slate-600 text-sm mb-4">Choose a quarter, half-year, or year to generate a report from your performance data.</p>
+          <AIPerformanceReportGenerator />
         </div>
       )}
     </div>

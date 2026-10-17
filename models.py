@@ -254,6 +254,29 @@ class AppraisalReport(Base):
     )
 
 
+class AIPerformanceReport(Base):
+    __tablename__ = "ai_performance_reports"
+    __table_args__ = (
+        CheckConstraint("period_type IN ('quarterly', 'semiannual', 'annual')", name="ck_ai_report_period_type"),
+        CheckConstraint("report_status IN ('ai_draft', 'human_reviewed')", name="ck_ai_report_status"),
+    )
+
+    report_id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.employee_id"), nullable=False, index=True)
+    generated_by_employee_id = Column(Integer, ForeignKey("employees.employee_id"), nullable=False, index=True)
+    period_type = Column(String(20), nullable=False)
+    period_code = Column(String(12), nullable=False, index=True)
+    period_start = Column(DateTime(timezone=True), nullable=False)
+    period_end = Column(DateTime(timezone=True), nullable=False)
+    telemetry_groups = Column(JSONB, nullable=False)
+    feedback_dimensions = Column(JSONB, nullable=False)
+    narrative = Column(JSONB, nullable=False)
+    data_coverage = Column(JSONB, nullable=False)
+    report_status = Column(String(30), nullable=False, default="ai_draft")
+    model_name = Column(String(100), nullable=False)
+    generated_at = Column(DateTime(timezone=True), nullable=False, default=utc_now, index=True)
+
+
 class ComplianceOverrideAudit(Base):
     __tablename__ = "compliance_override_audit"
 

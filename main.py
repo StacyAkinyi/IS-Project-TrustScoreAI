@@ -12,13 +12,13 @@ import hashlib
 import os
 import json
 import random
+import re
 import textwrap
 from pathlib import Path
 import secrets
 import joblib
 import numpy as np
 from datetime import datetime, timedelta, timezone
-from pymongo import MongoClient
 
 import models
 from models import Base
@@ -51,11 +51,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# MongoDB Connection
-MONGO_URI = "mongodb://localhost:27017/"
-mongo_client = MongoClient(MONGO_URI)
-mongo_db = mongo_client["trustscore_mongo"]
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -392,6 +387,239 @@ class CoachingMessage(BaseModel):
 class CoachingChatRequest(BaseModel):
     topic: str
     messages: List[CoachingMessage]
+
+
+class AIReportGenerateRequest(BaseModel):
+    employee_id: int
+    period_type: Literal["quarterly", "semiannual", "annual"]
+    year: int
+    period_number: Optional[int] = None
+
+
+def _report_period(payload: AIReportGenerateRequest):
+    if payload.year < 2000 or payload.year > datetime.now(timezone.utc).year + 1:
+        raise HTTPException(status_code=422, detail="Choose a valid report year")
+    if payload.period_type == "quarterly":
+        if payload.period_number not in (1, 2, 3, 4):
+            raise HTTPException(status_code=422, detail="Choose quarter 1, 2, 3, or 4")
+        month = (payload.period_number - 1) * 3 + 1
+        start = datetime(payload.year, month, 1, tzinfo=timezone.utc)
+        end = datetime(payload.year + (month + 2) // 12, (month + 2) % 12 + 1, 1, tzinfo=timezone.utc)
+        code = f"{payload.year}-Q{payload.period_number}"
+    elif payload.period_type == "semiannual":
+        if payload.period_number not in (1, 2):
+            raise HTTPException(status_code=422, detail="Choose half 1 or 2")
+        month = 1 if payload.period_number == 1 else 7
+        start = datetime(payload.year, month, 1, tzinfo=timezone.utc)
+        end = datetime(payload.year + (1 if month == 7 else 0), 1 if month == 7 else 7, 1, tzinfo=timezone.utc)
+        code = f"{payload.year}-H{payload.period_number}"
+    else:
+        if payload.period_number is not None:
+            raise HTTPException(status_code=422, detail="Annual reports do not use a period number")
+        start = datetime(payload.year, 1, 1, tzinfo=timezone.utc)
+        end = datetime(payload.year + 1, 1, 1, tzinfo=timezone.utc)
+        code = str(payload.year)
+    return start, end, code
+
+
+REPORT_METRICS = {
+    "transaction_accuracy": (0, 100, "high", "Transaction accuracy", "%"),
+    "error_frequencies": (0, 15, "low", "Processing errors", ""),
+    "cash_reconciliation_errors": (0, 10, "low", "Cash reconciliation errors", ""),
+    "workplan_completion": (0, 120, "high", "Workplan completion", "%"),
+    "task_deadline_fulfillment_pct": (0, 100, "high", "Tasks completed on time", "%"),
+    "loan_processing_turnaround_hours": (0, 96, "low", "Loan processing time", " hours"),
+    "customer_satisfaction": (1, 5, "high", "Customer satisfaction", " / 5"),
+    "complaint_resolution_rate_pct": (0, 100, "high", "Complaint resolution", "%"),
+    "non_performing_credit_pct": (0, 18, "low", "Non-performing credit", "%"),
+    "compliance_incidents": (0, 4, "low", "Compliance incidents", ""),
+}
+REPORT_GROUPS = {
+    "operational_quality": ["transaction_accuracy", "error_frequencies", "cash_reconciliation_errors"],
+    "delivery_timeliness": ["workplan_completion", "task_deadline_fulfillment_pct", "loan_processing_turnaround_hours"],
+    "customer_outcomes": ["customer_satisfaction", "complaint_resolution_rate_pct"],
+    "risk_controls": ["non_performing_credit_pct", "compliance_incidents"],
+}
+REPORT_DIMENSIONS = [
+    "communication", "collaboration", "compliance_awareness", "learning_development"
+]
+
+
+def _report_state(score):
+    if score is None:
+        return "No data"
+    if score < 100 / 3:
+        return "Danger"
+    if score < 200 / 3:
+        return "Warning"
+    return "Safe"
+
+
+def _build_report_telemetry(records):
+    group_outputs = {}
+    if not records:
+        return group_outputs
+    for group_key, metric_keys in REPORT_GROUPS.items():
+        metrics = []
+        normalized_values = []
+        for key in metric_keys:
+            low, high, direction, label, unit = REPORT_METRICS[key]
+            values = [float(getattr(record, key)) for record in records if getattr(record, key, None) is not None]
+            if not values:
+                metrics.append({"key": key, "label": label, "mean": None, "unit": unit, "normalized_score": None, "state": "No data"})
+                continue
+            mean_value = sum(values) / len(values)
+            normalized = max(0.0, min(100.0, (mean_value - low) * 100 / (high - low)))
+            if direction == "low":
+                normalized = 100.0 - normalized
+            normalized_values.append(normalized)
+            metrics.append({"key": key, "label": label, "mean": round(mean_value, 2), "unit": unit,
+                            "normalized_score": round(normalized, 1), "state": _report_state(normalized),
+                            "record_count": len(values)})
+        group_score = round(sum(normalized_values) / len(normalized_values), 1) if normalized_values else None
+        group_outputs[group_key] = {"label": group_key.replace("_", " ").title(),
+                                    "score_0_100": group_score, "state": _report_state(group_score),
+                                    "metrics": metrics}
+    return group_outputs
+
+
+def _sanitize_feedback_for_report(text, employee_names):
+    cleaned = text or ""
+    for name in sorted((item for item in employee_names if item), key=len, reverse=True):
+        cleaned = re.sub(re.escape(name), "[PERSON]", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", "[EMAIL]", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"(?<!\w)(?:\+?\d[\d .()/-]{7,}\d)(?!\w)", "[PHONE_OR_ID]", cleaned)
+    cleaned = re.sub(r"\b(?:account|acct|customer|client|loan)\s*(?:no\.?|number|id|#)?\s*[:#-]?\s*[A-Z0-9-]{5,}\b", "[REDACTED_REFERENCE]", cleaned, flags=re.IGNORECASE)
+    return cleaned[:1200]
+
+
+@app.get("/api/v1/reporting/employees")
+def get_reportable_employees(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    role = current_user.get("role")
+    if role == "employee":
+        rows = db.query(models.Employee).filter_by(employee_id=current_user["employee_id"], is_active=True).all()
+    elif role == "supervisor":
+        rows = db.query(models.Employee).filter_by(supervisor_id=current_user["user_id"], user_type="employee", is_active=True).order_by(models.Employee.full_name).all()
+    elif role == "executive":
+        rows = db.query(models.Employee).join(
+            models.ImmediateSupervisor, models.Employee.supervisor_id == models.ImmediateSupervisor.supervisor_id
+        ).filter(models.ImmediateSupervisor.executive_id == current_user["user_id"],
+                 models.Employee.user_type == "employee", models.Employee.is_active.is_(True)).order_by(models.Employee.full_name).all()
+    else:
+        raise HTTPException(status_code=403, detail="This account cannot generate performance reports")
+    return [{"employee_id": row.employee_id, "full_name": row.full_name, "role": row.role} for row in rows]
+
+
+@app.get("/api/v1/ai-reports/{employee_id}")
+def list_ai_reports(employee_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    employee = db.query(models.Employee).filter_by(employee_id=employee_id, is_active=True).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    ensure_employee_access(db, current_user, employee)
+    rows = db.query(models.AIPerformanceReport).filter_by(employee_id=employee_id).order_by(
+        models.AIPerformanceReport.generated_at.desc()
+    ).limit(30).all()
+    return [_serialize_ai_report(row) for row in rows]
+
+
+def _serialize_ai_report(row):
+    return {"report_id": row.report_id, "employee_id": row.employee_id,
+            "period_type": row.period_type, "period_code": row.period_code,
+            "period_start": row.period_start, "period_end": row.period_end,
+            "telemetry_groups": row.telemetry_groups, "feedback_dimensions": row.feedback_dimensions,
+            "narrative": row.narrative, "data_coverage": row.data_coverage,
+            "report_status": row.report_status, "model_name": row.model_name,
+            "generated_at": row.generated_at}
+
+
+@app.post("/api/v1/ai-reports/generate")
+def generate_ai_performance_report(payload: AIReportGenerateRequest, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    employee = db.query(models.Employee).filter_by(employee_id=payload.employee_id, is_active=True).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    ensure_employee_access(db, current_user, employee)
+    start, end, period_code = _report_period(payload)
+    records = db.query(models.PerformanceRecord).filter(
+        models.PerformanceRecord.employee_id == employee.employee_id,
+        models.PerformanceRecord.recorded_at >= start,
+        models.PerformanceRecord.recorded_at < end,
+    ).order_by(models.PerformanceRecord.recorded_at.asc()).all()
+    feedback = db.query(models.UnstructuredFeedback).filter(
+        models.UnstructuredFeedback.employee_id == employee.employee_id,
+        models.UnstructuredFeedback.created_at >= start,
+        models.UnstructuredFeedback.created_at < end,
+    ).order_by(models.UnstructuredFeedback.created_at.asc()).limit(60).all()
+    if not records and not feedback:
+        raise HTTPException(status_code=422, detail="No telemetry or feedback exists for that report period")
+
+    telemetry_groups = _build_report_telemetry(records)
+    all_names = [row[0] for row in db.query(models.Employee.full_name).all()]
+    feedback_items = [{"item": index + 1, "text": _sanitize_feedback_for_report(item.narrative_text, all_names)}
+                      for index, item in enumerate(feedback)]
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="The AI report service is not configured. Add OPENAI_API_KEY to the backend .env file.")
+    instructions = (
+        "Create a concise, evidence-based workplace performance report from the supplied period telemetry and feedback. "
+        "Treat the telemetry group scores and their Safe/Warning/Danger labels as the measured numeric data. "
+        "Rate feedback only from explicit work-related evidence, separately for Communication, Collaboration, Compliance awareness, "
+        "and Learning and development. For each dimension return score_1_5 (integer 1-5 or null when evidence is insufficient), "
+        "evidence_summary, and evidence_count. Do not infer personality, protected traits, health, intent, causes, or potential. "
+        "Positive or negative tone alone is not evidence. Do not turn missing evidence into a low score. "
+        "Return JSON with keys feedback_dimensions, summary, strengths, development_priorities, and caveats. "
+        "Each feedback_dimensions value must contain score_1_5, evidence_summary, evidence_count. "
+        "Mark all feedback ratings as provisional AI draft ratings requiring human review. Do not calculate or claim an overall Trust Score. "
+        "Do not make hiring, promotion, discipline, or termination recommendations. Do not repeat identifying or customer information."
+    )
+    input_data = {"period": period_code, "telemetry_groups": telemetry_groups,
+                  "feedback_items": feedback_items,
+                  "coverage": {"telemetry_records": len(records), "feedback_items": len(feedback)}}
+    try:
+        response = OpenAI(api_key=api_key).responses.create(
+            model=os.getenv("OPENAI_MODEL", "gpt-6-luna"), instructions=instructions,
+            input=json.dumps(input_data, ensure_ascii=False), max_output_tokens=1100, store=False,
+        )
+        narrative = json.loads(response.output_text.strip())
+        if not isinstance(narrative, dict):
+            raise ValueError("AI report response must be a JSON object")
+    except (OpenAIError, json.JSONDecodeError, AttributeError, TypeError, ValueError):
+        raise HTTPException(status_code=502, detail="The AI report could not be generated in the required format. Please try again.")
+
+    dimensions = narrative.get("feedback_dimensions", {})
+    normalized_dimensions = {}
+    for dimension in REPORT_DIMENSIONS:
+        item = dimensions.get(dimension, {}) if isinstance(dimensions, dict) else {}
+        score = item.get("score_1_5") if isinstance(item, dict) else None
+        if not isinstance(score, int) or score < 1 or score > 5:
+            score = None
+        normalized_dimensions[dimension] = {
+            "score_1_5": score,
+            "evidence_summary": str(item.get("evidence_summary", "Insufficient evidence to rate."))[:500] if isinstance(item, dict) else "Insufficient evidence to rate.",
+            "evidence_count": max(0, int(item.get("evidence_count", 0))) if isinstance(item, dict) and str(item.get("evidence_count", 0)).isdigit() else 0,
+            "rating_source": "ai_draft_requires_human_review",
+        }
+    narrative["feedback_dimensions"] = normalized_dimensions
+    for list_key in ("strengths", "development_priorities", "caveats"):
+        if not isinstance(narrative.get(list_key), list):
+            narrative[list_key] = []
+        narrative[list_key] = [str(value)[:500] for value in narrative[list_key][:6]]
+    narrative["summary"] = str(narrative.get("summary", "Report generated from the available period data."))[:2000]
+
+    sources = sorted({record.data_source or "unknown" for record in records})
+    data_coverage = {"telemetry_record_count": len(records), "feedback_item_count": len(feedback),
+                     "telemetry_months_covered": len({record.recorded_at.strftime("%Y-%m") for record in records}),
+                     "data_sources": sources, "feedback_ratings_are_human_reviewed": False}
+    report = models.AIPerformanceReport(
+        employee_id=employee.employee_id, generated_by_employee_id=current_user["employee_id"],
+        period_type=payload.period_type, period_code=period_code, period_start=start, period_end=end,
+        telemetry_groups=telemetry_groups, feedback_dimensions=normalized_dimensions,
+        narrative=narrative, data_coverage=data_coverage, report_status="ai_draft",
+        model_name=os.getenv("OPENAI_MODEL", "gpt-6-luna"),
+    )
+    db.add(report)
+    db.commit()
+    db.refresh(report)
+    return _serialize_ai_report(report)
 
 
 @app.post("/api/v1/coaching/chat")

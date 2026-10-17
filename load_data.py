@@ -135,6 +135,35 @@ def load_base_data(reset: bool = False) -> None:
     print(f"Shared local-demo password: {DEMO_PASSWORD}")
 
 
+
+def refresh_demo_names() -> None:
+    """Refresh names for synthetic demo accounts without resetting any tables."""
+    employees = read_csv("employees.csv")
+    names = [row["full_name"].strip() for row in employees]
+    if len(names) != len(set(names)):
+        raise RuntimeError("The generated employee seed contains duplicate full names.")
+    if any(not row["email"].lower().endswith("@trustscore.test") for row in employees):
+        raise RuntimeError("Name refresh is limited to @trustscore.test demo accounts.")
+
+    with SessionLocal() as session:
+        existing = {
+            employee.email: employee
+            for employee in session.query(models.Employee).filter(
+                models.Employee.email.like("%@trustscore.test")
+            ).all()
+        }
+        requested_emails = {row["email"].strip().lower() for row in employees}
+        if set(existing) != requested_emails:
+            raise RuntimeError(
+                "The database demo account set does not match data/base_seed. "
+                "No names were changed."
+            )
+        for row in employees:
+            existing[row["email"].strip().lower()].full_name = row["full_name"].strip()
+        session.commit()
+    print(f"Updated names for {len(employees)} synthetic demo accounts; IDs and related records were preserved.")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -142,8 +171,18 @@ def main() -> None:
         action="store_true",
         help="Drop and recreate all TrustScoreAI tables before loading base accounts.",
     )
+    parser.add_argument(
+        "--refresh-demo-names",
+        action="store_true",
+        help="Update only existing @trustscore.test names; preserve all rows and relationships.",
+    )
     args = parser.parse_args()
-    load_base_data(reset=args.reset)
+    if args.refresh_demo_names:
+        if args.reset:
+            parser.error("--reset and --refresh-demo-names cannot be used together")
+        refresh_demo_names()
+    else:
+        load_base_data(reset=args.reset)
 
 
 if __name__ == "__main__":

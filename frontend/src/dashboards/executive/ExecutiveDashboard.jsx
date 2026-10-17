@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import ExecutiveCoachingChat from './ExecutiveCoachingChat';
+import AIPerformanceReportGenerator from '../../components/AIPerformanceReportGenerator';
 import ExecutiveComplianceOverrideModal from './ExecutiveComplianceOverrideModal';
 
 const API = 'http://127.0.0.1:8000/api/v1';
@@ -147,7 +147,7 @@ export default function ExecutiveDashboard({ executiveId }) {
           <p className="mt-3 text-xs text-slate-500">Compliance overrides applied: {overrideCount}</p>
         </div>
       </section>
-      <ExecutiveCoachingChat executiveId={executiveId} />
+      <AIPerformanceReportGenerator />
       {selectedOverrideReport && <ExecutiveComplianceOverrideModal report={selectedOverrideReport} executiveId={executiveId} onClose={() => setSelectedOverrideReport(null)} onUpdated={handleOverrideUpdated} />}
     </div>
   );
