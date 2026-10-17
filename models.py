@@ -241,6 +241,8 @@ class AppraisalReport(Base):
     overriding_executive_id = Column(
         Integer, ForeignKey("executive_managers.executive_id"), nullable=True
     )
+    compliance_override_reason = Column(Text, nullable=True)
+    compliance_override_updated_at = Column(DateTime(timezone=True), nullable=True)
     generation_date = Column(DateTime(timezone=True), nullable=False, default=utc_now, index=True)
 
     employee = relationship("Employee", back_populates="appraisal_reports")
@@ -248,6 +250,18 @@ class AppraisalReport(Base):
     source_mappings = relationship(
         "AppraisalSourceMapping", back_populates="report", cascade="all, delete-orphan"
     )
+
+
+class ComplianceOverrideAudit(Base):
+    __tablename__ = "compliance_override_audit"
+
+    audit_id = Column(Integer, primary_key=True, index=True)
+    report_id = Column(Integer, ForeignKey("appraisal_reports.report_id"), nullable=False, index=True)
+    executive_id = Column(Integer, ForeignKey("executive_managers.executive_id"), nullable=False, index=True)
+    previous_status = Column(Boolean, nullable=False)
+    new_status = Column(Boolean, nullable=False)
+    justification = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now, index=True)
 
 
 class AppraisalSourceMapping(Base):

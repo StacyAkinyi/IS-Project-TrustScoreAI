@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 
@@ -105,8 +105,12 @@ class AppraisalReportResponse(BaseModel):
     report_id: int
     employee_id: int
     unified_trust_score: float
+    report_status: str = "generated"
     compliance_override_status: bool
     overriding_executive_id: Optional[int] = None
+    compliance_override_reason: Optional[str] = None
+    compliance_override_updated_at: Optional[datetime] = None
+    override_audit: list[dict] = Field(default_factory=list)
     generation_date: datetime
 
     class Config:
@@ -143,6 +147,7 @@ class ExecutiveOverrideRequest(BaseModel):
     report_id: int
     executive_id: int
     compliance_override_status: bool
+    justification: str = Field(min_length=10, max_length=2000)
 
 class LoginRequest(BaseModel):
     email: str

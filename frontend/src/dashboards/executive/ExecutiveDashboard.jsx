@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ExecutiveCoachingChat from './ExecutiveCoachingChat';
+import ExecutiveComplianceOverrideModal from './ExecutiveComplianceOverrideModal';
 
 const API = 'http://127.0.0.1:8000/api/v1';
 
@@ -11,6 +12,7 @@ export default function ExecutiveDashboard({ executiveId }) {
   const [formsBySupervisor, setFormsBySupervisor] = useState({});
   const [loadingFormsId, setLoadingFormsId] = useState(null);
   const [formsError, setFormsError] = useState('');
+  const [selectedOverrideReport, setSelectedOverrideReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -79,6 +81,17 @@ export default function ExecutiveDashboard({ executiveId }) {
     ? (reports.reduce((sum, report) => sum + Number(report.unified_trust_score || 0), 0) / reports.length).toFixed(1)
     : '—';
   const overrideCount = reports.filter((report) => report.compliance_override_status).length;
+  const handleOverrideUpdated = (data) => {
+    setReports((current) => current.map((report) => report.report_id === data.report_id ? {
+      ...report,
+      compliance_override_status: data.override_status,
+      compliance_override_reason: data.reason,
+      compliance_override_updated_at: data.audit_event.created_at,
+      overriding_executive_id: data.override_status ? executiveId : null,
+      override_audit: [data.audit_event, ...(report.override_audit || [])],
+    } : report));
+    setSelectedOverrideReport(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -121,11 +134,12 @@ export default function ExecutiveDashboard({ executiveId }) {
           {reports.length === 0 ? <p className="text-sm text-slate-500">No appraisal reports are available yet.</p> : (
             <div className="max-h-80 overflow-auto">
               <table className="w-full text-left text-sm">
-                <thead className="sticky top-0 bg-white"><tr className="border-b text-slate-500"><th className="p-2">Employee</th><th className="p-2">Trust score</th><th className="p-2">Status</th></tr></thead>
+                <thead className="sticky top-0 bg-white"><tr className="border-b text-slate-500"><th className="p-2">Employee</th><th className="p-2">Trust score</th><th className="p-2">Report status</th><th className="p-2">Compliance override</th></tr></thead>
                 <tbody>{[...reports].sort((a, b) => new Date(b.generation_date) - new Date(a.generation_date)).slice(0, 12).map((report) => <tr key={report.report_id} className="border-b last:border-0">
                   <td className="p-2 text-slate-700">#{report.employee_id}</td>
                   <td className="p-2 font-semibold text-slate-800">{Number(report.unified_trust_score).toFixed(1)}%</td>
-                  <td className="p-2 text-slate-600">{report.compliance_override_status ? 'Override applied' : report.report_status}</td>
+                  <td className="p-2 text-slate-600">{report.report_status}</td>
+                  <td className="p-2"><span className={`mr-2 rounded px-2 py-1 text-xs font-semibold ${report.compliance_override_status ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-600'}`}>{report.compliance_override_status ? 'Active' : 'None'}</span><button type="button" onClick={() => setSelectedOverrideReport(report)} className="whitespace-nowrap font-semibold text-blue-700 hover:underline">{report.compliance_override_status ? 'Review / remove' : 'Apply override'}</button></td>
                 </tr>)}</tbody>
               </table>
             </div>
@@ -134,6 +148,7 @@ export default function ExecutiveDashboard({ executiveId }) {
         </div>
       </section>
       <ExecutiveCoachingChat executiveId={executiveId} />
+      {selectedOverrideReport && <ExecutiveComplianceOverrideModal report={selectedOverrideReport} executiveId={executiveId} onClose={() => setSelectedOverrideReport(null)} onUpdated={handleOverrideUpdated} />}
     </div>
   );
 }

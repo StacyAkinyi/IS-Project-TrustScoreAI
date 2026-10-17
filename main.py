@@ -1367,13 +1367,39 @@ def get_executive_reports(
     if current_user["role"] != "executive" or current_user.get("user_id") != executive_id:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    return db.query(models.AppraisalReport).join(
+    reports = db.query(models.AppraisalReport).join(
         models.Employee, models.AppraisalReport.employee_id == models.Employee.employee_id
     ).join(
         models.ImmediateSupervisor, models.Employee.supervisor_id == models.ImmediateSupervisor.supervisor_id
     ).filter(
         models.ImmediateSupervisor.executive_id == executive_id
-    ).all()
+    ).order_by(models.AppraisalReport.generation_date.desc()).all()
+    report_ids = [report.report_id for report in reports]
+    audit_rows = db.query(models.ComplianceOverrideAudit).filter(
+        models.ComplianceOverrideAudit.report_id.in_(report_ids)
+    ).order_by(models.ComplianceOverrideAudit.created_at.desc()).all() if report_ids else []
+    audits_by_report = {}
+    for event in audit_rows:
+        audits_by_report.setdefault(event.report_id, []).append({
+            "audit_id": event.audit_id,
+            "executive_id": event.executive_id,
+            "previous_status": event.previous_status,
+            "new_status": event.new_status,
+            "justification": event.justification,
+            "created_at": event.created_at,
+        })
+    return [{
+        "report_id": report.report_id,
+        "employee_id": report.employee_id,
+        "unified_trust_score": report.unified_trust_score,
+        "report_status": report.report_status,
+        "compliance_override_status": report.compliance_override_status,
+        "overriding_executive_id": report.overriding_executive_id,
+        "compliance_override_reason": report.compliance_override_reason,
+        "compliance_override_updated_at": report.compliance_override_updated_at,
+        "override_audit": audits_by_report.get(report.report_id, []),
+        "generation_date": report.generation_date,
+    } for report in reports]
 
 @app.get("/api/v1/executives/{executive_id}/supervisors", response_model=List[schemas.SupervisorResponse])
 def get_executive_supervisors(
@@ -1430,47 +1456,63 @@ def get_executive_supervisors(
 
 @app.post("/api/v1/executives/override-compliance")
 def execute_compliance_override(
-    payload: schemas.ExecutiveOverrideRequest, 
+    payload: schemas.ExecutiveOverrideRequest,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    if current_user["role"] != "executive":
+    if current_user.get("role") != "executive":
         raise HTTPException(status_code=403, detail="Only executives can trigger compliance overrides")
     if current_user.get("user_id") != payload.executive_id:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    report = db.query(models.AppraisalReport).filter_by(report_id=payload.report_id).first()
+    report = db.query(models.AppraisalReport).join(
+        models.Employee, models.AppraisalReport.employee_id == models.Employee.employee_id
+    ).join(
+        models.ImmediateSupervisor, models.Employee.supervisor_id == models.ImmediateSupervisor.supervisor_id
+    ).filter(
+        models.AppraisalReport.report_id == payload.report_id,
+        models.ImmediateSupervisor.executive_id == payload.executive_id,
+    ).with_for_update().first()
     if not report:
         raise HTTPException(status_code=404, detail="Appraisal report not found")
-    belongs_to_region = db.query(models.AppraisalReport).join(
-        models.Employee, models.AppraisalReport.employee_id == models.Employee.employee_id
-    ).join(
-        models.ImmediateSupervisor, models.Employee.supervisor_id == models.ImmediateSupervisor.supervisor_id
-    ).filter(
-        models.AppraisalReport.report_id == payload.report_id,
-        models.ImmediateSupervisor.executive_id == payload.executive_id,
-    ).first()
-    if not belongs_to_region:
-        raise HTTPException(status_code=404, detail="Appraisal report not found")
-    belongs_to_region = db.query(models.AppraisalReport).join(
-        models.Employee, models.AppraisalReport.employee_id == models.Employee.employee_id
-    ).join(
-        models.ImmediateSupervisor, models.Employee.supervisor_id == models.ImmediateSupervisor.supervisor_id
-    ).filter(
-        models.AppraisalReport.report_id == payload.report_id,
-        models.ImmediateSupervisor.executive_id == payload.executive_id,
-    ).first()
-    if not belongs_to_region:
-        raise HTTPException(status_code=404, detail="Appraisal report not found")
 
+    justification = payload.justification.strip()
+    if len(justification) < 10:
+        raise HTTPException(status_code=422, detail="Provide at least 10 characters explaining this override action")
+    if report.compliance_override_status == payload.compliance_override_status:
+        action = "already applied" if payload.compliance_override_status else "not currently applied"
+        raise HTTPException(status_code=409, detail=f"A compliance override is {action} for this report")
+
+    previous_status = report.compliance_override_status
+    audit = models.ComplianceOverrideAudit(
+        report_id=report.report_id,
+        executive_id=payload.executive_id,
+        previous_status=previous_status,
+        new_status=payload.compliance_override_status,
+        justification=justification,
+    )
     report.compliance_override_status = payload.compliance_override_status
-    report.overriding_executive_id = payload.executive_id
+    report.overriding_executive_id = payload.executive_id if payload.compliance_override_status else None
+    report.compliance_override_reason = justification
+    report.compliance_override_updated_at = datetime.now(timezone.utc)
+    db.add(audit)
     db.commit()
+    db.refresh(audit)
 
     return {
-        "status": "success", 
-        "message": f"Compliance override updated for report #{payload.report_id}",
-        "override_status": payload.compliance_override_status
+        "status": "success",
+        "message": f"Compliance override {'applied' if payload.compliance_override_status else 'removed'} for report #{payload.report_id}",
+        "report_id": report.report_id,
+        "override_status": report.compliance_override_status,
+        "reason": report.compliance_override_reason,
+        "audit_event": {
+            "audit_id": audit.audit_id,
+            "executive_id": audit.executive_id,
+            "previous_status": audit.previous_status,
+            "new_status": audit.new_status,
+            "justification": audit.justification,
+            "created_at": audit.created_at,
+        },
     }
 
 # ---------------------------------------------------------
