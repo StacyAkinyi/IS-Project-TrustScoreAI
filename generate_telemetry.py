@@ -17,7 +17,7 @@ FIELDS = [
     "accounts_opened", "non_performing_credit_pct", "task_deadline_fulfillment_pct",
     "cash_reconciliation_errors", "customer_satisfaction", "compliance_incidents",
     "complaint_resolution_rate_pct", "digital_channel_adoption_pct",
-    "feedback_text", "truthfulness_weight", "reliability_target",
+    "feedback_text", "truthfulness_weight", "reliability_target", "data_source",
 ]
 
 
@@ -77,6 +77,7 @@ def generate():
                 "feedback_text": "",
                 "truthfulness_weight": round(rng.uniform(0.65, 1.0), 2),
                 "reliability_target": 1 if rng.random() < 0.9 else 0,
+                "data_source": "synthetic_demo",
             }
             rows.append(row)
 

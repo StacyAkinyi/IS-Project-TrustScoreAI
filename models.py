@@ -135,6 +135,7 @@ class PerformanceRecord(Base):
         CheckConstraint("workplan_completion BETWEEN 0 AND 120", name="ck_performance_workplan_range"),
         CheckConstraint("error_frequencies >= 0", name="ck_performance_errors_nonnegative"),
         CheckConstraint("reliability_target IN (0, 1)", name="ck_performance_reliability_target"),
+        CheckConstraint("data_source IN ('real_anonymized', 'synthetic_demo', 'unknown')", name="ck_performance_data_source"),
     )
 
     record_id = Column(Integer, primary_key=True, index=True)
@@ -156,6 +157,7 @@ class PerformanceRecord(Base):
     feedback_text = Column(Text, nullable=True)
     truthfulness_weight = Column(Float, nullable=False, default=1.0)
     reliability_target = Column(Integer, nullable=False)
+    data_source = Column(String(30), nullable=False, default="unknown")
     recorded_at = Column(DateTime(timezone=True), nullable=False, default=utc_now, index=True)
 
     employee = relationship("Employee", back_populates="performance_records")

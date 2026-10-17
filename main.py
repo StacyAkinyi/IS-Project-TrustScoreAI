@@ -106,14 +106,14 @@ def ensure_supervisor_access(db: Session, current_user: dict, supervisor_id: int
     raise HTTPException(status_code=403, detail="Access denied")
 
 # ---------------------------------------------------------
-# 1. Load Pre-Trained Machine Learning Models
+# 1. Load the human-labeled unified score regressor, when trained
 # ---------------------------------------------------------
+trust_score_model_bundle = None
 try:
-    rf_model = joblib.load('trust_score_rf_model.pkl')
-    tfidf_vectorizer = joblib.load('tfidf_vectorizer.pkl')
-    print("✓ Machine Learning pipeline loaded successfully.")
+    trust_score_model_bundle = joblib.load('trust_score_regressor.pkl')
+    print("Unified Trust Score regressor loaded.")
 except FileNotFoundError:
-    print("Warning: .pkl files not found. Ensure models are saved in the root directory.")
+    print("Unified Trust Score regressor is not trained yet; score reports are unavailable.")
 
 
 

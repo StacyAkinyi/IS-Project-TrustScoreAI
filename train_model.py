@@ -1,91 +1,177 @@
-import pandas as pd
-import numpy as np
+"""Train the PostgreSQL-backed unified Trust Score Random Forest Regressor.
+
+Training requires human-reviewed labels in data/training. Synthetic rows are
+excluded unless --include-demo-data is explicitly supplied.
+"""
+import argparse
+from pathlib import Path
+
 import joblib
-from pymongo import MongoClient
-from sklearn.model_selection import StratifiedKFold, cross_val_score
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.feature_extraction.text import TfidfVectorizer
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.impute import SimpleImputer
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import GroupKFold, cross_val_predict
+from sklearn.pipeline import make_pipeline
+from sqlalchemy import text
+
 from database import engine
 
-MONGO_URI = "mongodb://localhost:27017/"
-MONGO_DB_NAME = "trustscore_mongo"
+ROOT = Path(__file__).resolve().parent
+TRAINING_DIR = ROOT / "data" / "training"
+TARGET_FILE = TRAINING_DIR / "trust_score_reference_labels.csv"
+FEEDBACK_LABELS_FILE = TRAINING_DIR / "feedback_dimension_annotations.csv"
+MODEL_FILE = ROOT / "trust_score_regressor.pkl"
 
-def compute_truthfulness_weights(df):
-    weights = []
-    negative_keywords = ['struggles', 'delays', 'errors', 'overlooks', 'minor', 'needs improvement']
-    
-    for idx, row in df.iterrows():
-        text = str(row['narrative_text']).lower()
-        accuracy = row['transaction_accuracy']
-        source_credibility = 0.9  
-        has_negative_tone = any(word in text for word in negative_keywords)
-        
-        consistency_penalty = 0.7 if (has_negative_tone and accuracy > 95.0) else 1.0
-        weights.append(source_credibility * consistency_penalty)
-        
-    return np.array(weights)
+METRIC_RANGES = {
+    # (minimum, maximum, direction); these are data normalization bounds, not bank policy.
+    "transaction_accuracy": (0, 100, "high"),
+    "error_frequencies": (0, 15, "low"),
+    "cash_reconciliation_errors": (0, 10, "low"),
+    "workplan_completion": (0, 120, "high"),
+    "task_deadline_fulfillment_pct": (0, 100, "high"),
+    "loan_processing_turnaround_hours": (0, 96, "low"),
+    "customer_satisfaction": (1, 5, "high"),
+    "complaint_resolution_rate_pct": (0, 100, "high"),
+    "non_performing_credit_pct": (0, 18, "low"),
+    "compliance_incidents": (0, 4, "low"),
+}
+GROUPS = {
+    "operational_quality": ["transaction_accuracy", "error_frequencies", "cash_reconciliation_errors"],
+    "delivery_timeliness": ["workplan_completion", "task_deadline_fulfillment_pct", "loan_processing_turnaround_hours"],
+    "customer_outcomes": ["customer_satisfaction", "complaint_resolution_rate_pct"],
+    "risk_controls": ["non_performing_credit_pct", "compliance_incidents"],
+}
+FEEDBACK_DIMENSIONS = {
+    "feedback_communication": "communication_1_5",
+    "feedback_collaboration": "collaboration_1_5",
+    "feedback_compliance_awareness": "compliance_awareness_1_5",
+    "feedback_learning_development": "learning_development_1_5",
+}
+FEATURES = list(GROUPS) + list(FEEDBACK_DIMENSIONS) + ["telemetry_month_count"]
 
-def train_trust_score_model():
-    print("Loading evaluation record datasets from PostgreSQL and MongoDB...")
-    
-    # 1. Fetch individual performance evaluation records (2,400 rows)
-    perf_df = pd.read_sql_table("performance_records", con=engine)
-    
-    # 2. Fetch qualitative feedback from MongoDB
-    mongo_client = MongoClient(MONGO_URI)
-    mongo_db = mongo_client[MONGO_DB_NAME]
-    feedback_docs = list(mongo_db["unstructured_feedback"].find({}, {"_id": 0}))
-    feedback_df = pd.DataFrame(feedback_docs)
-    mongo_client.close()
 
-    # Aggregate feedback per employee to attach to monthly evaluation records
-    feedback_agg = feedback_df.groupby('employee_id').agg({
-        'narrative_text': lambda x: ' '.join(x.dropna())
-    }).reset_index()
+def _normalize(series, low, high, direction):
+    values = pd.to_numeric(series, errors="coerce").clip(lower=low, upper=high)
+    score = (values - low) * (100.0 / (high - low))
+    return score if direction == "high" else 100.0 - score
 
-    # Merge performance records with feedback narratives
-    df = pd.merge(perf_df, feedback_agg, on='employee_id', how='left')
-    df['narrative_text'] = df['narrative_text'].fillna(df['feedback_text'].fillna(""))
 
-    # Extract record-level feature vectors
-    X_num = df[['loan_volumes', 'transaction_accuracy', 'workplan_completion', 'error_frequencies']].values
-    text_data = df['narrative_text'].values
-    y = df['reliability_target'].values
+def _require_file(path, description):
+    if not path.exists():
+        raise SystemExit(f"Missing {path}. Copy and fill the {description} template first.")
+    frame = pd.read_csv(path)
+    if frame.empty:
+        raise SystemExit(f"{path} has headers but no reviewed rows yet. Add labeled examples before training.")
+    return frame
 
-    print("Computing Review Truthfulness Weights...")
-    truth_weights = compute_truthfulness_weights(df)
 
-    print("Vectorizing qualitative feedback...")
-    tfidf = TfidfVectorizer(stop_words='english', max_features=25)
-    X_text_raw = tfidf.fit_transform(text_data).toarray()
-    X_text_weighted = X_text_raw * truth_weights[:, np.newaxis]
-
-    X_combined = np.hstack((X_num, X_text_weighted))
-
-    # Regularized Random Forest Classifier
-    rf_classifier = RandomForestClassifier(
-        n_estimators=100,
-        max_depth=5,
-        min_samples_leaf=10,
-        min_samples_split=20,
-        random_state=42
+def _load_telemetry_features(include_demo_data=False):
+    columns = ["employee_id", "recorded_at", "data_source", *METRIC_RANGES.keys()]
+    query = text("SELECT " + ", ".join(columns) + " FROM performance_records")
+    with engine.connect() as connection:
+        telemetry = pd.read_sql_query(query, connection)
+    if telemetry.empty:
+        raise SystemExit("PostgreSQL has no performance_records to build score features from.")
+    allowed_sources = ["real_anonymized", "synthetic_demo"] if include_demo_data else ["real_anonymized"]
+    telemetry = telemetry[telemetry["data_source"].isin(allowed_sources)].copy()
+    if telemetry.empty:
+        raise SystemExit("No eligible telemetry rows found. Training uses real_anonymized rows by default; old rows marked unknown and synthetic_demo rows are excluded.")
+    telemetry["recorded_at"] = pd.to_datetime(telemetry["recorded_at"], utc=True, errors="coerce")
+    telemetry = telemetry.dropna(subset=["employee_id", "recorded_at"])
+    telemetry["period_code"] = telemetry["recorded_at"].dt.year.astype(str) + np.where(
+        telemetry["recorded_at"].dt.month <= 6, "-H1", "-H2"
     )
+    normalized = {}
+    for name, (low, high, direction) in METRIC_RANGES.items():
+        normalized[name] = _normalize(telemetry[name], low, high, direction)
+    for group_name, members in GROUPS.items():
+        telemetry[group_name] = pd.concat([normalized[name] for name in members], axis=1).mean(axis=1)
+    features = telemetry.groupby(["employee_id", "period_code", "data_source"], as_index=False).agg(
+        **{name: (name, "mean") for name in GROUPS},
+        telemetry_month_count=("recorded_at", "nunique"),
+    ).rename(columns={"data_source": "dataset_source"})
+    return features
 
-    # 5-Fold Stratified Cross-Validation on all 2,400 evaluation records
-    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-    cv_scores = cross_val_score(rf_classifier, X_combined, y, cv=skf, scoring='accuracy')
 
-    print(f"\n--- Record-Level Cross-Validation Results ---")
-    print(f"5-Fold Accuracy Scores: {np.round(cv_scores * 100, 2)}")
-    print(f"Mean CV Accuracy: {cv_scores.mean() * 100:.2f}% (+/- {cv_scores.std() * 100:.2f}%)")
+def _load_feedback_features(include_demo_data=False):
+    annotations = _require_file(FEEDBACK_LABELS_FILE, "feedback annotation")
+    required = {"employee_id", "period_code", "dataset_source", *FEEDBACK_DIMENSIONS.values()}
+    missing = required - set(annotations.columns)
+    if missing:
+        raise SystemExit(f"Feedback annotations are missing columns: {', '.join(sorted(missing))}")
+    allowed_sources = ["real_anonymized", "synthetic_demo"] if include_demo_data else ["real_anonymized"]
+    annotations = annotations[annotations["dataset_source"].isin(allowed_sources)].copy()
+    if annotations.empty:
+        raise SystemExit("No eligible feedback annotations are available. Synthetic annotations are excluded by default.")
+    for feature, source in FEEDBACK_DIMENSIONS.items():
+        ratings = pd.to_numeric(annotations[source], errors="coerce")
+        invalid = ratings.notna() & ~ratings.between(1, 5)
+        if invalid.any():
+            raise SystemExit(f"{source} contains ratings outside 1–5.")
+        annotations[feature] = (ratings - 1) * 25.0
+    return annotations.groupby(["employee_id", "period_code", "dataset_source"], as_index=False)[list(FEEDBACK_DIMENSIONS)].mean()
 
-    # Train final model across complete dataset
-    rf_classifier.fit(X_combined, y)
 
-    # Export serialized artifacts
-    joblib.dump(rf_classifier, 'trust_score_rf_model.pkl')
-    joblib.dump(tfidf, 'tfidf_vectorizer.pkl')
-    print("\n✓ Model trained and saved successfully as 'trust_score_rf_model.pkl'!")
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--include-demo-data", action="store_true", help="include synthetic_demo reference labels for a software demonstration only")
+    args = parser.parse_args()
+
+    labels = _require_file(TARGET_FILE, "overall score label")
+    required = {"employee_id", "period_code", "reviewer_1_score_0_100", "reviewer_2_score_0_100", "adjudicated_score_0_100", "label_status", "dataset_source", "rubric_version"}
+    missing = required - set(labels.columns)
+    if missing:
+        raise SystemExit(f"Reference labels are missing columns: {', '.join(sorted(missing))}")
+    labels = labels[labels["label_status"] == "approved"].copy()
+    allowed_sources = ["real_anonymized", "synthetic_demo"] if args.include_demo_data else ["real_anonymized"]
+    labels = labels[labels["dataset_source"].isin(allowed_sources)]
+    if labels.empty:
+        raise SystemExit("No approved real_anonymized score labels found. Demo labels require the explicit --include-demo-data option.")
+    for name in ["reviewer_1_score_0_100", "reviewer_2_score_0_100", "adjudicated_score_0_100"]:
+        labels[name] = pd.to_numeric(labels[name], errors="coerce")
+        if labels[name].isna().any() or not labels[name].between(0, 100).all():
+            raise SystemExit(f"Approved labels must have valid values from 0 to 100 in {name}.")
+    if labels.duplicated(["employee_id", "period_code"]).any():
+        raise SystemExit("Reference labels must have one approved row per employee and half-year period.")
+
+    features = _load_telemetry_features(args.include_demo_data).merge(
+        _load_feedback_features(args.include_demo_data),
+        on=["employee_id", "period_code", "dataset_source"], how="left"
+    )
+    dataset = labels.merge(features, on=["employee_id", "period_code", "dataset_source"], how="inner")
+    if len(dataset) < 10 or dataset["employee_id"].nunique() < 5:
+        raise SystemExit("Need at least 10 approved employee-period labels from at least 5 distinct employees before training.")
+    if dataset[list(FEEDBACK_DIMENSIONS)].notna().sum().min() == 0:
+        raise SystemExit("Each NLP dimension needs at least one reviewed rating before training the unified model.")
+
+    X = dataset[FEATURES]
+    y = dataset["adjudicated_score_0_100"]
+    groups = dataset["employee_id"]
+    folds = min(5, groups.nunique())
+    model = make_pipeline(
+        SimpleImputer(strategy="median", add_indicator=True, keep_empty_features=True),
+        RandomForestRegressor(
+            n_estimators=300,
+            max_depth=8,
+            min_samples_leaf=2,
+            max_features=0.8,
+            random_state=42,
+            n_jobs=-1,
+        ),
+    )
+    predictions = cross_val_predict(model, X, y, groups=groups, cv=GroupKFold(n_splits=folds))
+    print(f"Grouped cross-validation ({folds} folds; employees kept within one fold)")
+    print(f"Examples: {len(dataset)} across {groups.nunique()} employees")
+    print(f"MAE: {mean_absolute_error(y, predictions):.2f} points")
+    print(f"RMSE: {mean_squared_error(y, predictions) ** 0.5:.2f} points")
+    print(f"R²: {r2_score(y, predictions):.3f}")
+    model.fit(X, y)
+    joblib.dump({"model": model, "features": FEATURES, "rubric_version": sorted(labels["rubric_version"].astype(str).unique())}, MODEL_FILE)
+    print(f"Saved prototype regressor to {MODEL_FILE}")
+    print("Review model quality and subgroup error before using it for any employee-facing decision.")
+
 
 if __name__ == "__main__":
-    train_trust_score_model()
+    main()

@@ -55,6 +55,7 @@ def load():
                 feedback_text=row["feedback_text"] or None,
                 truthfulness_weight=float(row["truthfulness_weight"]),
                 reliability_target=int(row["reliability_target"]),
+                data_source=row.get("data_source", "synthetic_demo"),
             ))
         session.add_all(records)
         session.commit()
