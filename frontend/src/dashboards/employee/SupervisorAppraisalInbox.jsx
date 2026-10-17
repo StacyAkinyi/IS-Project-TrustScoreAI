@@ -109,7 +109,7 @@ export default function SupervisorAppraisalInbox({ employeeId }) {
             const canRequestReview = status === 'awaiting_employee';
             return <React.Fragment key={item.appraisal_id}>
               <tr className="border-t">
-                <td className="p-3 font-semibold text-blue-900">Supervisor appraisal · {item.period_code}</td>
+                <td className="p-3 font-semibold text-blue-900">Supervisor appraisal · Form {item.form_number || 1} · {item.period_code}</td>
                 <td className="p-3 text-slate-600">{new Date(item.created_at).toLocaleDateString()}</td>
                 <td className="p-3 text-slate-600">Yes {item.yes_count}/5</td>
                 <td className="p-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${status === 'satisfied' ? 'bg-green-100 text-green-800' : status === 'review_requested' ? 'bg-amber-100 text-amber-800' : 'bg-blue-50 text-blue-800'}`}>{statusLabel}</span></td>

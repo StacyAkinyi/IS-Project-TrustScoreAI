@@ -118,18 +118,32 @@ except FileNotFoundError:
 
 
 
-SUPERVISOR_APPRAISAL_QUESTIONS = [
-    {"id": "procedure_adherence", "type": "yes_no", "prompt": "Did the employee follow the documented procedures relevant to their role during this review period?"},
-    {"id": "accuracy_expectations", "type": "yes_no", "prompt": "Did the employee meet the agreed accuracy expectations, based on available work evidence?"},
-    {"id": "timeliness_expectations", "type": "yes_no", "prompt": "Did the employee meet agreed deadlines for assigned work?"},
-    {"id": "risk_escalation", "type": "yes_no", "prompt": "Did the employee escalate material errors, customer concerns, or compliance risks through the expected channels?"},
-    {"id": "team_contribution", "type": "yes_no", "prompt": "Did the employee meet the agreed expectations for respectful collaboration and customer service?"},
-    {"id": "evidence_achievements", "type": "open", "prompt": "What are up to two specific achievements from this period, and what evidence supports them?"},
-    {"id": "evidence_strengths", "type": "open", "prompt": "Which role-related strengths did you observe? Give a specific work example for each."},
-    {"id": "context_barriers", "type": "open", "prompt": "What work-related barriers or changing conditions affected results, and what context should be considered?"},
-    {"id": "development_goal", "type": "open", "prompt": "What is one practical development goal for the next six months, and how will progress be observed?"},
-    {"id": "support_needed", "type": "open", "prompt": "What support, coaching, tools, or workload changes would help the employee succeed?"},
-]
+SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM = {
+    1: [
+        {"id": "procedure_adherence", "type": "yes_no", "prompt": "Did the employee follow the documented procedures relevant to their role during this review period?"},
+        {"id": "accuracy_expectations", "type": "yes_no", "prompt": "Did the employee meet the agreed accuracy expectations, based on available work evidence?"},
+        {"id": "timeliness_expectations", "type": "yes_no", "prompt": "Did the employee meet agreed deadlines for assigned work?"},
+        {"id": "risk_escalation", "type": "yes_no", "prompt": "Did the employee escalate material errors, customer concerns, or compliance risks through the expected channels?"},
+        {"id": "team_contribution", "type": "yes_no", "prompt": "Did the employee meet the agreed expectations for respectful collaboration and customer service?"},
+        {"id": "evidence_achievements", "type": "open", "prompt": "What are up to two specific achievements from this period, and what evidence supports them?"},
+        {"id": "evidence_strengths", "type": "open", "prompt": "Which role-related strengths did you observe? Give a specific work example for each."},
+        {"id": "context_barriers", "type": "open", "prompt": "What work-related barriers or changing conditions affected results, and what context should be considered?"},
+        {"id": "development_goal", "type": "open", "prompt": "What is one practical development goal for the next six months, and how will progress be observed?"},
+        {"id": "support_needed", "type": "open", "prompt": "What support, coaching, tools, or workload changes would help the employee succeed?"},
+    ],
+    2: [
+        {"id": "prior_goal_progress", "type": "yes_no", "prompt": "Did the employee make measurable progress on the development goal agreed in the previous review?"},
+        {"id": "learning_application", "type": "yes_no", "prompt": "Did the employee apply relevant training or coaching to their day-to-day work?"},
+        {"id": "customer_followthrough", "type": "yes_no", "prompt": "Did the employee follow through on customer or colleague commitments within the agreed time?"},
+        {"id": "improvement_response", "type": "yes_no", "prompt": "Did the employee respond constructively to feedback by trying agreed improvement actions?"},
+        {"id": "resource_use", "type": "yes_no", "prompt": "Did the employee use work systems, time, and assigned resources responsibly?"},
+        {"id": "goal_progress_evidence", "type": "open", "prompt": "What evidence shows progress or limited progress on the previous review’s development goal?"},
+        {"id": "notable_change", "type": "open", "prompt": "What meaningful change in the employee’s work or results should be considered for this period?"},
+        {"id": "coaching_followup", "type": "open", "prompt": "What coaching or support was provided, and what happened after it was provided?"},
+        {"id": "next_period_priorities", "type": "open", "prompt": "What are the two most important role-related priorities for the employee’s next review period?"},
+        {"id": "success_evidence", "type": "open", "prompt": "What observable evidence will show that the employee has succeeded with those priorities?"},
+    ],
+}
 
 
 def current_review_period():
@@ -499,13 +513,35 @@ def coaching_chat(
 @app.get("/api/v1/supervisors/{supervisor_id}/appraisal-template")
 def get_supervisor_appraisal_template(
     supervisor_id: int,
+    employee_id: Optional[int] = None,
+    form_number: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
     ensure_supervisor_access(db, current_user, supervisor_id)
     if current_user.get("role") != "supervisor":
         raise HTTPException(status_code=403, detail="Only the assigned supervisor can issue this appraisal")
-    return {"period_code": current_review_period(), "questions": SUPERVISOR_APPRAISAL_QUESTIONS}
+    period_code = current_review_period()
+    if form_number is None and employee_id is not None:
+        employee = db.query(models.Employee).filter_by(
+            employee_id=employee_id, supervisor_id=supervisor_id
+        ).first()
+        if not employee:
+            raise HTTPException(status_code=404, detail="Employee is not assigned to this supervisor")
+        completed = {
+            row.form_number for row in db.query(models.SupervisorAppraisal.form_number).filter_by(
+                employee_id=employee_id, supervisor_id=supervisor_id, period_code=period_code
+            ).all()
+        }
+        form_number = next((number for number in (1, 2) if number not in completed), None)
+        if form_number is None:
+            return {"period_code": period_code, "complete": True, "questions": []}
+    form_number = form_number or 1
+    questions = SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM.get(form_number)
+    if questions is None:
+        raise HTTPException(status_code=422, detail="Form number must be 1 or 2")
+    return {"period_code": period_code, "form_number": form_number,
+            "complete": False, "questions": questions}
 
 
 @app.post("/api/v1/supervisors/{supervisor_id}/appraisals")
@@ -523,15 +559,30 @@ def submit_supervisor_appraisal(
     ).first()
     if not employee:
         raise HTTPException(status_code=404, detail="Employee is not assigned to this supervisor")
+    form_number = payload.form_number
+    questions = SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM.get(form_number)
+    if questions is None:
+        raise HTTPException(status_code=422, detail="Form number must be 1 or 2")
+    period_code = current_review_period()
+    if db.query(models.SupervisorAppraisal).filter_by(
+        employee_id=employee.employee_id, supervisor_id=supervisor_id,
+        period_code=period_code, form_number=form_number,
+    ).first():
+        raise HTTPException(status_code=409, detail=f"Form {form_number} is already submitted for this employee in this review period")
+    if form_number == 2 and not db.query(models.SupervisorAppraisal).filter_by(
+        employee_id=employee.employee_id, supervisor_id=supervisor_id,
+        period_code=period_code, form_number=1,
+    ).first():
+        raise HTTPException(status_code=409, detail="Submit Form 1 before Form 2")
     if len(payload.answers) != 10:
         raise HTTPException(status_code=422, detail="The semiannual form requires exactly 10 answers")
     answers_by_id = {answer.get("question_id"): answer.get("answer") for answer in payload.answers}
-    expected_ids = {question["id"] for question in SUPERVISOR_APPRAISAL_QUESTIONS}
+    expected_ids = {question["id"] for question in questions}
     if set(answers_by_id) != expected_ids:
         raise HTTPException(status_code=422, detail="The form answers do not match the current appraisal questions")
     snapshot = []
     yes_count = 0
-    for question in SUPERVISOR_APPRAISAL_QUESTIONS:
+    for question in questions:
         answer = answers_by_id[question["id"]]
         if question["type"] == "yes_no":
             if not isinstance(answer, bool):
@@ -545,7 +596,8 @@ def submit_supervisor_appraisal(
     record = models.SupervisorAppraisal(
         employee_id=employee.employee_id,
         supervisor_id=supervisor_id,
-        period_code=current_review_period(),
+        period_code=period_code,
+        form_number=form_number,
         answers_snapshot=snapshot,
         yes_count=yes_count,
     )
@@ -555,11 +607,16 @@ def submit_supervisor_appraisal(
         db.refresh(record)
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=409, detail="A supervisor appraisal is already submitted for this employee in this half-year period")
+        raise HTTPException(status_code=409, detail=f"Form {form_number} is already submitted for this employee in this half-year period")
+    next_form = None
+    if form_number == 1:
+        next_form = {"form_number": 2, "questions": SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM[2]}
     return {"appraisal_id": record.appraisal_id, "employee_id": record.employee_id,
-            "period_code": record.period_code, "yes_count": record.yes_count,
+            "period_code": record.period_code, "form_number": record.form_number,
+            "next_form": next_form, "yes_count": record.yes_count,
             "employee_notified_at": record.employee_notified_at,
-            "message": "The appraisal is saved and available in the employee dashboard."}
+            "message": ("Form 1 is saved. Continue with Form 2." if next_form else
+                        "Both appraisal forms are saved and available in the employee dashboard.")}
 
 
 def _meeting_summary(db: Session, appraisal_id: int):
@@ -658,7 +715,7 @@ def get_supervisor_appraisals(
         models.SupervisorAppraisal.created_at.desc()
     ).all()
     return [{"appraisal_id": row.appraisal_id, "employee_id": row.employee_id,
-             "employee_name": full_name, "period_code": row.period_code,
+             "employee_name": full_name, "period_code": row.period_code, "form_number": row.form_number,
              "answers": row.answers_snapshot, "yes_count": row.yes_count,
              "review_request_text": row.review_request_text,
              "review_requested_at": row.review_requested_at,
@@ -836,7 +893,7 @@ def get_executive_supervisor_appraisals(
         models.SupervisorAppraisal.created_at.desc()
     ).all()
     return [{"appraisal_id": row.appraisal_id, "employee_id": row.employee_id,
-             "employee_name": employee_name, "period_code": row.period_code,
+             "employee_name": employee_name, "period_code": row.period_code, "form_number": row.form_number,
              "answers": row.answers_snapshot, "yes_count": row.yes_count,
              "review_request_text": row.review_request_text,
              "review_requested_at": row.review_requested_at,
@@ -880,6 +937,7 @@ def download_supervisor_appraisal(
         f"Employee: {employee.full_name if employee else 'Unknown'} (ID {record.employee_id})",
         f"Supervisor: {supervisor_employee.full_name if supervisor_employee else 'Unknown'} (ID {record.supervisor_id})",
         f"Review period: {record.period_code}",
+        f"Form: {record.form_number} of 2",
         f"Submitted: {record.created_at.strftime('%Y-%m-%d %H:%M UTC') if record.created_at else 'Unknown'}",
         f"Yes answers: {record.yes_count}/5",
         f"Employee status: {'Satisfied and closed' if record.satisfied_at else 'Review requested' if record.review_requested_at and record.review_edit_count == 0 else 'Revised once' if record.review_edit_count else 'Awaiting employee response'}",
@@ -920,7 +978,7 @@ def get_employee_supervisor_appraisals(
         models.SupervisorAppraisal.created_at.desc()
     ).all()
     return [{"appraisal_id": row.appraisal_id, "period_code": row.period_code,
-             "answers": row.answers_snapshot, "yes_count": row.yes_count,
+             "form_number": row.form_number, "answers": row.answers_snapshot, "yes_count": row.yes_count,
              "employee_notified_at": row.employee_notified_at,
              "review_request_text": row.review_request_text,
              "review_requested_at": row.review_requested_at,
@@ -1000,11 +1058,12 @@ def revise_supervisor_appraisal(
     if len(payload.answers) != 10:
         raise HTTPException(status_code=422, detail="The semiannual form requires exactly 10 answers")
     answers_by_id = {answer.get("question_id"): answer.get("answer") for answer in payload.answers}
-    if set(answers_by_id) != {question["id"] for question in SUPERVISOR_APPRAISAL_QUESTIONS}:
+    revision_questions = SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM[record.form_number]
+    if set(answers_by_id) != {question["id"] for question in revision_questions}:
         raise HTTPException(status_code=422, detail="The form answers do not match the current appraisal questions")
     snapshot = []
     yes_count = 0
-    for question in SUPERVISOR_APPRAISAL_QUESTIONS:
+    for question in revision_questions:
         answer = answers_by_id[question["id"]]
         if question["type"] == "yes_no":
             if not isinstance(answer, bool):
@@ -1019,7 +1078,7 @@ def revise_supervisor_appraisal(
     record.yes_count = yes_count
     record.review_edit_count = 1
     db.commit()
-    return {"status": "reviewed", "message": "The appraisal was revised once and returned to the employee."}
+    return {"status": "reviewed", "form_number": record.form_number, "message": f"Form {record.form_number} was revised once and returned to the employee."}
 
 
 @app.get("/api/v1/supervisors/{supervisor_id}/team-overview")

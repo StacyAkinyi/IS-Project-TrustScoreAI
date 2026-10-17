@@ -187,14 +187,16 @@ class UnstructuredFeedback(Base):
 class SupervisorAppraisal(Base):
     __tablename__ = "supervisor_appraisals"
     __table_args__ = (
-        UniqueConstraint("employee_id", "period_code", name="uq_supervisor_appraisal_employee_period"),
+        UniqueConstraint("employee_id", "period_code", "form_number", name="uq_supervisor_appraisal_employee_period_form"),
         CheckConstraint("yes_count BETWEEN 0 AND 5", name="ck_supervisor_appraisal_yes_count"),
+        CheckConstraint("form_number IN (1, 2)", name="ck_supervisor_appraisal_form_number"),
     )
 
     appraisal_id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.employee_id"), nullable=False, index=True)
     supervisor_id = Column(Integer, ForeignKey("immediate_supervisors.sup_id"), nullable=False, index=True)
     period_code = Column(String(7), nullable=False)
+    form_number = Column(Integer, nullable=False, default=1)
     answers_snapshot = Column(JSONB, nullable=False)
     yes_count = Column(Integer, nullable=False)
     employee_notified_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)

@@ -130,6 +130,7 @@ class AppraisalSourceMappingResponse(BaseModel):
 class SupervisorAppraisalSubmission(BaseModel):
     employee_id: int
     answers: list[dict]
+    form_number: int = 1
 
 class ReviewClarificationRequest(BaseModel):
     message: str
