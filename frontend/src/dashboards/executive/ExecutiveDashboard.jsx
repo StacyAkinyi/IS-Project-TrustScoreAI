@@ -58,10 +58,11 @@ export default function ExecutiveDashboard({ executiveId }) {
         <p className="mt-1 text-sm text-slate-600">Oversight region: {profile?.oversight_region || 'Not assigned'}</p>
       </section>
       {error && <p role="alert" className="rounded bg-rose-100 p-3 text-sm text-rose-800">{error}</p>}
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <SummaryCard label="Supervisors" value={supervisors.length} />
         <SummaryCard label="Employees in reports" value={new Set(reports.map((report) => report.employee_id)).size} />
-        <SummaryCard label="Appraisal reports" value={reports.length} />
+        <SummaryCard label="Generated appraisal reports" value={reports.length} />
+        <SummaryCard label="Supervisor appraisals" value={supervisors.reduce((sum, item) => sum + Number(item.supervisor_appraisal_count || 0), 0)} />
         <SummaryCard label="Average trust score" value={averageScore === '—' ? averageScore : `${averageScore}%`} />
       </section>
       <section className="grid gap-6 lg:grid-cols-2">
@@ -71,12 +72,13 @@ export default function ExecutiveDashboard({ executiveId }) {
           {supervisors.length === 0 ? <p className="text-sm text-slate-500">No supervisor profiles are assigned to this region.</p> : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead><tr className="border-b text-slate-500"><th className="p-2">Supervisor</th><th className="p-2">Department</th><th className="p-2">Branch</th><th className="p-2">Team KPI averages</th></tr></thead>
+                <thead><tr className="border-b text-slate-500"><th className="p-2">Supervisor</th><th className="p-2">Department</th><th className="p-2">Branch</th><th className="p-2">Team KPI averages</th><th className="p-2">Supervisor forms</th></tr></thead>
                 <tbody>{supervisors.map((item) => <tr key={item.supervisor_id} className="border-b last:border-0">
                   <td className="p-2 font-medium text-slate-800">{item.full_name || `Supervisor #${item.supervisor_id}`}</td>
                   <td className="p-2 text-slate-600">{item.department_code || '—'}</td>
                   <td className="p-2 text-slate-600">{item.branch_code || '—'}</td>
                   <td className="p-2">{!item.employees_with_telemetry ? <span className="text-xs text-slate-400">No team telemetry</span> : <details><summary className="cursor-pointer font-semibold text-blue-700">View averages · {item.employees_with_telemetry}/{item.team_size} with telemetry</summary><div className="mt-2 grid min-w-[300px] gap-2 sm:grid-cols-2">{(item.team_kpi_averages || []).map((metric) => <div key={metric.key} className="rounded border border-slate-200 bg-white p-2 text-xs"><span className="font-semibold text-slate-700">{metric.label}: </span>{metric.value == null ? <span className="text-slate-400">No data</span> : <><span>{Number(metric.value).toFixed(1)}{metric.unit}</span><span className={`ml-2 rounded px-1.5 py-0.5 font-semibold ${metric.state === 'Safe' ? 'bg-green-100 text-green-800' : metric.state === 'Warning' ? 'bg-orange-100 text-orange-800' : metric.state === 'Danger' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-600'}`}>{metric.state}</span><span className="ml-1 text-slate-400">n={metric.sample_count}</span></>}</div>)}</div></details>}</td>
+                  <td className="p-2 text-center font-semibold text-slate-700">{item.supervisor_appraisal_count || 0}</td>
                 </tr>)}</tbody>
               </table>
             </div>

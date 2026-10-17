@@ -38,6 +38,7 @@ class SupervisorResponse(BaseModel):
     team_kpi_averages: list[dict] = []
     team_size: int = 0
     employees_with_telemetry: int = 0
+    supervisor_appraisal_count: int = 0
 
     class Config:
         from_attributes = True

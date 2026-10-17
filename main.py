@@ -960,8 +960,14 @@ def get_executive_supervisors(
     ).order_by(models.ImmediateSupervisor.supervisor_id.asc()).all()
     supervisor_ids = [supervisor.supervisor_id for supervisor in supervisors]
     employees_by_supervisor = {supervisor_id: [] for supervisor_id in supervisor_ids}
+    supervisor_appraisal_counts = {supervisor_id: 0 for supervisor_id in supervisor_ids}
     latest_records = {}
     if supervisor_ids:
+        appraisal_supervisor_ids = db.query(
+            models.SupervisorAppraisal.supervisor_id
+        ).filter(models.SupervisorAppraisal.supervisor_id.in_(supervisor_ids)).all()
+        for (appraisal_supervisor_id,) in appraisal_supervisor_ids:
+            supervisor_appraisal_counts[appraisal_supervisor_id] = supervisor_appraisal_counts.get(appraisal_supervisor_id, 0) + 1
         employees = db.query(
             models.Employee.employee_id, models.Employee.supervisor_id
         ).filter(models.Employee.supervisor_id.in_(supervisor_ids)).all()
@@ -987,6 +993,7 @@ def get_executive_supervisors(
             employee_id in latest_records
             for employee_id in employees_by_supervisor.get(supervisor.supervisor_id, [])
         ),
+        "supervisor_appraisal_count": supervisor_appraisal_counts.get(supervisor.supervisor_id, 0),
         "team_kpi_averages": _aggregate_team_kpis(
             latest_records, employees_by_supervisor.get(supervisor.supervisor_id, [])
         ),
