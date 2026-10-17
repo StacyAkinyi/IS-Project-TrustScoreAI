@@ -1,5 +1,20 @@
 import React, { useEffect, useState } from 'react';
 
+const API = 'http://127.0.0.1:8000/api/v1';
+const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` });
+
+async function downloadAppraisal(appraisalId) {
+  const response = await fetch(`${API}/supervisor-appraisals/${appraisalId}/download`, { headers: authHeaders() });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.detail || 'Could not download this appraisal');
+  }
+  const url = URL.createObjectURL(await response.blob());
+  const anchor = document.createElement('a');
+  anchor.href = url; anchor.download = `supervisor-appraisal-${appraisalId}.pdf`; anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function SupervisorAppraisalInbox({ employeeId }) {
   const [items, setItems] = useState([]);
   const [drafts, setDrafts] = useState({});
@@ -10,9 +25,7 @@ export default function SupervisorAppraisalInbox({ employeeId }) {
   const [notice, setNotice] = useState('');
 
   const load = async () => {
-    const response = await fetch(`http://127.0.0.1:8000/api/v1/employees/${employeeId}/supervisor-appraisals`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
-    });
+    const response = await fetch(`${API}/employees/${employeeId}/supervisor-appraisals`, { headers: authHeaders() });
     const data = await response.json();
     if (!response.ok) throw new Error(data.detail || 'Could not load supervisor appraisals');
     setItems(data);
@@ -25,9 +38,8 @@ export default function SupervisorAppraisalInbox({ employeeId }) {
   const requestReview = async (item) => {
     setBusyId(item.appraisal_id); setError(''); setNotice('');
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/v1/employees/${employeeId}/supervisor-appraisals/${item.appraisal_id}/review-request`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}`, 'Content-Type': 'application/json' },
+      const response = await fetch(`${API}/employees/${employeeId}/supervisor-appraisals/${item.appraisal_id}/review-request`, {
+        method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: drafts[item.appraisal_id] || '' }),
       });
       const data = await response.json();
@@ -41,8 +53,8 @@ export default function SupervisorAppraisalInbox({ employeeId }) {
     if (!window.confirm('Mark this appraisal as satisfied? It will be closed and cannot be changed.')) return;
     setBusyId(item.appraisal_id); setError(''); setNotice('');
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/v1/employees/${employeeId}/supervisor-appraisals/${item.appraisal_id}/satisfied`, {
-        method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+      const response = await fetch(`${API}/employees/${employeeId}/supervisor-appraisals/${item.appraisal_id}/satisfied`, {
+        method: 'POST', headers: authHeaders(),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || 'Could not close this appraisal');
@@ -51,14 +63,36 @@ export default function SupervisorAppraisalInbox({ employeeId }) {
     finally { setBusyId(null); }
   };
 
+  const confirmMeeting = async (meeting) => {
+    setBusyId(meeting.meeting_id); setError(''); setNotice('');
+    try {
+      const response = await fetch(`${API}/employees/${employeeId}/appraisal-meetings/${meeting.meeting_id}/confirm`, {
+        method: 'POST', headers: authHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Could not confirm this meeting');
+      setNotice(data.message); await load();
+    } catch (e) { setError(e.message); }
+    finally { setBusyId(null); }
+  };
+
+  const handleDownload = async (item) => {
+    setBusyId(`download-${item.appraisal_id}`); setError('');
+    try { await downloadAppraisal(item.appraisal_id); }
+    catch (e) { setError(e.message); }
+    finally { setBusyId(null); }
+  };
+
   if (loading) return <p className="p-4 text-slate-600">Loading supervisor reviews…</p>;
+  const bookings = items.filter((item) => item.meeting).sort((a, b) => new Date(a.meeting.scheduled_at) - new Date(b.meeting.scheduled_at));
   return <div className="space-y-4">
     {notice && <p role="status" className="rounded bg-green-50 p-3 text-sm text-green-800">{notice}</p>}
     {error && <p role="alert" className="rounded bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
+    {bookings.length > 0 && <section className="rounded-xl border-2 border-blue-200 bg-blue-50 p-4"><h3 className="mb-3 font-bold text-blue-900">Meeting bookings · please review first</h3><div className="space-y-3">{bookings.map((item) => <article key={item.meeting.meeting_id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-100 bg-white p-3"><div><p className="font-semibold text-slate-800">Supervisor appraisal · {item.period_code}</p><p className="text-sm text-slate-600">{new Date(item.meeting.scheduled_at).toLocaleString()}</p><p className="text-xs font-semibold text-blue-800">{item.meeting.status === 'confirmed' ? `Confirmed${item.meeting.confirmed_at ? ` · ${new Date(item.meeting.confirmed_at).toLocaleString()}` : ''}` : 'Waiting for your confirmation'}</p></div>{item.meeting.status !== 'confirmed' && <button type="button" onClick={() => confirmMeeting(item.meeting)} disabled={busyId === item.meeting.meeting_id} className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{busyId === item.meeting.meeting_id ? 'Confirming…' : 'Confirm meeting'}</button>}</article>)}</div></section>}
     {items.length === 0 && !error ? <p className="rounded-lg bg-white p-5 text-sm text-slate-600">No supervisor appraisal has been submitted for you yet.</p> : items.length > 0 ?
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full min-w-[620px] text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="p-3">Appraisal</th><th className="p-3">Submitted</th><th className="p-3">Score</th><th className="p-3">Status</th><th className="p-3">Action</th></tr></thead>
+        <table className="w-full min-w-[700px] text-left text-sm">
+          <thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="p-3">Appraisal</th><th className="p-3">Submitted</th><th className="p-3">Score</th><th className="p-3">Status</th><th className="p-3">Actions</th></tr></thead>
           <tbody>{items.map((item) => {
             const status = item.status || (item.satisfied_at ? 'satisfied' : item.review_requested_at ? 'review_requested' : 'awaiting_employee');
             const statusLabel = { satisfied: 'Satisfied · closed', review_requested: 'Review requested', reviewed: 'Revised · awaiting you', awaiting_employee: 'Awaiting your response' }[status];
@@ -70,7 +104,7 @@ export default function SupervisorAppraisalInbox({ employeeId }) {
                 <td className="p-3 text-slate-600">{new Date(item.created_at).toLocaleDateString()}</td>
                 <td className="p-3 text-slate-600">Yes {item.yes_count}/5</td>
                 <td className="p-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${status === 'satisfied' ? 'bg-green-100 text-green-800' : status === 'review_requested' ? 'bg-amber-100 text-amber-800' : 'bg-blue-50 text-blue-800'}`}>{statusLabel}</span></td>
-                <td className="p-3"><button type="button" onClick={() => setExpanded(expanded === item.appraisal_id ? null : item.appraisal_id)} className="font-semibold text-blue-700 hover:underline">{expanded === item.appraisal_id ? 'Hide details' : 'View appraisal'}</button></td>
+                <td className="space-x-3 whitespace-nowrap p-3"><button type="button" onClick={() => setExpanded(expanded === item.appraisal_id ? null : item.appraisal_id)} className="font-semibold text-blue-700 hover:underline">{expanded === item.appraisal_id ? 'Hide details' : 'View appraisal'}</button><button type="button" onClick={() => handleDownload(item)} disabled={busyId === `download-${item.appraisal_id}`} className="font-semibold text-blue-700 hover:underline">Download PDF</button></td>
               </tr>
               {expanded === item.appraisal_id && <tr className="border-t bg-slate-50"><td colSpan="5" className="p-4">
                 <div className="space-y-3">{item.answers.map((answer) => <div key={answer.id} className="border-b border-slate-200 pb-3 last:border-0"><p className="font-semibold text-slate-800">{answer.prompt}</p><p className="mt-1 whitespace-pre-wrap text-slate-700">{typeof answer.answer === 'boolean' ? (answer.answer ? 'Yes' : 'No') : answer.answer}</p></div>)}</div>

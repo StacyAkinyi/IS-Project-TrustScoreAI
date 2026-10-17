@@ -205,6 +205,26 @@ class SupervisorAppraisal(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
 
 
+class AppraisalMeeting(Base):
+    __tablename__ = "appraisal_meetings"
+    __table_args__ = (
+        UniqueConstraint("appraisal_id", name="uq_appraisal_meeting_per_appraisal"),
+        CheckConstraint(
+            "status IN ('pending_confirmation', 'confirmed')",
+            name="ck_appraisal_meeting_status",
+        ),
+    )
+
+    meeting_id = Column(Integer, primary_key=True, index=True)
+    appraisal_id = Column(Integer, ForeignKey("supervisor_appraisals.appraisal_id"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.employee_id"), nullable=False, index=True)
+    supervisor_id = Column(Integer, ForeignKey("immediate_supervisors.sup_id"), nullable=False, index=True)
+    scheduled_at = Column(DateTime(timezone=True), nullable=False)
+    status = Column(String(30), nullable=False, default="pending_confirmation")
+    confirmed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
+
+
 class AppraisalReport(Base):
     __tablename__ = "appraisal_reports"
     __table_args__ = (

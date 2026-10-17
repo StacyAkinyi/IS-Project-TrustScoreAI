@@ -7,6 +7,10 @@ export default function ExecutiveDashboard({ executiveId }) {
   const [profile, setProfile] = useState(null);
   const [supervisors, setSupervisors] = useState([]);
   const [reports, setReports] = useState([]);
+  const [expandedSupervisorId, setExpandedSupervisorId] = useState(null);
+  const [formsBySupervisor, setFormsBySupervisor] = useState({});
+  const [loadingFormsId, setLoadingFormsId] = useState(null);
+  const [formsError, setFormsError] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -44,6 +48,31 @@ export default function ExecutiveDashboard({ executiveId }) {
     return () => { cancelled = true; };
   }, [executiveId]);
 
+  const toggleSupervisorForms = async (supervisor) => {
+    if (expandedSupervisorId === supervisor.supervisor_id) { setExpandedSupervisorId(null); return; }
+    setExpandedSupervisorId(supervisor.supervisor_id); setFormsError('');
+    if (formsBySupervisor[supervisor.supervisor_id]) return;
+    setLoadingFormsId(supervisor.supervisor_id);
+    try {
+      const response = await fetch(`${API}/executives/${executiveId}/supervisors/${supervisor.supervisor_id}/appraisals`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Could not load this supervisor’s forms');
+      setFormsBySupervisor((current) => ({ ...current, [supervisor.supervisor_id]: data }));
+    } catch (err) { setFormsError(err.message); }
+    finally { setLoadingFormsId(null); }
+  };
+
+  const downloadAppraisal = async (appraisalId) => {
+    const response = await fetch(`${API}/supervisor-appraisals/${appraisalId}/download`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+    });
+    if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error(data.detail || 'Could not download this appraisal'); }
+    const url = URL.createObjectURL(await response.blob()); const anchor = document.createElement('a');
+    anchor.href = url; anchor.download = `supervisor-appraisal-${appraisalId}.pdf`; anchor.click(); URL.revokeObjectURL(url);
+  };
+
   if (loading) return <div className="p-8 text-center text-slate-600">Loading executive overview...</div>;
 
   const averageScore = reports.length
@@ -71,15 +100,18 @@ export default function ExecutiveDashboard({ executiveId }) {
           <p className="mb-4 text-xs text-slate-500">KPI averages use each employee’s latest telemetry record and the same safe, warning, and danger bands as the supervisor dashboard.</p>
           {supervisors.length === 0 ? <p className="text-sm text-slate-500">No supervisor profiles are assigned to this region.</p> : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full min-w-[850px] text-left text-sm">
                 <thead><tr className="border-b text-slate-500"><th className="p-2">Supervisor</th><th className="p-2">Department</th><th className="p-2">Branch</th><th className="p-2">Team KPI averages</th><th className="p-2">Supervisor forms</th></tr></thead>
-                <tbody>{supervisors.map((item) => <tr key={item.supervisor_id} className="border-b last:border-0">
-                  <td className="p-2 font-medium text-slate-800">{item.full_name || `Supervisor #${item.supervisor_id}`}</td>
-                  <td className="p-2 text-slate-600">{item.department_code || '—'}</td>
-                  <td className="p-2 text-slate-600">{item.branch_code || '—'}</td>
-                  <td className="p-2">{!item.employees_with_telemetry ? <span className="text-xs text-slate-400">No team telemetry</span> : <details><summary className="cursor-pointer font-semibold text-blue-700">View averages · {item.employees_with_telemetry}/{item.team_size} with telemetry</summary><div className="mt-2 grid min-w-[300px] gap-2 sm:grid-cols-2">{(item.team_kpi_averages || []).map((metric) => <div key={metric.key} className="rounded border border-slate-200 bg-white p-2 text-xs"><span className="font-semibold text-slate-700">{metric.label}: </span>{metric.value == null ? <span className="text-slate-400">No data</span> : <><span>{Number(metric.value).toFixed(1)}{metric.unit}</span><span className={`ml-2 rounded px-1.5 py-0.5 font-semibold ${metric.state === 'Safe' ? 'bg-green-100 text-green-800' : metric.state === 'Warning' ? 'bg-orange-100 text-orange-800' : metric.state === 'Danger' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-600'}`}>{metric.state}</span><span className="ml-1 text-slate-400">n={metric.sample_count}</span></>}</div>)}</div></details>}</td>
-                  <td className="p-2 text-center font-semibold text-slate-700">{item.supervisor_appraisal_count || 0}</td>
-                </tr>)}</tbody>
+                <tbody>{supervisors.map((item) => <React.Fragment key={item.supervisor_id}>
+                  <tr className="border-b last:border-0">
+                    <td className="p-2 font-medium text-slate-800">{item.full_name || `Supervisor #${item.supervisor_id}`}</td>
+                    <td className="p-2 text-slate-600">{item.department_code || '—'}</td>
+                    <td className="p-2 text-slate-600">{item.branch_code || '—'}</td>
+                    <td className="p-2">{!item.employees_with_telemetry ? <span className="text-xs text-slate-400">No team telemetry</span> : <details><summary className="cursor-pointer font-semibold text-blue-700">View averages · {item.employees_with_telemetry}/{item.team_size} with telemetry</summary><div className="mt-2 grid min-w-[300px] gap-2 sm:grid-cols-2">{(item.team_kpi_averages || []).map((metric) => <div key={metric.key} className="rounded border border-slate-200 bg-white p-2 text-xs"><span className="font-semibold text-slate-700">{metric.label}: </span>{metric.value == null ? <span className="text-slate-400">No data</span> : <><span>{Number(metric.value).toFixed(1)}{metric.unit}</span><span className={`ml-2 rounded px-1.5 py-0.5 font-semibold ${metric.state === 'Safe' ? 'bg-green-100 text-green-800' : metric.state === 'Warning' ? 'bg-orange-100 text-orange-800' : metric.state === 'Danger' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-600'}`}>{metric.state}</span><span className="ml-1 text-slate-400">n={metric.sample_count}</span></>}</div>)}</div></details>}</td>
+                    <td className="p-2"><button type="button" onClick={() => toggleSupervisorForms(item)} className="rounded border border-blue-700 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-50">{loadingFormsId === item.supervisor_id ? 'Loading…' : `${item.supervisor_appraisal_count || 0} forms · ${expandedSupervisorId === item.supervisor_id ? 'Hide' : 'View'}`}</button></td>
+                  </tr>
+                  {expandedSupervisorId === item.supervisor_id && <tr className="border-b bg-slate-50"><td colSpan="5" className="p-3">{formsError && <p role="alert" className="mb-2 rounded bg-rose-50 p-2 text-xs text-rose-800">{formsError}</p>}{loadingFormsId === item.supervisor_id ? <p className="text-xs text-slate-500">Loading supervisor forms…</p> : (formsBySupervisor[item.supervisor_id] || []).length === 0 ? <p className="text-xs text-slate-500">No semiannual supervisor appraisal forms for this team yet.</p> : <div className="overflow-x-auto"><table className="w-full min-w-[600px] text-left text-xs"><thead><tr className="border-b text-slate-500"><th className="p-2">Employee</th><th className="p-2">Period</th><th className="p-2">Yes answers</th><th className="p-2">Status</th><th className="p-2">Download</th></tr></thead><tbody>{formsBySupervisor[item.supervisor_id].map((form) => <tr key={form.appraisal_id} className="border-b last:border-0"><td className="p-2">{form.employee_name}</td><td className="p-2">{form.period_code}</td><td className="p-2">{form.yes_count}/5</td><td className="p-2">{form.satisfied_at ? 'Satisfied' : form.review_requested_at && !form.review_edit_count ? 'Review requested' : form.review_edit_count ? 'Revised once' : 'Awaiting employee'}</td><td className="p-2"><button type="button" onClick={async () => { setFormsError(''); try { await downloadAppraisal(form.appraisal_id); } catch (err) { setFormsError(err.message); } }} className="font-semibold text-blue-700 hover:underline">Download PDF</button></td></tr>)}</tbody></table></div>}</td></tr>}
+                </React.Fragment>)}</tbody>
               </table>
             </div>
           )}

@@ -134,6 +134,10 @@ class SupervisorAppraisalSubmission(BaseModel):
 class ReviewClarificationRequest(BaseModel):
     message: str
 
+
+class ScheduleAppraisalMeeting(BaseModel):
+    scheduled_at: datetime
+
 class ExecutiveOverrideRequest(BaseModel):
     report_id: int
     executive_id: int

@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -11,6 +12,7 @@ import hashlib
 import os
 import json
 import random
+import textwrap
 from pathlib import Path
 import secrets
 import joblib
@@ -560,6 +562,67 @@ def submit_supervisor_appraisal(
             "message": "The appraisal is saved and available in the employee dashboard."}
 
 
+def _meeting_summary(db: Session, appraisal_id: int):
+    meeting = db.query(models.AppraisalMeeting).filter_by(appraisal_id=appraisal_id).first()
+    if not meeting:
+        return None
+    return {
+        "meeting_id": meeting.meeting_id,
+        "scheduled_at": meeting.scheduled_at,
+        "status": meeting.status,
+        "confirmed_at": meeting.confirmed_at,
+    }
+
+
+def _pdf_literal(value: str) -> bytes:
+    safe = str(value).encode("cp1252", errors="replace").decode("cp1252")
+    safe = "".join(char if char >= " " else " " for char in safe)
+    return safe.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)").encode("cp1252")
+
+
+def _simple_text_pdf(lines):
+    page_lines = [lines[index:index + 48] for index in range(0, len(lines), 48)] or [[]]
+    objects = [None, b"<< /Type /Catalog /Pages 2 0 R >>", None,
+               b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"]
+    page_refs = []
+    page_data = []
+    for page_index, content_lines in enumerate(page_lines):
+        page_obj_id = 4 + page_index * 2
+        content_obj_id = page_obj_id + 1
+        page_refs.append(f"{page_obj_id} 0 R".encode("ascii"))
+        stream = bytearray(b"BT\n/F1 10 Tf\n14 TL\n52 748 Td\n")
+        for line in content_lines:
+            stream.extend(b"(")
+            stream.extend(_pdf_literal(line))
+            stream.extend(b") Tj\nT*\n")
+        stream.extend(b"ET")
+        page_data.append((page_obj_id, content_obj_id, bytes(stream)))
+    objects[2] = b"<< /Type /Pages /Kids [" + b" ".join(page_refs) + b"] /Count " + str(len(page_lines)).encode("ascii") + b" >>"
+    for page_obj_id, content_obj_id, stream in page_data:
+        objects.extend([None] * max(0, content_obj_id + 1 - len(objects)))
+        objects[page_obj_id] = (
+            f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+            f"/Resources << /Font << /F1 3 0 R >> >> /Contents {content_obj_id} 0 R >>"
+        ).encode("ascii")
+        objects[content_obj_id] = (
+            b"<< /Length " + str(len(stream)).encode("ascii") + b" >>\nstream\n" + stream + b"\nendstream"
+        )
+    pdf = bytearray(b"%PDF-1.4\n")
+    offsets = [0]
+    for object_id in range(1, len(objects)):
+        offsets.append(len(pdf))
+        pdf.extend(f"{object_id} 0 obj\n".encode("ascii"))
+        pdf.extend(objects[object_id])
+        pdf.extend(b"\nendobj\n")
+    xref_offset = len(pdf)
+    pdf.extend(f"xref\n0 {len(objects)}\n".encode("ascii"))
+    pdf.extend(b"0000000000 65535 f \n")
+    for offset in offsets[1:]:
+        pdf.extend(f"{offset:010d} 00000 n \n".encode("ascii"))
+    pdf.extend(f"trailer\n<< /Size {len(objects)} /Root 1 0 R >>\nstartxref\n{xref_offset}\n%%EOF".encode("ascii"))
+    return bytes(pdf)
+
+
 @app.get("/api/v1/supervisors/{supervisor_id}/appraisals")
 def get_supervisor_appraisals(
     supervisor_id: int,
@@ -580,7 +643,186 @@ def get_supervisor_appraisals(
              "review_edit_count": row.review_edit_count,
              "satisfied_at": row.satisfied_at,
              "status": "satisfied" if row.satisfied_at else ("review_requested" if row.review_requested_at and row.review_edit_count == 0 else ("reviewed" if row.review_edit_count else "awaiting_employee")),
+             "meeting": _meeting_summary(db, row.appraisal_id),
              "created_at": row.created_at} for row, full_name in rows]
+
+
+@app.post("/api/v1/supervisors/{supervisor_id}/appraisals/{appraisal_id}/meetings")
+def schedule_appraisal_meeting(
+    supervisor_id: int,
+    appraisal_id: int,
+    payload: schemas.ScheduleAppraisalMeeting,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    ensure_supervisor_access(db, current_user, supervisor_id)
+    if current_user.get("role") != "supervisor":
+        raise HTTPException(status_code=403, detail="Only the assigned supervisor can schedule this meeting")
+    appraisal = db.query(models.SupervisorAppraisal).filter_by(
+        appraisal_id=appraisal_id, supervisor_id=supervisor_id
+    ).first()
+    if not appraisal:
+        raise HTTPException(status_code=404, detail="Supervisor appraisal not found")
+    if appraisal.satisfied_at:
+        raise HTTPException(status_code=409, detail="This appraisal is closed")
+    if db.query(models.AppraisalMeeting).filter_by(appraisal_id=appraisal_id).first():
+        raise HTTPException(status_code=409, detail="A meeting is already booked for this appraisal")
+    scheduled_at = payload.scheduled_at
+    if scheduled_at.tzinfo is None:
+        scheduled_at = scheduled_at.replace(tzinfo=ZoneInfo("Africa/Nairobi"))
+    if scheduled_at <= datetime.now(timezone.utc):
+        raise HTTPException(status_code=422, detail="Choose a future meeting date and time")
+    meeting = models.AppraisalMeeting(
+        appraisal_id=appraisal.appraisal_id,
+        employee_id=appraisal.employee_id,
+        supervisor_id=supervisor_id,
+        scheduled_at=scheduled_at,
+    )
+    db.add(meeting)
+    try:
+        db.commit()
+        db.refresh(meeting)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="A meeting is already booked for this appraisal")
+    return {"meeting_id": meeting.meeting_id, "status": meeting.status,
+            "scheduled_at": meeting.scheduled_at,
+            "message": "Meeting booked and shown in the employee appraisal section for confirmation."}
+
+
+@app.post("/api/v1/employees/{employee_id}/appraisal-meetings/{meeting_id}/confirm")
+def confirm_appraisal_meeting(
+    employee_id: int,
+    meeting_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    if current_user.get("role") != "employee" or current_user.get("employee_id") != employee_id:
+        raise HTTPException(status_code=403, detail="Only the employee booked for this meeting can confirm it")
+    meeting = db.query(models.AppraisalMeeting).filter_by(
+        meeting_id=meeting_id, employee_id=employee_id
+    ).first()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting booking not found")
+    if meeting.status != "confirmed":
+        meeting.status = "confirmed"
+        meeting.confirmed_at = datetime.now(timezone.utc)
+        db.commit()
+    return {"status": meeting.status, "message": "Meeting confirmed. Your supervisor can see your confirmation in their meetings list."}
+
+
+@app.get("/api/v1/supervisors/{supervisor_id}/meetings")
+def get_supervisor_appraisal_meetings(
+    supervisor_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    ensure_supervisor_access(db, current_user, supervisor_id)
+    rows = db.query(models.AppraisalMeeting, models.Employee.full_name,
+                    models.SupervisorAppraisal.period_code).join(
+        models.Employee, models.Employee.employee_id == models.AppraisalMeeting.employee_id
+    ).join(
+        models.SupervisorAppraisal, models.SupervisorAppraisal.appraisal_id == models.AppraisalMeeting.appraisal_id
+    ).filter(models.AppraisalMeeting.supervisor_id == supervisor_id).order_by(
+        models.AppraisalMeeting.scheduled_at.asc()
+    ).all()
+    return [{"meeting_id": meeting.meeting_id, "appraisal_id": meeting.appraisal_id,
+             "employee_id": meeting.employee_id, "employee_name": employee_name,
+             "period_code": period_code, "scheduled_at": meeting.scheduled_at,
+             "status": meeting.status, "confirmed_at": meeting.confirmed_at}
+            for meeting, employee_name, period_code in rows]
+
+
+@app.get("/api/v1/executives/{executive_id}/supervisors/{supervisor_id}/appraisals")
+def get_executive_supervisor_appraisals(
+    executive_id: int,
+    supervisor_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    if current_user.get("role") != "executive" or current_user.get("user_id") != executive_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    supervisor = db.query(models.ImmediateSupervisor).filter_by(
+        supervisor_id=supervisor_id, executive_id=executive_id
+    ).first()
+    if not supervisor:
+        raise HTTPException(status_code=404, detail="Supervisor not found in this executive's region")
+    rows = db.query(models.SupervisorAppraisal, models.Employee.full_name).join(
+        models.Employee, models.Employee.employee_id == models.SupervisorAppraisal.employee_id
+    ).filter(models.SupervisorAppraisal.supervisor_id == supervisor_id).order_by(
+        models.SupervisorAppraisal.created_at.desc()
+    ).all()
+    return [{"appraisal_id": row.appraisal_id, "employee_id": row.employee_id,
+             "employee_name": employee_name, "period_code": row.period_code,
+             "answers": row.answers_snapshot, "yes_count": row.yes_count,
+             "review_request_text": row.review_request_text,
+             "review_requested_at": row.review_requested_at,
+             "review_edit_count": row.review_edit_count,
+             "satisfied_at": row.satisfied_at,
+             "meeting": _meeting_summary(db, row.appraisal_id),
+             "created_at": row.created_at}
+            for row, employee_name in rows]
+
+
+@app.get("/api/v1/supervisor-appraisals/{appraisal_id}/download")
+def download_supervisor_appraisal(
+    appraisal_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    record = db.query(models.SupervisorAppraisal).filter_by(appraisal_id=appraisal_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Supervisor appraisal not found")
+    role = current_user.get("role")
+    employee = db.query(models.Employee).filter_by(employee_id=record.employee_id).first()
+    allowed = role == "employee" and current_user.get("employee_id") == record.employee_id
+    if role == "supervisor":
+        allowed = current_user.get("user_id") == record.supervisor_id
+    elif role == "executive":
+        allowed = db.query(models.ImmediateSupervisor).filter_by(
+            supervisor_id=record.supervisor_id,
+            executive_id=current_user.get("user_id"),
+        ).first() is not None
+    if not allowed:
+        raise HTTPException(status_code=403, detail="You do not have access to this appraisal")
+    supervisor = db.query(models.ImmediateSupervisor).filter_by(
+        supervisor_id=record.supervisor_id
+    ).first()
+    supervisor_employee = db.query(models.Employee).filter_by(
+        employee_id=supervisor.emp_id
+    ).first() if supervisor else None
+    lines = [
+        "TrustScoreAI - Semiannual Supervisor Appraisal",
+        "",
+        f"Employee: {employee.full_name if employee else 'Unknown'} (ID {record.employee_id})",
+        f"Supervisor: {supervisor_employee.full_name if supervisor_employee else 'Unknown'} (ID {record.supervisor_id})",
+        f"Review period: {record.period_code}",
+        f"Submitted: {record.created_at.strftime('%Y-%m-%d %H:%M UTC') if record.created_at else 'Unknown'}",
+        f"Yes answers: {record.yes_count}/5",
+        f"Employee status: {'Satisfied and closed' if record.satisfied_at else 'Review requested' if record.review_requested_at and record.review_edit_count == 0 else 'Revised once' if record.review_edit_count else 'Awaiting employee response'}",
+        "",
+        "APPRAISAL QUESTIONS AND ANSWERS",
+        "",
+    ]
+    for index, answer in enumerate(record.answers_snapshot or [], start=1):
+        response_value = "Yes" if answer.get("answer") is True else "No" if answer.get("answer") is False else str(answer.get("answer", ""))
+        lines.extend(textwrap.wrap(f"{index}. {answer.get('prompt', '')}", width=92) or [f"{index}."])
+        lines.extend(textwrap.wrap("Answer: " + response_value, width=92))
+        lines.append("")
+    if record.review_request_text:
+        lines.extend(["EMPLOYEE REVIEW REQUEST", ""])
+        lines.extend(textwrap.wrap(record.review_request_text, width=92))
+        lines.append("")
+    meeting = db.query(models.AppraisalMeeting).filter_by(appraisal_id=appraisal_id).first()
+    if meeting:
+        lines.extend(["MEETING", f"Scheduled: {meeting.scheduled_at.isoformat()}",
+                      f"Employee confirmation: {meeting.status}"])
+    pdf = _simple_text_pdf(lines)
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="supervisor-appraisal-{appraisal_id}.pdf"'},
+    )
 
 
 @app.get("/api/v1/employees/{employee_id}/supervisor-appraisals")
@@ -602,6 +844,7 @@ def get_employee_supervisor_appraisals(
              "review_edit_count": row.review_edit_count,
              "satisfied_at": row.satisfied_at,
              "status": "satisfied" if row.satisfied_at else ("review_requested" if row.review_requested_at and row.review_edit_count == 0 else ("reviewed" if row.review_edit_count else "awaiting_employee")),
+             "meeting": _meeting_summary(db, row.appraisal_id),
              "created_at": row.created_at} for row in rows]
 
 
