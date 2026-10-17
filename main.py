@@ -521,27 +521,55 @@ def get_supervisor_appraisal_template(
     ensure_supervisor_access(db, current_user, supervisor_id)
     if current_user.get("role") != "supervisor":
         raise HTTPException(status_code=403, detail="Only the assigned supervisor can issue this appraisal")
-    period_code = current_review_period()
-    if form_number is None and employee_id is not None:
-        employee = db.query(models.Employee).filter_by(
-            employee_id=employee_id, supervisor_id=supervisor_id
+    calendar_period = current_review_period()
+    if employee_id is None:
+        # Reopening a submitted appraisal for its one-time revision.
+        revision_form = form_number or 1
+        questions = SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM.get(revision_form)
+        if questions is None:
+            raise HTTPException(status_code=422, detail="Form number must be 1 or 2")
+        return {"period_code": calendar_period, "form_number": revision_form,
+                "complete": False, "questions": questions}
+
+    employee = db.query(models.Employee).filter_by(
+        employee_id=employee_id, supervisor_id=supervisor_id
+    ).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee is not assigned to this supervisor")
+
+    if calendar_period.endswith("-H1"):
+        form_period = calendar_period
+        active_form_number = 1
+        overdue_first_form = False
+    else:
+        first_half_period = f"{calendar_period[:4]}-H1"
+        first_form = db.query(models.SupervisorAppraisal).filter_by(
+            employee_id=employee_id, supervisor_id=supervisor_id,
+            period_code=first_half_period, form_number=1,
         ).first()
-        if not employee:
-            raise HTTPException(status_code=404, detail="Employee is not assigned to this supervisor")
-        completed = {
-            row.form_number for row in db.query(models.SupervisorAppraisal.form_number).filter_by(
-                employee_id=employee_id, supervisor_id=supervisor_id, period_code=period_code
-            ).all()
-        }
-        form_number = next((number for number in (1, 2) if number not in completed), None)
-        if form_number is None:
-            return {"period_code": period_code, "complete": True, "questions": []}
-    form_number = form_number or 1
-    questions = SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM.get(form_number)
-    if questions is None:
-        raise HTTPException(status_code=422, detail="Form number must be 1 or 2")
-    return {"period_code": period_code, "form_number": form_number,
-            "complete": False, "questions": questions}
+        if first_form:
+            form_period = calendar_period
+            active_form_number = 2
+            overdue_first_form = False
+        else:
+            # Permit a late first-half entry, then the second-half form can follow.
+            form_period = first_half_period
+            active_form_number = 1
+            overdue_first_form = True
+
+    questions = SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM[active_form_number]
+    existing = db.query(models.SupervisorAppraisal).filter_by(
+        employee_id=employee_id, supervisor_id=supervisor_id,
+        period_code=form_period, form_number=active_form_number,
+    ).first()
+    if existing:
+        return {"period_code": form_period, "form_number": active_form_number,
+                "complete": True, "questions": []}
+    return {"period_code": form_period, "form_number": active_form_number,
+            "complete": False, "overdue_first_form": overdue_first_form,
+            "message": ("Complete the first-half Form 1 to unlock Form 2."
+                        if overdue_first_form else None),
+            "questions": questions}
 
 
 @app.post("/api/v1/supervisors/{supervisor_id}/appraisals")
@@ -559,21 +587,36 @@ def submit_supervisor_appraisal(
     ).first()
     if not employee:
         raise HTTPException(status_code=404, detail="Employee is not assigned to this supervisor")
+    calendar_period = current_review_period()
+    if calendar_period.endswith("-H1"):
+        period_code = calendar_period
+        active_form_number = 1
+    else:
+        first_half_period = f"{calendar_period[:4]}-H1"
+        first_form = db.query(models.SupervisorAppraisal).filter_by(
+            employee_id=employee.employee_id, supervisor_id=supervisor_id,
+            period_code=first_half_period, form_number=1,
+        ).first()
+        if first_form:
+            period_code = calendar_period
+            active_form_number = 2
+        else:
+            period_code = first_half_period
+            active_form_number = 1
+
     form_number = payload.form_number
-    questions = SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM.get(form_number)
-    if questions is None:
-        raise HTTPException(status_code=422, detail="Form number must be 1 or 2")
-    period_code = current_review_period()
+    if form_number != active_form_number:
+        raise HTTPException(status_code=409, detail=(
+            f"Form {form_number} is not active for this employee right now. "
+            f"Complete Form {active_form_number} for {period_code} first. "
+            "Form 2 is only available from July onward."
+        ))
+    questions = SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM[form_number]
     if db.query(models.SupervisorAppraisal).filter_by(
         employee_id=employee.employee_id, supervisor_id=supervisor_id,
         period_code=period_code, form_number=form_number,
     ).first():
         raise HTTPException(status_code=409, detail=f"Form {form_number} is already submitted for this employee in this review period")
-    if form_number == 2 and not db.query(models.SupervisorAppraisal).filter_by(
-        employee_id=employee.employee_id, supervisor_id=supervisor_id,
-        period_code=period_code, form_number=1,
-    ).first():
-        raise HTTPException(status_code=409, detail="Submit Form 1 before Form 2")
     if len(payload.answers) != 10:
         raise HTTPException(status_code=422, detail="The semiannual form requires exactly 10 answers")
     answers_by_id = {answer.get("question_id"): answer.get("answer") for answer in payload.answers}
@@ -608,15 +651,15 @@ def submit_supervisor_appraisal(
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=409, detail=f"Form {form_number} is already submitted for this employee in this half-year period")
-    next_form = None
-    if form_number == 1:
-        next_form = {"form_number": 2, "questions": SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM[2]}
     return {"appraisal_id": record.appraisal_id, "employee_id": record.employee_id,
             "period_code": record.period_code, "form_number": record.form_number,
-            "next_form": next_form, "yes_count": record.yes_count,
+            "yes_count": record.yes_count,
             "employee_notified_at": record.employee_notified_at,
-            "message": ("Form 1 is saved. Continue with Form 2." if next_form else
-                        "Both appraisal forms are saved and available in the employee dashboard.")}
+            "message": (("Form 1 is saved for the first half. Form 2 is now available for the second half."
+                         if calendar_period.endswith("-H2") else
+                         "Form 1 is saved. Form 2 becomes available on July 1.")
+                        if form_number == 1 else
+                        "Form 2 is saved and available in the employee dashboard.")}
 
 
 def _meeting_summary(db: Session, appraisal_id: int):
