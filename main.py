@@ -606,9 +606,11 @@ def generate_ai_performance_report(payload: AIReportGenerateRequest, db: Session
     narrative["summary"] = str(narrative.get("summary", "Report generated from the available period data."))[:2000]
 
     sources = sorted({record.data_source or "unknown" for record in records})
+    feedback_sources = sorted({item.data_source or "unknown" for item in feedback})
     data_coverage = {"telemetry_record_count": len(records), "feedback_item_count": len(feedback),
                      "telemetry_months_covered": len({record.recorded_at.strftime("%Y-%m") for record in records}),
-                     "data_sources": sources, "feedback_ratings_are_human_reviewed": False}
+                     "data_sources": sources, "feedback_data_sources": feedback_sources,
+                     "feedback_ratings_are_human_reviewed": False}
     report = models.AIPerformanceReport(
         employee_id=employee.employee_id, generated_by_employee_id=current_user["employee_id"],
         period_type=payload.period_type, period_code=period_code, period_start=start, period_end=end,

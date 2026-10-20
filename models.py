@@ -166,6 +166,9 @@ class PerformanceRecord(Base):
 
 class UnstructuredFeedback(Base):
     __tablename__ = "unstructured_feedback"
+    __table_args__ = (
+        CheckConstraint("data_source IN ('real_anonymized', 'synthetic_demo', 'unknown')", name="ck_feedback_data_source"),
+    )
 
     feedback_id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.employee_id"), nullable=False, index=True)
@@ -174,6 +177,7 @@ class UnstructuredFeedback(Base):
     narrative_text = Column(Text, nullable=False)
     question_snapshot = Column(JSONB, nullable=True)
     sentiment_polarity_value = Column(Float, nullable=True)
+    data_source = Column(String(30), nullable=False, default="unknown")
     created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
 
     employee = relationship(
