@@ -113,13 +113,13 @@ export default function EmployeeDashboard({ userId }) {
               onClick={() => setActiveView('appraisals')}
               className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 hover:border-blue-500 cursor-pointer transition text-center space-y-2"
             >
-              <h3 className="text-lg font-bold text-blue-900">AI-Driven Appraisals</h3>
-              <p className="text-slate-500 text-sm">Respond to reflection questions based on recent telemetry and add context for your appraisal discussion.</p>
+              <h3 className="text-lg font-bold text-blue-900">Appraisal Follow-up</h3>
+              <p className="text-slate-500 text-sm">Answer open-ended follow-up questions linked to a completed supervisor appraisal.</p>
             </div>
 
             <div onClick={() => setActiveView('reviews')} className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 hover:border-blue-500 cursor-pointer transition text-center space-y-2">
-              <h3 className="text-lg font-bold text-blue-900">Supervisor Reviews {reviewCount > 0 ? `(${reviewCount})` : ''}</h3>
-              <p className="text-slate-500 text-sm">Read your semiannual appraisal and ask your supervisor for clarification.</p>
+              <h3 className="text-lg font-bold text-blue-900">Appraisal Log {reviewCount > 0 ? `(${reviewCount})` : ''}</h3>
+              <p className="text-slate-500 text-sm">Review your submitted semiannual supervisor forms, follow-up status, and meeting bookings.</p>
             </div>
 
             <div 
@@ -182,8 +182,8 @@ export default function EmployeeDashboard({ userId }) {
       {/* 3. Sub-Page: AI Appraisals */}
       {activeView === 'appraisals' && (
         <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-          <h3 className="text-xl font-bold text-blue-900 mb-2">Submit & Complete Self-Appraisals</h3>
-          <p className="text-slate-600 text-sm mb-6">Review three follow-up questions based on your recent telemetry, then add your perspective. Your responses provide context for discussion.</p>
+          <h3 className="text-xl font-bold text-blue-900 mb-2">Follow-up Self-Questionnaire</h3>
+          <p className="text-slate-600 text-sm mb-6">After a supervisor submits a semiannual form, answer four open-ended questions tied to that specific appraisal.</p>
           {activeView === 'appraisals' && (
             <AppraisalForm 
               employee={employeeData}  
@@ -194,7 +194,7 @@ export default function EmployeeDashboard({ userId }) {
       )}
 
       {activeView === 'reviews' && (
-        <section className="space-y-4"><h3 className="text-xl font-bold text-blue-900">Supervisor appraisals</h3><p className="text-sm text-slate-600">A submitted review is tied to your employee record. You can ask your supervisor to clarify any part.</p><SupervisorAppraisalInbox employeeId={employeeData?.employee_id} /></section>
+        <section className="space-y-4"><h3 className="text-xl font-bold text-blue-900">Appraisal Log</h3><p className="text-sm text-slate-600">Each submitted supervisor form appears here with its own review status and linked self-questionnaire status. You can request clarification or mark a form satisfied.</p><SupervisorAppraisalInbox employeeId={employeeData?.employee_id} /></section>
       )}
 
       {/* 4. Sub-Page: AI Chatbot */}

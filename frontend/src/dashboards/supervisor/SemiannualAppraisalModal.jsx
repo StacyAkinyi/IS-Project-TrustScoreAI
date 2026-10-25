@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
 
 const API = 'http://127.0.0.1:8000/api/v1';
+const CATEGORY_LABELS = {
+  communication: 'Communication',
+  collaboration: 'Collaboration',
+  learning_development: 'Learning and development',
+  compliance_awareness: 'Compliance awareness',
+};
 
 export default function SemiannualAppraisalModal({ employee, supervisorId, appraisal = null, onClose, onSuccess }) {
   const [template, setTemplate] = useState(null);
@@ -14,7 +20,10 @@ export default function SemiannualAppraisalModal({ employee, supervisorId, appra
 
   useEffect(() => {
     const params = new URLSearchParams();
-    if (revisionId) params.set('form_number', String(appraisal.form_number || 1));
+    if (revisionId) {
+      params.set('form_number', String(appraisal.form_number || 1));
+      params.set('appraisal_id', String(revisionId));
+    }
     else params.set('employee_id', String(employee.employee_id));
     fetch(`${API}/supervisors/${supervisorId}/appraisal-template?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -58,14 +67,19 @@ export default function SemiannualAppraisalModal({ employee, supervisorId, appra
       <div className="mb-5 flex items-start justify-between gap-4"><div><h2 className="text-xl font-bold text-blue-900">{revisionId ? 'One-time appraisal revision' : `Semiannual performance appraisal · Form ${template?.form_number || '…'} of 2`}</h2><p className="mt-1 text-sm text-slate-600">{employee.full_name} · Employee #{employee.employee_id} · {appraisal?.period_code || template?.period_code || 'Loading period…'}</p></div><button type="button" onClick={onClose} className="text-slate-500 hover:text-slate-900" aria-label="Close">✕</button></div>
       {appraisal?.review_request_text && <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900"><strong>Employee review request:</strong> {appraisal.review_request_text}</p>}
       {notice && <p role="status" className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-900">{notice}</p>}
-      <p className="mb-5 rounded-lg bg-blue-50 p-3 text-sm text-blue-900">Complete the form for its half-year period using work evidence and role expectations; avoid assumptions about personal traits.{revisionId ? ' This is the single permitted revision for this appraisal.' : ' Form 1 is for January–June. Form 2 is for July–December and becomes available on July 1.'}</p>
+      <p className="mb-5 rounded-lg bg-blue-50 p-3 text-sm text-blue-900">Answer all 16 open-ended questions with work evidence and role expectations; avoid assumptions about personal traits. Each half-year form has its own question set, with four questions in each competency.{revisionId ? ' This is the single permitted revision for this appraisal.' : ' Form 1 is for January–June. Form 2 is for July–December and becomes available on July 1.'}</p>
       {loading && <p className="text-slate-600">Loading questions…</p>}
       {error && <p role="alert" className="mb-4 rounded bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
       {template?.locked && <div role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">{template.message}</div>}
       {template?.complete && <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-900">This half-year appraisal form is already complete for this employee.</div>}
       {template && !template.complete && !template.locked && <form onSubmit={submit} className="space-y-6">
-        <section className="space-y-4"><h3 className="font-bold text-slate-800">5 Yes / No questions</h3>{template.questions.filter((q) => q.type === 'yes_no').map((q, i) => <fieldset key={q.id} className="rounded-lg border border-slate-200 p-4"><legend className="px-1 text-sm font-medium text-slate-800">{i + 1}. {q.prompt}</legend><div className="mt-3 flex gap-5">{[true, false].map((value) => <label key={String(value)} className="flex items-center gap-2 text-sm"><input type="radio" name={q.id} checked={answers[q.id] === value} onChange={() => setAnswer(q.id, value)} required />{value ? 'Yes' : 'No'}</label>)}</div></fieldset>)}</section>
-        <section className="space-y-4"><h3 className="font-bold text-slate-800">5 Open-ended questions</h3>{template.questions.filter((q) => q.type === 'open').map((q, i) => <label key={q.id} className="block text-sm font-medium text-slate-800">{i + 1}. {q.prompt}<textarea required minLength={10} maxLength={3000} rows={3} value={answers[q.id] || ''} onChange={(e) => setAnswer(q.id, e.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 p-3 text-sm font-normal" /></label>)}</section>
+        {Object.entries(CATEGORY_LABELS).map(([category, label]) => {
+          const questions = template.questions.filter((question) => question.category === category);
+          return <section key={category} className="space-y-4 rounded-lg border border-slate-200 p-4">
+            <h3 className="font-bold text-slate-800">{label} <span className="font-normal text-slate-500">· {questions.length} open-ended questions</span></h3>
+            {questions.map((question, index) => <label key={question.id} className="block text-sm font-medium text-slate-800">{index + 1}. {question.prompt}<textarea required minLength={10} maxLength={3000} rows={3} value={answers[question.id] || ''} onChange={(event) => setAnswer(question.id, event.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 p-3 text-sm font-normal" /></label>)}
+          </section>;
+        })}
         <div className="flex justify-end gap-3"><button type="button" onClick={onClose} className="rounded-lg border px-4 py-2 text-sm">Cancel</button><button type="submit" disabled={saving || loading || template.questions.some((q) => answers[q.id] === undefined)} className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white disabled:bg-slate-400">{saving ? 'Saving…' : revisionId ? 'Submit one-time revision' : `Submit Form ${template.form_number}`}</button></div>
       </form>}
     </div>

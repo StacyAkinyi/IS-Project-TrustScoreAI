@@ -174,6 +174,9 @@ class UnstructuredFeedback(Base):
     employee_id = Column(Integer, ForeignKey("employees.employee_id"), nullable=False, index=True)
     supervisor_id = Column(Integer, ForeignKey("immediate_supervisors.sup_id"), nullable=True)
     author_employee_id = Column(Integer, ForeignKey("employees.employee_id"), nullable=True)
+    supervisor_appraisal_id = Column(
+        Integer, ForeignKey("supervisor_appraisals.appraisal_id", ondelete="SET NULL"), nullable=True, index=True
+    )
     narrative_text = Column(Text, nullable=False)
     question_snapshot = Column(JSONB, nullable=True)
     sentiment_polarity_value = Column(Float, nullable=True)

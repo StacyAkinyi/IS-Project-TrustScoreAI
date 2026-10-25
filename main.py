@@ -184,28 +184,40 @@ except Exception as exc:
 
 SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM = {
     1: [
-        {"id": "procedure_adherence", "type": "yes_no", "prompt": "Did the employee follow the documented procedures relevant to their role during this review period?"},
-        {"id": "accuracy_expectations", "type": "yes_no", "prompt": "Did the employee meet the agreed accuracy expectations, based on available work evidence?"},
-        {"id": "timeliness_expectations", "type": "yes_no", "prompt": "Did the employee meet agreed deadlines for assigned work?"},
-        {"id": "risk_escalation", "type": "yes_no", "prompt": "Did the employee escalate material errors, customer concerns, or compliance risks through the expected channels?"},
-        {"id": "team_contribution", "type": "yes_no", "prompt": "Did the employee meet the agreed expectations for respectful collaboration and customer service?"},
-        {"id": "evidence_achievements", "type": "open", "prompt": "What are up to two specific achievements from this period, and what evidence supports them?"},
-        {"id": "evidence_strengths", "type": "open", "prompt": "Which role-related strengths did you observe? Give a specific work example for each."},
-        {"id": "context_barriers", "type": "open", "prompt": "What work-related barriers or changing conditions affected results, and what context should be considered?"},
-        {"id": "development_goal", "type": "open", "prompt": "What is one practical development goal for the next six months, and how will progress be observed?"},
-        {"id": "support_needed", "type": "open", "prompt": "What support, coaching, tools, or workload changes would help the employee succeed?"},
+        {"id": "comm_updates", "category": "communication", "type": "open", "prompt": "Describe an example of how accurately and promptly the employee kept relevant people informed, or what could improve."},
+        {"id": "comm_listening", "category": "communication", "type": "open", "prompt": "How did the employee listen, clarify instructions, and communicate respectfully? Give a work example."},
+        {"id": "comm_example", "category": "communication", "type": "open", "prompt": "Describe one specific example of the employee communicating clearly or where clearer communication would have helped."},
+        {"id": "comm_context", "category": "communication", "type": "open", "prompt": "What communication context or support should be considered for the next review period?"},
+        {"id": "collab_shared_work", "category": "collaboration", "type": "open", "prompt": "How did the employee contribute to shared team responsibilities? Include a specific example."},
+        {"id": "collab_respect", "category": "collaboration", "type": "open", "prompt": "Describe how the employee considered colleagues' perspectives or handled a disagreement at work."},
+        {"id": "collab_example", "category": "collaboration", "type": "open", "prompt": "Give an example of how the employee supported a colleague or helped a shared task succeed."},
+        {"id": "collab_growth", "category": "collaboration", "type": "open", "prompt": "What is one practical way the employee could strengthen collaboration or coordination?"},
+        {"id": "learning_application", "category": "learning_development", "type": "open", "prompt": "What training, coaching, or new knowledge did the employee apply, and what evidence shows its effect?"},
+        {"id": "learning_feedback", "category": "learning_development", "type": "open", "prompt": "How did the employee respond to feedback or agreed development actions? Give an example."},
+        {"id": "learning_example", "category": "learning_development", "type": "open", "prompt": "What skill or knowledge did the employee develop, and what work evidence shows its application?"},
+        {"id": "learning_goal", "category": "learning_development", "type": "open", "prompt": "What is one measurable learning goal for the next six months, and what support would help?"},
+        {"id": "compliance_procedures", "category": "compliance_awareness", "type": "open", "prompt": "Describe how the employee applied policies and control steps required for their role."},
+        {"id": "compliance_escalation", "category": "compliance_awareness", "type": "open", "prompt": "How did the employee handle or escalate a potential control, privacy, or compliance concern?"},
+        {"id": "compliance_example", "category": "compliance_awareness", "type": "open", "prompt": "Describe a specific example of the employee applying a control or handling a compliance concern appropriately."},
+        {"id": "compliance_support", "category": "compliance_awareness", "type": "open", "prompt": "Where would additional guidance or training help the employee apply requirements consistently?"},
     ],
     2: [
-        {"id": "prior_goal_progress", "type": "yes_no", "prompt": "Did the employee make measurable progress on the development goal agreed in the previous review?"},
-        {"id": "learning_application", "type": "yes_no", "prompt": "Did the employee apply relevant training or coaching to their day-to-day work?"},
-        {"id": "customer_followthrough", "type": "yes_no", "prompt": "Did the employee follow through on customer or colleague commitments within the agreed time?"},
-        {"id": "improvement_response", "type": "yes_no", "prompt": "Did the employee respond constructively to feedback by trying agreed improvement actions?"},
-        {"id": "resource_use", "type": "yes_no", "prompt": "Did the employee use work systems, time, and assigned resources responsibly?"},
-        {"id": "goal_progress_evidence", "type": "open", "prompt": "What evidence shows progress or limited progress on the previous review’s development goal?"},
-        {"id": "notable_change", "type": "open", "prompt": "What meaningful change in the employee’s work or results should be considered for this period?"},
-        {"id": "coaching_followup", "type": "open", "prompt": "What coaching or support was provided, and what happened after it was provided?"},
-        {"id": "next_period_priorities", "type": "open", "prompt": "What are the two most important role-related priorities for the employee’s next review period?"},
-        {"id": "success_evidence", "type": "open", "prompt": "What observable evidence will show that the employee has succeeded with those priorities?"},
+        {"id": "comm_priority_updates", "category": "communication", "type": "open", "prompt": "Describe how the employee communicated when priorities changed, including the timeliness and clarity of updates."},
+        {"id": "comm_handover", "category": "communication", "type": "open", "prompt": "How reliably did the employee document and hand over important work information? Give an example."},
+        {"id": "comm_pressure_example", "category": "communication", "type": "open", "prompt": "Describe an example of the employee communicating effectively during a difficult or time-sensitive situation."},
+        {"id": "comm_goal_progress", "category": "communication", "type": "open", "prompt": "What progress did the employee make on communication feedback from the previous review, and what remains to improve?"},
+        {"id": "collab_coordination", "category": "collaboration", "type": "open", "prompt": "How did the employee coordinate handovers and shared work across the team? Give a specific example."},
+        {"id": "collab_feedback", "category": "collaboration", "type": "open", "prompt": "Describe how the employee considered constructive input or helped resolve a team disagreement."},
+        {"id": "collab_outcome", "category": "collaboration", "type": "open", "prompt": "Give an example of the employee contributing to a cross-team outcome or shared deliverable."},
+        {"id": "collab_next_step", "category": "collaboration", "type": "open", "prompt": "What collaboration habit should the employee continue or change in the next review period?"},
+        {"id": "learning_goal_progress", "category": "learning_development", "type": "open", "prompt": "What progress did the employee make on the learning goal from the previous review? Include evidence."},
+        {"id": "learning_transfer", "category": "learning_development", "type": "open", "prompt": "How did the employee use new learning to improve work or solve a role-related problem?"},
+        {"id": "learning_progress_example", "category": "learning_development", "type": "open", "prompt": "What evidence shows the employee's learning was applied or shared during this period?"},
+        {"id": "learning_barrier", "category": "learning_development", "type": "open", "prompt": "What barrier affected development progress, and what realistic next goal should be agreed?"},
+        {"id": "compliance_updates", "category": "compliance_awareness", "type": "open", "prompt": "How did the employee apply policy or control updates to day-to-day work? Provide evidence."},
+        {"id": "compliance_training", "category": "compliance_awareness", "type": "open", "prompt": "What required compliance guidance did the employee complete and apply during this period?"},
+        {"id": "compliance_risk_example", "category": "compliance_awareness", "type": "open", "prompt": "Describe an example of the employee identifying, preventing, or escalating a compliance risk."},
+        {"id": "compliance_next_support", "category": "compliance_awareness", "type": "open", "prompt": "What compliance topic or control needs further coaching or clarification for the next period?"},
     ],
 }
 
@@ -366,26 +378,94 @@ def generate_appraisal_prompt(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    if current_user.get("employee_id") != employee_id:
+    if current_user.get("role") != "employee" or current_user.get("employee_id") != employee_id:
         raise HTTPException(status_code=403, detail="Access denied")
+    appraisals = db.query(models.SupervisorAppraisal).filter_by(
+        employee_id=employee_id
+    ).order_by(models.SupervisorAppraisal.created_at.desc()).all()
+    if not appraisals:
+        return {"employee_id": employee_id, "available": False, "questions": [],
+                "message": "A supervisor appraisal must be submitted before the self-questionnaire is available."}
 
-    latest_record = db.query(models.PerformanceRecord).filter(
-        models.PerformanceRecord.employee_id == employee_id
-    ).order_by(models.PerformanceRecord.recorded_at.desc()).first()
-    question_snapshot = _build_reflection_questions(latest_record)
+    appraisal_ids = [row.appraisal_id for row in appraisals]
+    completed_ids = {
+        appraisal_id for (appraisal_id,) in db.query(
+            models.UnstructuredFeedback.supervisor_appraisal_id
+        ).filter(
+            models.UnstructuredFeedback.supervisor_appraisal_id.in_(appraisal_ids),
+            models.UnstructuredFeedback.author_employee_id == employee_id,
+        ).all()
+    }
+    appraisal = next((row for row in appraisals if row.appraisal_id not in completed_ids), None)
+    if appraisal is None:
+        return {"employee_id": employee_id, "available": False, "questions": [],
+                "message": "You have completed a self-questionnaire for each submitted supervisor appraisal."}
+
+    question_snapshot = _build_supervisor_followup_questions(appraisal)
     return {
         "employee_id": employee_id,
+        "available": True,
+        "supervisor_appraisal_id": appraisal.appraisal_id,
+        "form_number": appraisal.form_number,
+        "period_code": appraisal.period_code,
         "questions": [item["text"] for item in question_snapshot],
         "question_snapshot": question_snapshot,
-        "based_on_latest_record": latest_record is not None,
-        "method": "random question-bank sampling weighted by current KPI states",
+        "method": "competency follow-up grounded in the employee's submitted supervisor appraisal",
     }
 
 
+FOLLOWUP_CATEGORIES = [
+    ("communication", "Communication"),
+    ("collaboration", "Collaboration"),
+    ("learning_development", "Learning and development"),
+    ("compliance_awareness", "Compliance awareness"),
+]
+
+
+def _build_supervisor_followup_questions(appraisal):
+    answers_by_category = {key: [] for key, _ in FOLLOWUP_CATEGORIES}
+    for item in appraisal.answers_snapshot or []:
+        category = item.get("category")
+        answer = item.get("answer")
+        if category in answers_by_category and isinstance(answer, str) and answer.strip():
+            answers_by_category[category].append(answer.strip())
+
+    questions = []
+    for category, title in FOLLOWUP_CATEGORIES:
+        supervisor_context = " ".join(answers_by_category[category])
+        if len(supervisor_context) > 500:
+            supervisor_context = supervisor_context[:497].rsplit(" ", 1)[0] + "..."
+        context_line = (
+            f"Your supervisor's {title.lower()} section noted: “{supervisor_context}” "
+            if supervisor_context else
+            f"Your supervisor completed the {title.lower()} section. "
+        )
+        text = (
+            f"{context_line}What context or work evidence would you add, what did you learn "
+            "from this review period, and what practical support or next step would help you?"
+        )
+        questions.append({
+            "id": f"self_{category}",
+            "category": category,
+            "category_label": title,
+            "text": text,
+            "source_appraisal_id": appraisal.appraisal_id,
+        })
+    return questions
+
+
+class SelfAppraisalResponse(BaseModel):
+    question_id: str
+    category: Literal["communication", "collaboration", "learning_development", "compliance_awareness"]
+    answer: str = Field(min_length=10, max_length=3000)
+
+
 class SelfAppraisalSubmission(BaseModel):
-    generated_questions: List[str]
-    question_snapshot: List[dict]
-    feedback_text: str
+    generated_questions: Optional[List[str]] = None
+    question_snapshot: Optional[List[dict]] = None
+    supervisor_appraisal_id: Optional[int] = None
+    responses: Optional[List[SelfAppraisalResponse]] = None
+    feedback_text: Optional[str] = None
 
 
 @app.post("/evaluate-employee/")
@@ -396,6 +476,73 @@ def save_self_appraisal(
 ):
     if current_user.get("role") != "employee":
         raise HTTPException(status_code=403, detail="Only employees can submit a self-appraisal")
+    employee_id = current_user["employee_id"]
+    employee = db.query(models.Employee).filter(
+        models.Employee.employee_id == employee_id,
+        models.Employee.is_active.is_(True),
+    ).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee account not found")
+
+    if payload.supervisor_appraisal_id is not None:
+        appraisal = db.query(models.SupervisorAppraisal).filter_by(
+            appraisal_id=payload.supervisor_appraisal_id,
+            employee_id=employee_id,
+        ).first()
+        if not appraisal:
+            raise HTTPException(status_code=404, detail="The supervisor appraisal was not found for this employee")
+        if db.query(models.UnstructuredFeedback.feedback_id).filter_by(
+            supervisor_appraisal_id=appraisal.appraisal_id,
+            author_employee_id=employee_id,
+        ).first():
+            raise HTTPException(status_code=409, detail="A self-questionnaire has already been submitted for this appraisal")
+
+        expected_snapshot = _build_supervisor_followup_questions(appraisal)
+        expected_questions = [item["text"] for item in expected_snapshot]
+        if payload.generated_questions != expected_questions or payload.question_snapshot != expected_snapshot:
+            raise HTTPException(status_code=409, detail="The questionnaire changed. Reload it and try again.")
+        if payload.responses is None or len(payload.responses) != len(FOLLOWUP_CATEGORIES):
+            raise HTTPException(status_code=422, detail="Answer all four category questions before submitting")
+        response_by_category = {item.category: item for item in payload.responses}
+        if set(response_by_category) != {category for category, _ in FOLLOWUP_CATEGORIES}:
+            raise HTTPException(status_code=422, detail="Provide exactly one response for each appraisal category")
+
+        saved_snapshot = []
+        narrative_lines = []
+        for question in expected_snapshot:
+            response = response_by_category[question["category"]]
+            if response.question_id != question["id"]:
+                raise HTTPException(status_code=422, detail="A response does not match its questionnaire item")
+            answer = response.answer.strip()
+            if len(answer) < 10:
+                raise HTTPException(status_code=422, detail="Each response must contain at least 10 characters")
+            saved_snapshot.append({**question, "answer": answer})
+            narrative_lines.append(f"{question['category_label']}:\n{answer}")
+
+        feedback = models.UnstructuredFeedback(
+            employee_id=employee_id,
+            supervisor_id=employee.supervisor_id,
+            author_employee_id=employee_id,
+            supervisor_appraisal_id=appraisal.appraisal_id,
+            narrative_text="\n\n".join(narrative_lines),
+            question_snapshot=saved_snapshot,
+        )
+        try:
+            db.add(feedback)
+            db.commit()
+            db.refresh(feedback)
+        except IntegrityError:
+            db.rollback()
+            raise HTTPException(status_code=409, detail="A self-questionnaire has already been submitted for this appraisal")
+        return {
+            "status": "saved",
+            "feedback_id": feedback.feedback_id,
+            "supervisor_appraisal_id": appraisal.appraisal_id,
+            "message": f"Your self-questionnaire for Form {appraisal.form_number} ({appraisal.period_code}) is saved and linked to the supervisor appraisal.",
+        }
+
+    if not payload.generated_questions or not payload.question_snapshot or not payload.feedback_text:
+        raise HTTPException(status_code=422, detail="The reflection questions and response are required")
     if len(payload.generated_questions) != 3 or len(payload.question_snapshot) != 3:
         raise HTTPException(status_code=422, detail="Exactly three reflection questions are required")
     snapshot_texts = [item.get("text") for item in payload.question_snapshot]
@@ -407,14 +554,6 @@ def save_self_appraisal(
         raise HTTPException(status_code=422, detail="Please enter your reflection before submitting")
     if len(response_text) > 10000:
         raise HTTPException(status_code=422, detail="Your reflection must be 10,000 characters or fewer")
-
-    employee_id = current_user["employee_id"]
-    employee = db.query(models.Employee).filter(
-        models.Employee.employee_id == employee_id,
-        models.Employee.is_active.is_(True),
-    ).first()
-    if not employee:
-        raise HTTPException(status_code=404, detail="Employee account not found")
 
     feedback = models.UnstructuredFeedback(
         employee_id=employee_id,
@@ -868,6 +1007,7 @@ def get_supervisor_appraisal_template(
     supervisor_id: int,
     employee_id: Optional[int] = None,
     form_number: Optional[int] = None,
+    appraisal_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
@@ -877,6 +1017,23 @@ def get_supervisor_appraisal_template(
     calendar_period = current_review_period()
     if employee_id is None:
         # Reopening a submitted appraisal for its one-time revision.
+        if appraisal_id is not None:
+            record = db.query(models.SupervisorAppraisal).filter_by(
+                appraisal_id=appraisal_id, supervisor_id=supervisor_id
+            ).first()
+            if not record:
+                raise HTTPException(status_code=404, detail="Supervisor appraisal not found")
+            stored_questions = [
+                {key: value for key, value in item.items() if key != "answer"}
+                for item in (record.answers_snapshot or [])
+            ]
+            if any(item.get("type") == "yes_no" for item in stored_questions):
+                # Existing legacy forms remain viewable, while their one-time
+                # revision uses the current open-ended form for that half-year.
+                stored_questions = SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM[record.form_number]
+            if stored_questions:
+                return {"period_code": record.period_code, "form_number": record.form_number,
+                        "complete": False, "questions": stored_questions}
         revision_form = form_number or 1
         questions = SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM.get(revision_form)
         if questions is None:
@@ -970,8 +1127,8 @@ def submit_supervisor_appraisal(
         period_code=period_code, form_number=form_number,
     ).first():
         raise HTTPException(status_code=409, detail=f"Form {form_number} is already submitted for this employee in this review period")
-    if len(payload.answers) != 10:
-        raise HTTPException(status_code=422, detail="The semiannual form requires exactly 10 answers")
+    if len(payload.answers) != len(questions):
+        raise HTTPException(status_code=422, detail=f"The semiannual form requires exactly {len(questions)} answers")
     answers_by_id = {answer.get("question_id"): answer.get("answer") for answer in payload.answers}
     expected_ids = {question["id"] for question in questions}
     if set(answers_by_id) != expected_ids:
@@ -980,14 +1137,9 @@ def submit_supervisor_appraisal(
     yes_count = 0
     for question in questions:
         answer = answers_by_id[question["id"]]
-        if question["type"] == "yes_no":
-            if not isinstance(answer, bool):
-                raise HTTPException(status_code=422, detail="Answer each yes/no question with Yes or No")
-            yes_count += int(answer)
-        else:
-            if not isinstance(answer, str) or len(answer.strip()) < 10 or len(answer) > 3000:
-                raise HTTPException(status_code=422, detail="Each open response must contain 10 to 3,000 characters")
-            answer = answer.strip()
+        if not isinstance(answer, str) or len(answer.strip()) < 10 or len(answer) > 3000:
+            raise HTTPException(status_code=422, detail="Each open response must contain 10 to 3,000 characters")
+        answer = answer.strip()
         snapshot.append({**question, "answer": answer})
     record = models.SupervisorAppraisal(
         employee_id=employee.employee_id,
@@ -1112,7 +1264,8 @@ def get_supervisor_appraisals(
     ).all()
     return [{"appraisal_id": row.appraisal_id, "employee_id": row.employee_id,
              "employee_name": full_name, "period_code": row.period_code, "form_number": row.form_number,
-             "answers": row.answers_snapshot, "yes_count": row.yes_count,
+              "answers": row.answers_snapshot, "yes_count": row.yes_count,
+              "question_count": len(row.answers_snapshot or []),
              "review_request_text": row.review_request_text,
              "review_requested_at": row.review_requested_at,
              "review_edit_count": row.review_edit_count,
@@ -1290,7 +1443,8 @@ def get_executive_supervisor_appraisals(
     ).all()
     return [{"appraisal_id": row.appraisal_id, "employee_id": row.employee_id,
              "employee_name": employee_name, "period_code": row.period_code, "form_number": row.form_number,
-             "answers": row.answers_snapshot, "yes_count": row.yes_count,
+              "answers": row.answers_snapshot, "yes_count": row.yes_count,
+              "question_count": len(row.answers_snapshot or []),
              "review_request_text": row.review_request_text,
              "review_requested_at": row.review_requested_at,
              "review_edit_count": row.review_edit_count,
@@ -1335,14 +1489,19 @@ def download_supervisor_appraisal(
         f"Review period: {record.period_code}",
         f"Form: {record.form_number} of 2",
         f"Submitted: {record.created_at.strftime('%Y-%m-%d %H:%M UTC') if record.created_at else 'Unknown'}",
-        f"Yes answers: {record.yes_count}/5",
+        f"Questions answered: {len(record.answers_snapshot or [])}",
         f"Employee status: {'Satisfied and closed' if record.satisfied_at else 'Review requested' if record.review_requested_at and record.review_edit_count == 0 else 'Revised once' if record.review_edit_count else 'Awaiting employee response'}",
         "",
         "APPRAISAL QUESTIONS AND ANSWERS",
         "",
     ]
+    previous_category = None
     for index, answer in enumerate(record.answers_snapshot or [], start=1):
-        response_value = "Yes" if answer.get("answer") is True else "No" if answer.get("answer") is False else str(answer.get("answer", ""))
+        category = answer.get("category") or "General"
+        if category != previous_category:
+            lines.extend(["", category.replace("_", " ").title(), ""])
+            previous_category = category
+        response_value = str(answer.get("answer", ""))
         lines.extend(textwrap.wrap(f"{index}. {answer.get('prompt', '')}", width=92) or [f"{index}."])
         lines.extend(textwrap.wrap("Answer: " + response_value, width=92))
         lines.append("")
@@ -1373,8 +1532,20 @@ def get_employee_supervisor_appraisals(
     rows = db.query(models.SupervisorAppraisal).filter_by(employee_id=employee_id).order_by(
         models.SupervisorAppraisal.created_at.desc()
     ).all()
+    feedback_rows = db.query(models.UnstructuredFeedback.supervisor_appraisal_id,
+                              models.UnstructuredFeedback.feedback_id,
+                              models.UnstructuredFeedback.created_at).filter(
+        models.UnstructuredFeedback.supervisor_appraisal_id.in_([row.appraisal_id for row in rows]),
+        models.UnstructuredFeedback.author_employee_id == employee_id,
+    ).all() if rows else []
+    feedback_by_appraisal = {appraisal_id: (feedback_id, created_at)
+                             for appraisal_id, feedback_id, created_at in feedback_rows}
     return [{"appraisal_id": row.appraisal_id, "period_code": row.period_code,
              "form_number": row.form_number, "answers": row.answers_snapshot, "yes_count": row.yes_count,
+             "question_count": len(row.answers_snapshot or []),
+             "self_questionnaire_submitted": row.appraisal_id in feedback_by_appraisal,
+             "self_questionnaire_feedback_id": feedback_by_appraisal.get(row.appraisal_id, (None, None))[0],
+             "self_questionnaire_submitted_at": feedback_by_appraisal.get(row.appraisal_id, (None, None))[1],
              "employee_notified_at": row.employee_notified_at,
              "review_request_text": row.review_request_text,
              "review_requested_at": row.review_requested_at,
@@ -1451,24 +1622,24 @@ def revise_supervisor_appraisal(
         raise HTTPException(status_code=409, detail="This appraisal is closed because the employee marked it satisfied")
     if not record.review_requested_at or record.review_edit_count >= 1:
         raise HTTPException(status_code=409, detail="A pending one-time employee review request is required")
-    if len(payload.answers) != 10:
-        raise HTTPException(status_code=422, detail="The semiannual form requires exactly 10 answers")
     answers_by_id = {answer.get("question_id"): answer.get("answer") for answer in payload.answers}
-    revision_questions = SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM[record.form_number]
+    revision_questions = [
+        {key: value for key, value in item.items() if key != "answer"}
+        for item in (record.answers_snapshot or [])
+    ] or SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM[record.form_number]
+    if any(item.get("type") == "yes_no" for item in revision_questions):
+        revision_questions = SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM[record.form_number]
+    if len(payload.answers) != len(revision_questions):
+        raise HTTPException(status_code=422, detail=f"The appraisal revision requires exactly {len(revision_questions)} answers")
     if set(answers_by_id) != {question["id"] for question in revision_questions}:
         raise HTTPException(status_code=422, detail="The form answers do not match the current appraisal questions")
     snapshot = []
     yes_count = 0
     for question in revision_questions:
         answer = answers_by_id[question["id"]]
-        if question["type"] == "yes_no":
-            if not isinstance(answer, bool):
-                raise HTTPException(status_code=422, detail="Answer each yes/no question with Yes or No")
-            yes_count += int(answer)
-        else:
-            if not isinstance(answer, str) or len(answer.strip()) < 10 or len(answer) > 3000:
-                raise HTTPException(status_code=422, detail="Each open response must contain 10 to 3,000 characters")
-            answer = answer.strip()
+        if not isinstance(answer, str) or len(answer.strip()) < 10 or len(answer) > 3000:
+            raise HTTPException(status_code=422, detail="Each open response must contain 10 to 3,000 characters")
+        answer = answer.strip()
         snapshot.append({**question, "answer": answer})
     record.answers_snapshot = snapshot
     record.yes_count = yes_count
