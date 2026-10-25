@@ -1,10 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from zoneinfo import ZoneInfo
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 from openai import OpenAI, OpenAIError
 from typing import List, Optional, Any, Literal
@@ -100,6 +101,61 @@ def ensure_supervisor_access(db: Session, current_user: dict, supervisor_id: int
         return supervisor
     raise HTTPException(status_code=403, detail="Access denied")
 
+
+
+def ensure_admin(current_user: dict) -> None:
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Administrator access required")
+
+
+def admin_employee_payload(db: Session, employee: models.Employee) -> dict:
+    supervisor_profile = None
+    executive_profile = None
+    if employee.user_type == "supervisor":
+        supervisor_profile = db.query(models.ImmediateSupervisor).filter_by(emp_id=employee.employee_id).first()
+    elif employee.user_type == "executive":
+        executive_profile = db.query(models.ExecutiveManager).filter_by(emp_id=employee.employee_id).first()
+    elif employee.supervisor_id is not None:
+        supervisor_profile = db.query(models.ImmediateSupervisor).filter_by(supervisor_id=employee.supervisor_id).first()
+    if supervisor_profile is not None:
+        executive_profile = supervisor_profile.executive
+    return {
+        "employee_id": employee.employee_id,
+        "full_name": employee.full_name,
+        "email": employee.email,
+        "department": employee.department,
+        "role": employee.role,
+        "user_type": employee.user_type,
+        "is_active": employee.is_active,
+        "supervisor_id": employee.supervisor_id,
+        "supervisor_name": supervisor_profile.full_name if supervisor_profile else None,
+        "supervisor_profile_id": supervisor_profile.supervisor_id if employee.user_type == "supervisor" and supervisor_profile else None,
+        "executive_id": executive_profile.executive_id if executive_profile else None,
+        "executive_name": executive_profile.full_name if executive_profile else None,
+        "branch_code": supervisor_profile.branch_code if supervisor_profile else None,
+        "oversight_region": executive_profile.oversight_region if executive_profile else None,
+        "created_at": employee.created_at,
+    }
+
+
+def active_supervisor_profile(db: Session, supervisor_id: int):
+    return db.query(models.ImmediateSupervisor).join(
+        models.Employee, models.ImmediateSupervisor.emp_id == models.Employee.employee_id
+    ).filter(
+        models.ImmediateSupervisor.supervisor_id == supervisor_id,
+        models.Employee.is_active.is_(True),
+    ).first()
+
+
+def active_executive_profile(db: Session, executive_id: int):
+    return db.query(models.ExecutiveManager).join(
+        models.Employee, models.ExecutiveManager.emp_id == models.Employee.employee_id
+    ).filter(
+        models.ExecutiveManager.executive_id == executive_id,
+        models.Employee.is_active.is_(True),
+    ).first()
+
+
 # ---------------------------------------------------------
 # 1. Load the human-labeled unified score regressor, when trained
 # ---------------------------------------------------------
@@ -109,6 +165,19 @@ try:
     print("Unified Trust Score regressor loaded.")
 except FileNotFoundError:
     print("Unified Trust Score regressor is not trained yet; score reports are unavailable.")
+
+# Appraisal feedback direction model exported from grouped Colab training.
+DIRECTION_MODEL_PATH = Path(__file__).resolve().parent / "trustscore_direction_model.joblib"
+DIRECTION_METADATA_PATH = Path(__file__).resolve().parent / "trustscore_direction_model_metadata.json"
+direction_model = None
+direction_metadata = None
+try:
+    direction_model = joblib.load(DIRECTION_MODEL_PATH)
+    with DIRECTION_METADATA_PATH.open("r", encoding="utf-8") as metadata_file:
+        direction_metadata = json.load(metadata_file)
+    print("Appraisal direction model loaded.")
+except Exception as exc:
+    print(f"Appraisal direction model unavailable: {exc}")
 
 
 
@@ -368,6 +437,60 @@ def save_self_appraisal(
         "message": "Your reflection and the three questions shown are saved together in PostgreSQL.",
     }
 
+
+class DirectionClassificationRequest(BaseModel):
+    employee_id: int = Field(ge=1)
+    category: Literal["collaboration", "communication", "compliance_awareness", "learning_development"]
+    statement: str = Field(min_length=1, max_length=10000)
+
+
+@app.post("/api/v1/feedback/classify")
+def classify_appraisal_feedback(
+    payload: DirectionClassificationRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Return a direction suggestion; never assign a numerical score."""
+    if direction_model is None or direction_metadata is None:
+        raise HTTPException(status_code=503, detail="The appraisal direction model is not available.")
+
+    employee = db.query(models.Employee).filter_by(employee_id=payload.employee_id).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    ensure_employee_access(db, current_user, employee)
+
+    category_text = payload.category.strip().lower().replace("_", " ")
+    cleaned_statement = " ".join(payload.statement.strip().lower().split())
+    model_input = f"{category_text} [SEP] {cleaned_statement}"
+    try:
+        classifier = direction_model.named_steps["classifier"]
+        labels = [str(label) for label in classifier.classes_]
+        probabilities = direction_model.predict_proba([model_input])[0]
+        predicted_direction = str(direction_model.predict([model_input])[0])
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="The direction model could not classify this statement.") from exc
+
+    confidence_by_direction = {
+        label: round(float(probability), 4)
+        for label, probability in zip(labels, probabilities)
+    }
+    if predicted_direction == "negative":
+        scoring_action = "supervisor_confirmation_required"
+    elif predicted_direction == "positive":
+        scoring_action = "human_review_required"
+    else:
+        scoring_action = "do_not_score"
+
+    return {
+        "employee_id": payload.employee_id,
+        "category": payload.category,
+        "predicted_direction": predicted_direction,
+        "confidence": confidence_by_direction.get(predicted_direction, 0.0),
+        "probabilities": confidence_by_direction,
+        "scoring_action": scoring_action,
+        "numerical_score": None,
+        "notice": "This is a review suggestion only; it does not change the employee's Trust Score.",
+    }
 
 COACHING_TOPICS = {
     "skills": "practical skill development and practice",
@@ -1889,3 +2012,260 @@ class SupportsGenerate(Protocol):
     def generate(self, *args: Any, **kwargs: Any) -> Any:
         ...
 
+# ---------------------------------------------------------
+# Organization administration
+# ---------------------------------------------------------
+@app.get("/api/v1/admin/overview")
+def get_admin_overview(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    ensure_admin(current_user)
+    accounts = {
+        key: db.query(func.count(models.Employee.employee_id)).filter_by(user_type=key).scalar() or 0
+        for key in ("employee", "supervisor", "executive", "admin")
+    }
+    accounts = {
+        "employees": accounts["employee"],
+        "supervisors": accounts["supervisor"],
+        "executives": accounts["executive"],
+        "admins": accounts["admin"],
+        "active_accounts": db.query(func.count(models.Employee.employee_id)).filter_by(is_active=True).scalar() or 0,
+        "total_accounts": db.query(func.count(models.Employee.employee_id)).scalar() or 0,
+    }
+
+    kpi_columns = [
+        ("loan_volumes", models.PerformanceRecord.loan_volumes),
+        ("transaction_accuracy", models.PerformanceRecord.transaction_accuracy),
+        ("workplan_completion", models.PerformanceRecord.workplan_completion),
+        ("tasks_on_time", models.PerformanceRecord.task_deadline_fulfillment_pct),
+        ("accounts_opened", models.PerformanceRecord.accounts_opened),
+        ("complaint_resolution", models.PerformanceRecord.complaint_resolution_rate_pct),
+        ("customer_satisfaction", models.PerformanceRecord.customer_satisfaction),
+        ("processing_errors", models.PerformanceRecord.error_frequencies),
+        ("loan_processing_hours", models.PerformanceRecord.loan_processing_turnaround_hours),
+        ("non_performing_credit", models.PerformanceRecord.non_performing_credit_pct),
+        ("cash_reconciliation_errors", models.PerformanceRecord.cash_reconciliation_errors),
+        ("compliance_incidents", models.PerformanceRecord.compliance_incidents),
+        ("digital_channel_adoption", models.PerformanceRecord.digital_channel_adoption_pct),
+    ]
+    telemetry_result = db.query(
+        func.count(models.PerformanceRecord.record_id),
+        *[func.avg(column) for _, column in kpi_columns],
+    ).one()
+    telemetry = {
+        "records_count": int(telemetry_result[0] or 0),
+        "averages": {
+            name: (round(float(value), 2) if value is not None else None)
+            for (name, _), value in zip(kpi_columns, telemetry_result[1:])
+        },
+    }
+
+    report_count, average_score = db.query(
+        func.count(models.AppraisalReport.report_id),
+        func.avg(models.AppraisalReport.unified_trust_score),
+    ).one()
+    feedback_count = db.query(func.count(models.UnstructuredFeedback.feedback_id)).scalar() or 0
+
+    dimension_labels = {
+        "communication": "Communication",
+        "collaboration": "Collaboration",
+        "compliance_awareness": "Compliance awareness",
+        "learning_development": "Learning and development",
+    }
+    dimension_scores = {
+        key: {"scores": [], "human_reviewed_count": 0, "ai_draft_count": 0}
+        for key in dimension_labels
+    }
+    ai_reports = db.query(
+        models.AIPerformanceReport.feedback_dimensions,
+        models.AIPerformanceReport.report_status,
+    ).all()
+    for dimensions, report_status in ai_reports:
+        if not isinstance(dimensions, dict):
+            continue
+        for key in dimension_labels:
+            item = dimensions.get(key)
+            score = item.get("score_1_5") if isinstance(item, dict) else None
+            if isinstance(score, (int, float)) and not isinstance(score, bool) and 1 <= score <= 5:
+                dimension_scores[key]["scores"].append(float(score))
+                if report_status == "human_reviewed":
+                    dimension_scores[key]["human_reviewed_count"] += 1
+                else:
+                    dimension_scores[key]["ai_draft_count"] += 1
+    category_items = [
+        {
+            "category": key,
+            "label": dimension_labels[key],
+            "average_score": round(sum(values["scores"]) / len(values["scores"]), 2) if values["scores"] else None,
+            "ratings_count": len(values["scores"]),
+            "human_reviewed_count": values["human_reviewed_count"],
+            "ai_draft_count": values["ai_draft_count"],
+        }
+        for key, values in dimension_scores.items()
+    ]
+    has_ratings = any(item["ratings_count"] for item in category_items)
+
+    return {
+        "accounts": accounts,
+        "telemetry": telemetry,
+        "reports": {
+            "count": int(report_count or 0),
+            "average_trust_score": round(float(average_score), 2) if average_score is not None else None,
+        },
+        "feedback_count": int(feedback_count),
+        "ai_categories": {
+            "available": has_ratings,
+            "items": category_items,
+            "message": (
+                "Average 1–5 feedback ratings across saved AI appraisal reports. Draft ratings are provisional; counts distinguish them from human-reviewed reports."
+                if has_ratings else "AI competency summaries will appear after an AI appraisal report has saved competency ratings."
+            ),
+        },
+    }
+
+
+@app.get("/api/v1/admin/employees", response_model=List[schemas.AdminEmployeeResponse])
+def list_admin_employees(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    ensure_admin(current_user)
+    employees = db.query(models.Employee).order_by(
+        models.Employee.user_type.asc(), models.Employee.full_name.asc()
+    ).all()
+    return [admin_employee_payload(db, employee) for employee in employees]
+
+
+@app.post("/api/v1/admin/employees", response_model=schemas.AdminEmployeeResponse, status_code=201)
+def create_admin_managed_employee(
+    payload: schemas.AdminEmployeeCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    ensure_admin(current_user)
+    if payload.user_type not in {"employee", "supervisor", "executive"}:
+        raise HTTPException(status_code=422, detail="Account type must be employee, supervisor, or executive")
+    password_error = _password_policy_error(payload.password)
+    if password_error:
+        raise HTTPException(status_code=422, detail=password_error)
+    email = payload.email.strip().lower()
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        raise HTTPException(status_code=422, detail="Enter a valid email address")
+    if db.query(models.Employee).filter(func.lower(models.Employee.email) == email).first():
+        raise HTTPException(status_code=409, detail="An account with this email already exists")
+
+    if payload.user_type == "employee" and payload.supervisor_id is not None:
+        if not active_supervisor_profile(db, payload.supervisor_id):
+            raise HTTPException(status_code=400, detail="Choose an active supervisor")
+    elif payload.user_type == "supervisor":
+        if not payload.branch_code or not payload.branch_code.strip():
+            raise HTTPException(status_code=400, detail="Branch code is required for a supervisor")
+        if payload.executive_id is None or not active_executive_profile(db, payload.executive_id):
+            raise HTTPException(status_code=400, detail="Choose an active executive for this supervisor")
+    elif payload.user_type == "executive" and (not payload.oversight_region or not payload.oversight_region.strip()):
+        raise HTTPException(status_code=400, detail="Oversight region is required for an executive")
+
+    employee = models.Employee(
+        full_name=payload.full_name.strip(), email=email,
+        password_hashed=auth.hash_password(payload.password),
+        department=payload.department.strip(), role=payload.role.strip(),
+        user_type=payload.user_type,
+        supervisor_id=payload.supervisor_id if payload.user_type == "employee" else None,
+    )
+    db.add(employee)
+    try:
+        db.flush()
+        if payload.user_type == "supervisor":
+            db.add(models.ImmediateSupervisor(
+                branch_code=payload.branch_code.strip(), executive_id=payload.executive_id,
+                emp_id=employee.employee_id,
+            ))
+        elif payload.user_type == "executive":
+            db.add(models.ExecutiveManager(
+                emp_id=employee.employee_id, oversight_region=payload.oversight_region.strip(),
+            ))
+        db.commit()
+        db.refresh(employee)
+    except Exception:
+        db.rollback()
+        raise
+    return admin_employee_payload(db, employee)
+
+
+@app.patch("/api/v1/admin/employees/{employee_id}", response_model=schemas.AdminEmployeeResponse)
+def update_admin_managed_employee(
+    employee_id: int,
+    payload: schemas.AdminEmployeeUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    ensure_admin(current_user)
+    employee = db.query(models.Employee).filter_by(employee_id=employee_id).first()
+    if not employee or employee.user_type == "admin":
+        raise HTTPException(status_code=404, detail="Managed employee account not found")
+
+    supplied = getattr(payload, "model_fields_set", getattr(payload, "__fields_set__", set()))
+    updates = payload.model_dump(exclude_unset=True) if hasattr(payload, "model_dump") else payload.dict(exclude_unset=True)
+    if "email" in supplied and payload.email is not None:
+        email = payload.email.strip().lower()
+        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+            raise HTTPException(status_code=422, detail="Enter a valid email address")
+        duplicate = db.query(models.Employee).filter(
+            func.lower(models.Employee.email) == email,
+            models.Employee.employee_id != employee_id,
+        ).first()
+        if duplicate:
+            raise HTTPException(status_code=409, detail="An account with this email already exists")
+        employee.email = email
+    for field in ("full_name", "department", "role", "is_active"):
+        if field in updates and updates[field] is not None:
+            value = updates[field]
+            setattr(employee, field, value.strip() if isinstance(value, str) else value)
+    if updates.get("password"):
+        password_error = _password_policy_error(updates["password"])
+        if password_error:
+            raise HTTPException(status_code=422, detail=password_error)
+        employee.password_hashed = auth.hash_password(updates["password"])
+        employee.auth_token_version += 1
+
+    if employee.user_type == "employee":
+        if "supervisor_id" in supplied:
+            supervisor_id = payload.supervisor_id
+            if supervisor_id is not None and not active_supervisor_profile(db, supervisor_id):
+                raise HTTPException(status_code=400, detail="Choose an active supervisor")
+            employee.supervisor_id = supervisor_id
+        if supplied.intersection({"executive_id", "branch_code", "oversight_region"}):
+            raise HTTPException(status_code=400, detail="Those hierarchy fields apply only to manager accounts")
+    elif employee.user_type == "supervisor":
+        profile = db.query(models.ImmediateSupervisor).filter_by(emp_id=employee.employee_id).first()
+        if profile is None:
+            raise HTTPException(status_code=409, detail="Supervisor profile is missing; repair it before editing")
+        if "branch_code" in supplied:
+            if not payload.branch_code or not payload.branch_code.strip():
+                raise HTTPException(status_code=400, detail="Branch code cannot be blank")
+            profile.branch_code = payload.branch_code.strip()
+        if "executive_id" in supplied:
+            if payload.executive_id is None or not active_executive_profile(db, payload.executive_id):
+                raise HTTPException(status_code=400, detail="Choose an active executive")
+            profile.executive_id = payload.executive_id
+        if supplied.intersection({"supervisor_id", "oversight_region"}):
+            raise HTTPException(status_code=400, detail="Those hierarchy fields do not apply to supervisors")
+    elif employee.user_type == "executive":
+        profile = db.query(models.ExecutiveManager).filter_by(emp_id=employee.employee_id).first()
+        if profile is None:
+            raise HTTPException(status_code=409, detail="Executive profile is missing; repair it before editing")
+        if "oversight_region" in supplied:
+            if not payload.oversight_region or not payload.oversight_region.strip():
+                raise HTTPException(status_code=400, detail="Oversight region cannot be blank")
+            profile.oversight_region = payload.oversight_region.strip()
+        if supplied.intersection({"supervisor_id", "executive_id", "branch_code"}):
+            raise HTTPException(status_code=400, detail="Those hierarchy fields do not apply to executives")
+
+    try:
+        db.commit()
+        db.refresh(employee)
+    except Exception:
+        db.rollback()
+        raise
+    return admin_employee_payload(db, employee)

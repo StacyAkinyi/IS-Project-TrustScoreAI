@@ -3,6 +3,7 @@ import Login from './components/Login';
 import EmployeeDashboard from './dashboards/employee/EmployeeDashboard'; 
 import SupervisorDashboard from './dashboards/supervisor/SupervisorDashboard';
 import ExecutiveDashboard from './dashboards/executive/ExecutiveDashboard';
+import AdminDashboard from './dashboards/admin/AdminDashboard';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -57,6 +58,7 @@ export default function App() {
         {userRole === 'employee' && <EmployeeDashboard userId={userId} />}
         {userRole === 'supervisor' && <SupervisorDashboard supervisorId={userId} />}
         {userRole === 'executive' && <ExecutiveDashboard executiveId={userId} />}
+        {userRole === 'admin' && <AdminDashboard />}
       </main>
     </div>
   );

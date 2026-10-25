@@ -26,7 +26,7 @@ class Employee(Base):
     __tablename__ = "employees"
     __table_args__ = (
         CheckConstraint(
-            "user_type IN ('employee', 'supervisor', 'executive')",
+            "user_type IN ('employee', 'supervisor', 'executive', 'admin')",
             name="ck_employees_user_type",
         ),
     )

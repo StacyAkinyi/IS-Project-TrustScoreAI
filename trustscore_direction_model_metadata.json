@@ -1,0 +1,18 @@
+{
+  "task": "appraisal direction classification",
+  "class_order": [
+    "mixed",
+    "negative",
+    "neutral",
+    "positive"
+  ],
+  "input_format": "lowercase category + ' [SEP] ' + cleaned appraisal statement",
+  "scoring_policy": {
+    "mixed": "no numerical score",
+    "neutral": "no numerical score",
+    "negative": "supervisor confirmation required",
+    "positive": "review before contributing to Trust Score"
+  },
+  "grouped_test_accuracy": 0.8,
+  "grouped_test_macro_f1": 0.72
+}

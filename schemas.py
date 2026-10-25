@@ -166,3 +166,46 @@ class TokenResponse(BaseModel):
     role: str
     user_id: int
     email: str
+
+class AdminEmployeeResponse(BaseModel):
+    employee_id: int
+    full_name: str
+    email: str
+    department: str
+    role: str
+    user_type: str
+    is_active: bool
+    supervisor_id: Optional[int] = None
+    supervisor_name: Optional[str] = None
+    supervisor_profile_id: Optional[int] = None
+    executive_id: Optional[int] = None
+    executive_name: Optional[str] = None
+    branch_code: Optional[str] = None
+    oversight_region: Optional[str] = None
+    created_at: datetime
+
+
+class AdminEmployeeCreate(BaseModel):
+    full_name: str = Field(min_length=2, max_length=160)
+    email: str = Field(min_length=5, max_length=254)
+    password: str = Field(min_length=12, max_length=72)
+    department: str = Field(min_length=2, max_length=100)
+    role: str = Field(min_length=2, max_length=100)
+    user_type: str
+    supervisor_id: Optional[int] = Field(default=None, ge=1)
+    executive_id: Optional[int] = Field(default=None, ge=1)
+    branch_code: Optional[str] = Field(default=None, max_length=30)
+    oversight_region: Optional[str] = Field(default=None, max_length=100)
+
+
+class AdminEmployeeUpdate(BaseModel):
+    full_name: Optional[str] = Field(default=None, min_length=2, max_length=160)
+    email: Optional[str] = Field(default=None, min_length=5, max_length=254)
+    password: Optional[str] = Field(default=None, min_length=12, max_length=72)
+    department: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    role: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    is_active: Optional[bool] = None
+    supervisor_id: Optional[int] = Field(default=None, ge=1)
+    executive_id: Optional[int] = Field(default=None, ge=1)
+    branch_code: Optional[str] = Field(default=None, max_length=30)
+    oversight_region: Optional[str] = Field(default=None, max_length=100)
