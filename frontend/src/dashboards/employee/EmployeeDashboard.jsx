@@ -13,6 +13,7 @@ export default function EmployeeDashboard({ userId }) {
   const [reviewCount, setReviewCount] = useState(0);
   const [reports, setReports] = useState([]);
   const [trustScoreRuns, setTrustScoreRuns] = useState([]);
+  const [trustScoreDetailsOpen, setTrustScoreDetailsOpen] = useState(false);
   const [activeView, setActiveView] = useState('home'); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -110,11 +111,17 @@ export default function EmployeeDashboard({ userId }) {
               Role: <span className="font-semibold text-slate-800">{employeeData?.job_title || employeeData?.role}</span> | Branch: <span className="font-semibold text-slate-800">{employeeData?.branch_location || 'Not assigned'}</span>
             </p>
             <p className="text-slate-600 text-sm">Supervisor: <span className="font-semibold text-slate-800">{employeeData?.supervisor_name || 'Not assigned'}</span></p>
-            <div className="inline-block mt-2 bg-blue-50 border border-blue-200 px-6 py-2 rounded-full">
-              <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Latest Trust Score: </span>
+            <button
+              type="button"
+              onClick={() => setTrustScoreDetailsOpen(true)}
+              aria-haspopup="dialog"
+              className="mt-2 inline-block rounded-full border border-blue-200 bg-blue-50 px-6 py-3 text-left transition hover:border-blue-400 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <span className="block text-xs font-bold uppercase tracking-wider text-blue-600">Latest Trust Score</span>
               <span className="text-lg font-extrabold text-blue-900">{latestScore}</span>
-              {latestTrustRun && <span className="mt-1 block text-xs text-slate-500">{latestTrustRun.period_code} · based on four KPI groups and four reviewed feedback groups</span>}
-            </div>
+              {latestTrustRun && <span className="mt-1 block text-xs text-slate-500">{latestTrustRun.period_code} · View how the 8 groups are populated</span>}
+              {!latestTrustRun && <span className="mt-1 block text-xs text-slate-500">Click to see how the score is calculated</span>}
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -243,6 +250,122 @@ export default function EmployeeDashboard({ userId }) {
           <AIPerformanceReportGenerator />
         </div>
       )}
+      {trustScoreDetailsOpen && <TrustScoreBreakdown run={latestTrustRun} onClose={() => setTrustScoreDetailsOpen(false)} />}
+    </div>
+  );
+}
+
+
+const KPI_GROUPS = [
+  ['operational_quality', 'Operational quality'],
+  ['delivery_timeliness', 'Delivery and timeliness'],
+  ['customer_outcomes', 'Customer outcomes'],
+  ['risk_controls', 'Risk and controls'],
+];
+const FEEDBACK_GROUPS = [
+  ['communication', 'Communication'],
+  ['collaboration', 'Collaboration'],
+  ['compliance_awareness', 'Compliance awareness'],
+  ['learning_development', 'Learning and development'],
+];
+const METRIC_UNITS = {
+  transaction_accuracy: '%', workplan_completion: '%', task_deadline_fulfillment_pct: '%',
+  complaint_resolution_rate_pct: '%', non_performing_credit_pct: '%', customer_satisfaction: ' / 5',
+  error_frequencies: ' / month', loan_processing_turnaround_hours: ' hours',
+  cash_reconciliation_errors: ' / month', compliance_incidents: ' / month',
+};
+const SOURCE_LABELS = {
+  supervisor_appraisal: 'Supervisor form',
+};
+
+function TrustScoreBreakdown({ run, onClose }) {
+  const classifications = run?.classifications || [];
+  const scoreLabel = run?.score_status === 'ready' && run.trust_score != null
+    ? `${Number(run.trust_score).toFixed(1)}%`
+    : run?.score_status === 'awaiting_review' ? 'Awaiting review'
+      : run?.score_status === 'incomplete' ? 'Incomplete' : 'Not generated';
+
+  const countsFor = (category, sourceType) => {
+    const rows = classifications.filter((item) => item.category === category && (!sourceType || item.source_type === sourceType));
+    return {
+      positive: rows.filter((item) => item.review_status === 'auto_classified' && item.predicted_direction === 'positive').length,
+      negative: rows.filter((item) => item.review_status === 'auto_classified' && item.predicted_direction === 'negative').length,
+      mixedNeutral: rows.filter((item) => item.review_status === 'auto_classified' && ['mixed', 'neutral'].includes(item.predicted_direction)).length,
+    };
+  };
+  const sourceScore = (counts) => {
+    const scored = counts.positive + counts.negative;
+    return scored ? `${((counts.positive / scored) * 100).toFixed(1)}%` : '—';
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <section className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-xl bg-white p-5 shadow-2xl sm:p-7" role="dialog" aria-modal="true" aria-labelledby="trust-score-breakdown-title">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-blue-700">{run?.period_code || 'Trust Score'}</p>
+            <h2 id="trust-score-breakdown-title" className="mt-1 text-2xl font-bold text-blue-950">How your Trust Score is populated</h2>
+            <p className="mt-2 max-w-3xl text-sm text-slate-600">The score is the equal-weight average of four KPI group scores and four automatically classified supervisor feedback groups. Each group is scored from 0 to 100.</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" aria-label="Close Trust Score breakdown">Close</button>
+        </div>
+
+        <div className="mt-5 rounded-lg bg-blue-50 p-4">
+          <span className="text-sm font-semibold text-blue-900">Overall Trust Score: </span>
+          <span className="text-lg font-bold text-blue-900">{scoreLabel}</span>
+          <p className="mt-1 text-xs text-blue-800">A numeric score is available when all eight groups have enough data to calculate a score.</p>
+        </div>
+
+        <h3 className="mb-3 mt-6 text-lg font-bold text-slate-900">KPI groups</h3>
+        <div className="grid gap-3 md:grid-cols-2">
+          {KPI_GROUPS.map(([key, label]) => {
+            const group = run?.kpi_groups?.[key];
+            const metrics = group?.metrics || [];
+            return (
+              <article key={key} className="rounded-lg border border-slate-200 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div><h4 className="font-bold text-slate-800">{label}</h4><p className="text-xs text-slate-500">Mean of available metric scores in this group</p></div>
+                  <strong className="whitespace-nowrap text-blue-800">{group?.score_0_100 == null ? 'Not scored' : `${Number(group.score_0_100).toFixed(1)}%`}</strong>
+                </div>
+                {metrics.length ? <ul className="mt-3 divide-y divide-slate-100">{metrics.map((metric) => (
+                  <li key={metric.key} className="flex items-start justify-between gap-3 py-2 text-sm">
+                    <span className="text-slate-700">{metric.label}<small className="block text-xs text-slate-500">Observed: {metric.mean == null ? 'No data' : `${metric.mean}${METRIC_UNITS[metric.key] || ''}`} · {metric.sample_count} record(s)</small>
+                      {metric.zero_tolerance_breach && <small className="block font-semibold text-red-700">Zero-tolerance cash error detected</small>}
+                    </span>
+                    <span className="whitespace-nowrap font-semibold text-slate-800">{metric.score_0_100 == null ? '—' : `${Number(metric.score_0_100).toFixed(1)}%`}</span>
+                  </li>
+                ))}</ul> : <p className="mt-3 text-sm text-slate-500">No KPI records for this group.</p>}
+              </article>
+            );
+          })}
+        </div>
+
+        <h3 className="mb-3 mt-7 text-lg font-bold text-slate-900">Supervisor feedback groups</h3>
+        <p className="mb-3 text-xs text-slate-600">For supervisor answers assigned to each competency, positive predictions count as 100 and negative predictions as 0. Mixed and neutral predictions are displayed but do not enter that competency percentage. Employee self-questionnaires are not classified or scored.</p>
+        <div className="grid gap-3 md:grid-cols-2">
+          {FEEDBACK_GROUPS.map(([key, label]) => {
+            const group = run?.feedback_groups?.[key];
+            const combined = countsFor(key);
+            return (
+              <article key={key} className="rounded-lg border border-slate-200 p-4">
+                <div className="flex items-start justify-between gap-3"><div><h4 className="font-bold text-slate-800">{label}</h4><p className="text-xs text-slate-500">Automatic positive/negative predictions only</p></div><strong className="whitespace-nowrap text-blue-800">{group?.score_0_100 == null ? 'Not scored' : `${Number(group.score_0_100).toFixed(1)}%`}</strong></div>
+                <div className="mt-3 space-y-2">
+                  {Object.entries(SOURCE_LABELS).map(([sourceType, sourceLabel]) => {
+                    const counts = countsFor(key, sourceType);
+                    const total = counts.positive + counts.negative + counts.mixedNeutral;
+                    return <div key={sourceType} className="rounded bg-slate-50 px-3 py-2 text-xs">
+                      <div className="flex justify-between gap-2"><strong className="text-slate-700">{sourceLabel}</strong><strong className="text-slate-800">{total ? sourceScore(counts) : 'No answers'}</strong></div>
+                      <p className="mt-1 text-slate-600">Positive {counts.positive} · Negative {counts.negative} · Mixed/neutral {counts.mixedNeutral}</p>
+                    </div>;
+                  })}
+                </div>
+                <p className="mt-2 text-xs text-slate-600">Group status: {group?.state || 'No data'} · {combined.positive + combined.negative} scored answer(s)</p>
+              </article>
+            );
+          })}
+        </div>
+        {!run && <p className="mt-5 rounded bg-amber-50 p-3 text-sm text-amber-900">No Trust Score run has been generated yet. Your supervisor can run classification after the appraisal answers are available.</p>}
+      </section>
     </div>
   );
 }

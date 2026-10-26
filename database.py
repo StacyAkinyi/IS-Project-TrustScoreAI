@@ -1,20 +1,20 @@
+"""PostgreSQL connection configured in the local, git-ignored .env file."""
+from pathlib import Path
+import os
+
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-# Database connection URL using your local PostgreSQL credentials
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:Bambino.0@127.0.0.1:5433/trust_score_ai_db"
+load_dotenv(Path(__file__).resolve().parent / ".env")
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
+if not SQLALCHEMY_DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is missing. Set it in the project .env file.")
 
-# Create the SQLAlchemy engine
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
-# Create a session maker for database interactions
+engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Base class for your ORM models to inherit from
 Base = declarative_base()
 
-# Dependency function for FastAPI routes to manage session lifecycle
 def get_db():
     db = SessionLocal()
     try:

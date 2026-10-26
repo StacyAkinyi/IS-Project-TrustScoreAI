@@ -1,0 +1,26 @@
+{
+  "task": "multi-label appraisal competency classification",
+  "categories": [
+    "collaboration",
+    "communication",
+    "compliance_awareness",
+    "learning_development"
+  ],
+  "thresholds": {
+    "collaboration": 0.5,
+    "communication": 0.5,
+    "compliance_awareness": 0.4,
+    "learning_development": 0.4
+  },
+  "threshold_source": "validation split from appraisal_nlp_baseline_colab.ipynb",
+  "model": "word TF-IDF (1,2) + One-vs-Rest Logistic Regression",
+  "training_statement_count": 2000,
+  "training_pair_count": 8000,
+  "scikit_learn_version": "1.9.0",
+  "statement_id_source": "SHA-256 of normalized statement text",
+  "reported_grouped_test": {
+    "micro_f1": 0.97,
+    "macro_f1": 0.97,
+    "note": "Reported by the notebook's grouped holdout evaluation; the exported model is refit on all supplied labeled statements."
+  }
+}

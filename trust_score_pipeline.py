@@ -1,4 +1,4 @@
-"""Classify appraisal evidence and calculate transparent, review-gated Trust Scores."""
+"""Automatically multi-label supervisor appraisal evidence and calculate grouped Trust Scores."""
 
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ import models
 
 
 CATEGORIES = (
-    "communication",
     "collaboration",
+    "communication",
     "compliance_awareness",
     "learning_development",
 )
@@ -124,62 +124,45 @@ def build_kpi_groups(records: list[models.PerformanceRecord]) -> tuple[dict, boo
 
 def _extract_form_items(
     employee_id: int,
-    start: datetime,
-    end: datetime,
     supervisor_appraisals: list[models.SupervisorAppraisal],
-    feedback_rows: list[models.UnstructuredFeedback],
-) -> tuple[list[dict], int]:
+) -> list[dict]:
+    """Extract supervisor answers only; question categories are not classifier labels."""
     items: list[dict] = []
     for appraisal in supervisor_appraisals:
         answers = appraisal.answers_snapshot if isinstance(appraisal.answers_snapshot, list) else []
         for index, answer in enumerate(answers):
             if not isinstance(answer, dict):
                 continue
-            category = str(answer.get("category") or "").strip().lower()
             text = answer.get("answer")
-            if category in CATEGORIES and isinstance(text, str) and text.strip():
+            if isinstance(text, str) and text.strip():
                 items.append({
                     "employee_id": employee_id,
                     "source_type": "supervisor_appraisal",
                     "supervisor_appraisal_id": appraisal.appraisal_id,
                     "feedback_id": None,
                     "item_key": str(answer.get("id") or answer.get("question_id") or f"answer_{index + 1}"),
-                    "category": category,
                     "statement_text": text.strip(),
-                    "source_label": "Supervisor appraisal",
                 })
-
-    untagged_employee_feedback = 0
-    for feedback in feedback_rows:
-        snapshot = feedback.question_snapshot if isinstance(feedback.question_snapshot, list) else []
-        found_categorized_item = False
-        for index, answer in enumerate(snapshot):
-            if not isinstance(answer, dict):
-                continue
-            category = str(answer.get("category") or "").strip().lower()
-            text = answer.get("answer")
-            if category in CATEGORIES and isinstance(text, str) and text.strip():
-                found_categorized_item = True
-                items.append({
-                    "employee_id": employee_id,
-                    "source_type": "employee_followup",
-                    "supervisor_appraisal_id": None,
-                    "feedback_id": feedback.feedback_id,
-                    "item_key": str(answer.get("id") or answer.get("question_id") or f"answer_{index + 1}"),
-                    "category": category,
-                    "statement_text": text.strip(),
-                    "source_label": "Employee self-appraisal",
-                })
-        # Legacy free-text rows without per-answer category labels are deliberately
-        # excluded: the direction model is category-conditioned and cannot assign
-        # a reliable competency to an untagged paragraph.
-        if not found_categorized_item:
-            untagged_employee_feedback += 1
-    return items, untagged_employee_feedback
+    return items
 
 
-def _classify(model, category: str, statement: str) -> tuple[str, float, dict]:
-    model_input = f"{category.replace('_', ' ')} [SEP] {' '.join(statement.lower().split())}"
+def _predict_competencies(model, thresholds: dict[str, float], statement: str) -> list[tuple[str, float]]:
+    """Return every competency whose independently trained probability meets its cutoff."""
+    probabilities = model.predict_proba([" ".join(statement.lower().split())])[0]
+    if len(probabilities) != len(CATEGORIES):
+        raise ValueError(
+            f"Competency model returned {len(probabilities)} columns; expected {len(CATEGORIES)}."
+        )
+    predicted = []
+    for category, probability in zip(CATEGORIES, probabilities):
+        cutoff = float(thresholds.get(category, 0.5))
+        if float(probability) >= cutoff:
+            predicted.append((category, float(probability)))
+    return predicted
+
+
+def _classify_direction(model, category: str, statement: str) -> tuple[str, float, dict]:
+    model_input = f"{category.lower()} [SEP] {' '.join(statement.lower().split())}"
     classifier = model.named_steps["classifier"]
     labels = [str(label) for label in classifier.classes_]
     probabilities = model.predict_proba([model_input])[0]
@@ -190,38 +173,52 @@ def _classify(model, category: str, statement: str) -> tuple[str, float, dict]:
     return direction, probability_map.get(direction, 0.0), probability_map
 
 
-def _upsert_classification(db: Session, item: dict, model, model_version: str):
-    query = db.query(models.FeedbackClassification).filter_by(item_key=item["item_key"])
-    if item["supervisor_appraisal_id"] is not None:
-        query = query.filter_by(supervisor_appraisal_id=item["supervisor_appraisal_id"])
-    else:
-        query = query.filter_by(feedback_id=item["feedback_id"])
+def _upsert_classification(
+    db: Session,
+    item: dict,
+    category: str,
+    category_probability: float,
+    direction_model,
+    model_version: str,
+):
+    query = db.query(models.FeedbackClassification).filter_by(
+        supervisor_appraisal_id=item["supervisor_appraisal_id"],
+        item_key=item["item_key"],
+        category=category,
+    )
     existing = query.first()
-    direction, confidence, probabilities = _classify(model, item["category"], item["statement_text"])
+    direction, confidence, direction_probabilities = _classify_direction(
+        direction_model, category, item["statement_text"]
+    )
+    probability_payload = {
+        "competency_probability": round(category_probability, 6),
+        "direction_probabilities": direction_probabilities,
+    }
     if existing:
-        changed_text = existing.statement_text != item["statement_text"]
-        existing.category = item["category"]
+        existing.employee_id = item["employee_id"]
         existing.statement_text = item["statement_text"]
         existing.predicted_direction = direction
         existing.confidence = confidence
-        existing.probabilities = probabilities
+        existing.probabilities = probability_payload
+        existing.review_status = "auto_classified"
+        existing.confirmed_direction = None
+        existing.reviewed_by_employee_id = None
+        existing.reviewed_at = None
         existing.model_version = model_version
-        if changed_text:
-            existing.review_status = "pending"
-            existing.confirmed_direction = None
-            existing.reviewed_by_employee_id = None
-            existing.reviewed_at = None
+        existing.is_current = True
         return existing
     row = models.FeedbackClassification(
         **{key: item[key] for key in (
             "employee_id", "source_type", "supervisor_appraisal_id", "feedback_id",
-            "item_key", "category", "statement_text",
+            "item_key", "statement_text",
         )},
+        category=category,
         predicted_direction=direction,
         confidence=confidence,
-        probabilities=probabilities,
+        probabilities=probability_payload,
+        review_status="auto_classified",
+        is_current=True,
         model_version=model_version,
-        review_status="pending",
     )
     db.add(row)
     db.flush()
@@ -239,73 +236,52 @@ def get_period_classifications(
         models.SupervisorAppraisal.created_at >= start,
         models.SupervisorAppraisal.created_at < end,
     ).all()
-    feedback_rows = db.query(models.UnstructuredFeedback).filter(
-        models.UnstructuredFeedback.employee_id == employee_id,
-        models.UnstructuredFeedback.author_employee_id == employee_id,
-        models.UnstructuredFeedback.created_at >= start,
-        models.UnstructuredFeedback.created_at < end,
-    ).all()
-    predicates = []
-    if appraisals:
-        predicates.append(models.FeedbackClassification.supervisor_appraisal_id.in_([row.appraisal_id for row in appraisals]))
-    if feedback_rows:
-        predicates.append(models.FeedbackClassification.feedback_id.in_([row.feedback_id for row in feedback_rows]))
+    feedback_rows: list[models.UnstructuredFeedback] = []
+    appraisal_ids = [row.appraisal_id for row in appraisals]
     classifications = db.query(models.FeedbackClassification).filter(
         models.FeedbackClassification.employee_id == employee_id,
-        or_(*predicates) if predicates else False,
-    ).order_by(models.FeedbackClassification.category, models.FeedbackClassification.source_type, models.FeedbackClassification.classification_id).all()
+        models.FeedbackClassification.source_type == "supervisor_appraisal",
+        models.FeedbackClassification.is_current.is_(True),
+        models.FeedbackClassification.supervisor_appraisal_id.in_(appraisal_ids) if appraisal_ids else False,
+    ).order_by(
+        models.FeedbackClassification.category,
+        models.FeedbackClassification.supervisor_appraisal_id,
+        models.FeedbackClassification.item_key,
+    ).all()
     return classifications, appraisals, feedback_rows
 
 
 def build_feedback_groups(rows: Iterable[models.FeedbackClassification]) -> tuple[dict, int]:
-    rows = list(rows)
+    """Score only automatic direction predictions on supervisor appraisal answers."""
+    rows = [row for row in rows if row.review_status == "auto_classified"]
     groups = {}
-    total_pending = 0
     for category in CATEGORIES:
         category_rows = [row for row in rows if row.category == category]
-        pending = [row for row in category_rows if row.review_status == "pending"]
-        total_pending += len(pending)
-        confirmed = [row for row in category_rows if row.review_status == "confirmed"]
-        positive = [row for row in confirmed if row.confirmed_direction == "positive"]
-        negative = [row for row in confirmed if row.confirmed_direction == "negative"]
-        mixed_neutral = [row for row in confirmed if row.confirmed_direction in ("mixed", "neutral")]
-        excluded = [row for row in category_rows if row.review_status == "excluded"]
-        scored = positive + negative
-        per_source = []
-        for source_type in ("supervisor_appraisal", "employee_followup"):
-            source_scored = [row for row in scored if row.source_type == source_type]
-            if source_scored:
-                source_positive = sum(row.confirmed_direction == "positive" for row in source_scored)
-                per_source.append(100.0 * source_positive / len(source_scored))
-        # Each source contributes equally when both exist, so the 16 supervisor
-        # answers do not automatically outweigh the employee's four answers.
-        category_score = None
-        if not pending and scored and per_source:
-            category_score = round(sum(per_source) / len(per_source), 1)
+        positive = [row for row in category_rows if row.predicted_direction == "positive"]
+        negative = [row for row in category_rows if row.predicted_direction == "negative"]
+        mixed_neutral = [row for row in category_rows if row.predicted_direction in ("mixed", "neutral")]
+        scored_count = len(positive) + len(negative)
+        category_score = round(100.0 * len(positive) / scored_count, 1) if scored_count else None
         groups[category] = {
             "label": category.replace("_", " ").title(),
             "score_0_100": category_score,
             "state": _state(category_score),
             "classification_count": len(category_rows),
-            "pending_review_count": len(pending),
-            "confirmed_positive_count": len(positive),
-            "confirmed_negative_count": len(negative),
-            "confirmed_mixed_or_neutral_count": len(mixed_neutral),
-            "excluded_count": len(excluded),
-            "score_rule": "Mean of source-specific positive evidence percentages; confirmed negative evidence scores 0. Mixed/neutral evidence is not numerically scored.",
+            "positive_count": len(positive),
+            "negative_count": len(negative),
+            "mixed_or_neutral_count": len(mixed_neutral),
+            "score_rule": "Automatic direction predictions on supervisor answers: positive=100, negative=0; mixed/neutral are not numerically scored.",
         }
-    return groups, total_pending
+    return groups, 0
 
 
-def score_status(kpi_groups: dict, feedback_groups: dict, pending_count: int) -> tuple[float | None, str]:
+def score_status(kpi_groups: dict, feedback_groups: dict, pending_count: int = 0) -> tuple[float | None, str]:
     group_scores = [
         item.get("score_0_100")
         for item in [*kpi_groups.values(), *feedback_groups.values()]
     ]
     if all(score is not None for score in group_scores) and len(group_scores) == 8:
         return round(sum(float(score) for score in group_scores) / 8, 1), "ready"
-    if pending_count:
-        return None, "awaiting_review"
     return None, "incomplete"
 
 
@@ -348,20 +324,21 @@ def serialize_run(run: models.TrustScoreRun, classifications: list[models.Feedba
 
 
 def recalculate_run(db: Session, run: models.TrustScoreRun) -> list[models.FeedbackClassification]:
-    rows, appraisals, feedback_rows = get_period_classifications(
+    rows, appraisals, _ = get_period_classifications(
         db, run.employee_id, run.period_start, run.period_end
     )
-    feedback_groups, pending = build_feedback_groups(rows)
-    trust_score, status = score_status(run.kpi_groups, feedback_groups, pending)
+    feedback_groups, _ = build_feedback_groups(rows)
+    trust_score, status = score_status(run.kpi_groups, feedback_groups)
     run.feedback_groups = feedback_groups
     run.trust_score = trust_score
     run.score_status = status
     coverage = dict(run.data_coverage or {})
     coverage.update({
         "supervisor_form_count": len(appraisals),
-        "employee_followup_count": len(feedback_rows),
-        "classified_answer_count": len(rows),
-        "pending_review_count": pending,
+        "employee_followup_count": 0,
+        "employee_followups_scored": False,
+        "classified_answer_category_count": len(rows),
+        "pending_review_count": 0,
         "scored_group_count": sum(
             item.get("score_0_100") is not None
             for item in [*run.kpi_groups.values(), *feedback_groups.values()]
@@ -380,9 +357,13 @@ def generate_run(
     period_code: str,
     start: datetime,
     end: datetime,
+    competency_model,
+    competency_thresholds: dict[str, float],
     direction_model,
     model_version: str,
 ) -> tuple[models.TrustScoreRun, list[models.FeedbackClassification]]:
+    if competency_model is None:
+        raise RuntimeError("The multi-label competency model is unavailable.")
     if direction_model is None:
         raise RuntimeError("The appraisal direction model is unavailable.")
     employee = db.query(models.Employee).filter_by(employee_id=employee_id, is_active=True).first()
@@ -398,32 +379,46 @@ def generate_run(
         models.SupervisorAppraisal.created_at >= start,
         models.SupervisorAppraisal.created_at < end,
     ).all()
-    feedback_rows = db.query(models.UnstructuredFeedback).filter(
-        models.UnstructuredFeedback.employee_id == employee_id,
-        models.UnstructuredFeedback.author_employee_id == employee_id,
-        models.UnstructuredFeedback.created_at >= start,
-        models.UnstructuredFeedback.created_at < end,
-    ).all()
-    items, untagged_feedback_count = _extract_form_items(
-        employee_id, start, end, appraisals, feedback_rows
-    )
+    items = _extract_form_items(employee_id, appraisals)
+    appraisal_ids = [row.appraisal_id for row in appraisals]
+    if appraisal_ids:
+        # Retain previous rows for audit, but only the current model's categories
+        # can feed this period's score.
+        db.query(models.FeedbackClassification).filter(
+            models.FeedbackClassification.supervisor_appraisal_id.in_(appraisal_ids)
+        ).update({
+            models.FeedbackClassification.is_current: False,
+            models.FeedbackClassification.review_status: "superseded",
+        }, synchronize_session=False)
+    assigned_category_count = 0
+    unassigned_answer_count = 0
     for item in items:
-        _upsert_classification(db, item, direction_model, model_version)
+        selected_categories = _predict_competencies(
+            competency_model, competency_thresholds, item["statement_text"]
+        )
+        if not selected_categories:
+            unassigned_answer_count += 1
+        for category, probability in selected_categories:
+            _upsert_classification(
+                db, item, category, probability, direction_model, model_version
+            )
+            assigned_category_count += 1
     db.flush()
 
-    classifications, appraisals, feedback_rows = get_period_classifications(
+    classifications, appraisals, _ = get_period_classifications(
         db, employee_id, start, end
     )
     kpi_groups, cash_alert = build_kpi_groups(records)
-    feedback_groups, pending = build_feedback_groups(classifications)
-    trust_score, status = score_status(kpi_groups, feedback_groups, pending)
+    feedback_groups, _ = build_feedback_groups(classifications)
+    trust_score, status = score_status(kpi_groups, feedback_groups)
     coverage = {
         "performance_record_count": len(records),
         "supervisor_form_count": len(appraisals),
-        "employee_followup_count": len(feedback_rows),
-        "classified_answer_count": len(classifications),
-        "untagged_employee_feedback_skipped": untagged_feedback_count,
-        "pending_review_count": pending,
+        "employee_followups_scored": False,
+        "supervisor_answer_count": len(items),
+        "unassigned_supervisor_answer_count": unassigned_answer_count,
+        "classified_answer_category_count": assigned_category_count,
+        "pending_review_count": 0,
         "scored_group_count": sum(
             item.get("score_0_100") is not None
             for item in [*kpi_groups.values(), *feedback_groups.values()]

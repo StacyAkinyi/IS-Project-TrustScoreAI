@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, Query, status
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func
@@ -165,13 +165,18 @@ def active_executive_profile(db: Session, executive_id: int):
     ).first()
 
 
-# The Trust Score is calculated from four KPI groups and four reviewed feedback groups in trust_score_pipeline.py.
+# Trust Scores combine four KPI groups with four automatically classified supervisor-feedback groups.
 
 # Appraisal feedback direction model exported from grouped Colab training.
 DIRECTION_MODEL_PATH = Path(__file__).resolve().parent / "trustscore_direction_model.joblib"
 DIRECTION_METADATA_PATH = Path(__file__).resolve().parent / "trustscore_direction_model_metadata.json"
+COMPETENCY_MODEL_PATH = Path(__file__).resolve().parent / "trustscore_competency_model.joblib"
+COMPETENCY_METADATA_PATH = Path(__file__).resolve().parent / "trustscore_competency_model_metadata.json"
 direction_model = None
 direction_metadata = None
+competency_model = None
+competency_thresholds = {}
+competency_metadata = None
 try:
     direction_model = joblib.load(DIRECTION_MODEL_PATH)
     with DIRECTION_METADATA_PATH.open("r", encoding="utf-8") as metadata_file:
@@ -179,6 +184,20 @@ try:
     print("Appraisal direction model loaded.")
 except Exception as exc:
     print(f"Appraisal direction model unavailable: {exc}")
+try:
+    competency_bundle = joblib.load(COMPETENCY_MODEL_PATH)
+    competency_model = competency_bundle["model"]
+    competency_thresholds = {
+        str(key): float(value)
+        for key, value in competency_bundle.get("thresholds", {}).items()
+    }
+    with COMPETENCY_METADATA_PATH.open("r", encoding="utf-8") as metadata_file:
+        competency_metadata = json.load(metadata_file)
+    print("Multi-label appraisal competency model loaded.")
+except FileNotFoundError:
+    print("Multi-label competency model missing. Run train_competency_classifier.py with the labeled workbook.")
+except Exception as exc:
+    print(f"Multi-label competency model unavailable: {exc}")
 
 
 
@@ -714,7 +733,9 @@ def _trust_period(payload):
 
 
 def _trust_run_model_version():
-    return str((direction_metadata or {}).get("model_version", "trustscore_direction_model.joblib"))
+    category_version = str((competency_metadata or {}).get("model_version", "tfidf-ovr-appraisal-competencies-v1"))
+    direction_version = str((direction_metadata or {}).get("model_version", "trustscore_direction_model.joblib"))
+    return f"{category_version}+{direction_version}"
 
 
 def _serialize_trust_run_for_api(db: Session, run: models.TrustScoreRun):
@@ -732,6 +753,8 @@ def _check_trust_score_access(db: Session, current_user: dict, employee: models.
 
 
 def _generate_trust_score_for_employee(db: Session, employee_id: int, actor_id: int, payload):
+    if competency_model is None:
+        raise HTTPException(status_code=503, detail="The multi-label competency model is not installed. Train it with train_competency_classifier.py, then restart the API.")
     if direction_model is None:
         raise HTTPException(status_code=503, detail="The appraisal direction model is unavailable.")
     start, end, period_code = _trust_period(payload)
@@ -744,6 +767,8 @@ def _generate_trust_score_for_employee(db: Session, employee_id: int, actor_id: 
             period_code=period_code,
             start=start,
             end=end,
+            competency_model=competency_model,
+            competency_thresholds=competency_thresholds,
             direction_model=direction_model,
             model_version=_trust_run_model_version(),
         )
@@ -791,6 +816,38 @@ def list_employee_trust_score_runs(
     return [_serialize_trust_run_for_api(db, row) for row in rows]
 
 
+@app.get("/api/v1/supervisors/{supervisor_id}/trust-score-runs")
+def list_supervisor_team_trust_score_runs(
+    supervisor_id: int,
+    year: int = Query(ge=2000, le=9998),
+    period_type: Literal["quarterly", "semiannual", "annual"] = "semiannual",
+    period_number: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    ensure_supervisor_access(db, current_user, supervisor_id)
+    if current_user.get("role") != "supervisor":
+        raise HTTPException(status_code=403, detail="Only the assigned supervisor can view these team runs")
+    start, end, period_code = _report_period(AIReportGenerateRequest(
+        employee_id=1, period_type=period_type, year=year, period_number=period_number
+    ))
+    employees = db.query(models.Employee).filter_by(
+        supervisor_id=supervisor_id, user_type="employee", is_active=True
+    ).all()
+    employee_names = {employee.employee_id: employee.full_name for employee in employees}
+    if not employee_names:
+        return []
+    runs = db.query(models.TrustScoreRun).filter(
+        models.TrustScoreRun.employee_id.in_(employee_names.keys()),
+        models.TrustScoreRun.period_type == period_type,
+        models.TrustScoreRun.period_code == period_code,
+    ).order_by(models.TrustScoreRun.generated_at.desc()).all()
+    return [{
+        **_serialize_trust_run_for_api(db, run),
+        "employee_name": employee_names.get(run.employee_id),
+    } for run in runs]
+
+
 @app.post("/api/v1/supervisors/{supervisor_id}/trust-score-runs")
 def generate_supervisor_team_trust_score_runs(
     supervisor_id: int,
@@ -810,13 +867,20 @@ def generate_supervisor_team_trust_score_runs(
             for employee in employees
         ]
         db.commit()
+        employee_names = {
+            employee.employee_id: employee.full_name
+            for employee in employees
+        }
         return {
             "period_type": payload.period_type,
             "period_code": runs[0].period_code if runs else None,
             "employees_processed": len(runs),
-            "awaiting_review": sum(run.score_status == "awaiting_review" for run in runs),
             "scores_ready": sum(run.score_status == "ready" for run in runs),
-            "runs": [_serialize_trust_run_for_api(db, run) for run in runs],
+            "incomplete": sum(run.score_status == "incomplete" for run in runs),
+            "runs": [{
+                **_serialize_trust_run_for_api(db, run),
+                "employee_name": employee_names.get(run.employee_id),
+            } for run in runs],
         }
     except HTTPException:
         db.rollback()
@@ -1498,10 +1562,24 @@ def get_supervisor_appraisals(
     ).filter(models.SupervisorAppraisal.supervisor_id == supervisor_id).order_by(
         models.SupervisorAppraisal.created_at.desc()
     ).all()
+    appraisal_ids = [row.appraisal_id for row, _ in rows]
+    followups_by_appraisal = {}
+    if appraisal_ids:
+        followups = db.query(models.UnstructuredFeedback).filter(
+            models.UnstructuredFeedback.supervisor_appraisal_id.in_(appraisal_ids),
+            models.UnstructuredFeedback.author_employee_id == models.UnstructuredFeedback.employee_id,
+        ).order_by(models.UnstructuredFeedback.created_at.desc()).all()
+        for feedback in followups:
+            followups_by_appraisal.setdefault(feedback.supervisor_appraisal_id, feedback)
     return [{"appraisal_id": row.appraisal_id, "employee_id": row.employee_id,
              "employee_name": full_name, "period_code": row.period_code, "form_number": row.form_number,
               "answers": row.answers_snapshot, "yes_count": row.yes_count,
               "question_count": len(row.answers_snapshot or []),
+             "employee_followup": ({
+                 "feedback_id": followups_by_appraisal[row.appraisal_id].feedback_id,
+                 "submitted_at": followups_by_appraisal[row.appraisal_id].created_at,
+                 "answers": followups_by_appraisal[row.appraisal_id].question_snapshot,
+             } if row.appraisal_id in followups_by_appraisal else None),
              "review_request_text": row.review_request_text,
              "review_requested_at": row.review_requested_at,
              "review_edit_count": row.review_edit_count,
@@ -2520,7 +2598,10 @@ def get_admin_overview(
     pipeline_runs = db.query(models.TrustScoreRun).order_by(
         models.TrustScoreRun.generated_at.desc()
     ).all()
-    pipeline_classifications = db.query(models.FeedbackClassification).all()
+    pipeline_classifications = db.query(models.FeedbackClassification).filter(
+        models.FeedbackClassification.is_current.is_(True),
+        models.FeedbackClassification.review_status == "auto_classified",
+    ).all()
     direction_counts = {
         category: {
             direction: sum(
@@ -2533,7 +2614,7 @@ def get_admin_overview(
     }
     reviewed_counts = {
         category: sum(
-            row.category == category and row.review_status == "confirmed"
+            row.category == category and row.review_status == "auto_classified" and row.is_current
             for row in pipeline_classifications
         )
         for category in REPORT_DIMENSIONS
@@ -2555,7 +2636,7 @@ def get_admin_overview(
             "average_score_0_100": round(sum(scores) / len(scores), 1) if scores else None,
             "scored_run_count": len(scores),
             "predicted_directions": direction_counts[key],
-            "reviewed_count": reviewed_counts[key],
+            "classified_answer_count": reviewed_counts[key],
         })
     pipeline_kpi_groups = []
     for key, label in (
@@ -2581,7 +2662,7 @@ def get_admin_overview(
         "available": bool(pipeline_runs or pipeline_classifications),
         "runs_count": len(pipeline_runs),
         "scores_ready_count": len(ready_runs),
-        "awaiting_review_count": sum(run.score_status == "awaiting_review" for run in pipeline_runs),
+        "awaiting_review_count": 0,
         "incomplete_count": sum(run.score_status == "incomplete" for run in pipeline_runs),
         "average_trust_score": round(sum(float(run.trust_score) for run in ready_runs) / len(ready_runs), 1) if ready_runs else None,
         "pending_feedback_reviews": pending_count,
@@ -2592,9 +2673,9 @@ def get_admin_overview(
         "kpi_groups": pipeline_kpi_groups,
         "feedback_categories": pipeline_categories,
         "message": (
-            "Trust Scores average four KPI groups and four reviewed feedback categories. Model predictions stay pending until a supervisor confirms or excludes them."
+            "Trust Scores average four KPI groups and four automatically classified feedback categories from supervisor appraisal answers. Employee self-questionnaire answers are context for the supervisor and are not scored."
             if pipeline_runs or pipeline_classifications
-            else "Run the appraisal pipeline for a team to classify its stored supervisor and employee form answers."
+            else "Run the appraisal pipeline for a team to classify submitted supervisor appraisal answers."
         ),
     }
 

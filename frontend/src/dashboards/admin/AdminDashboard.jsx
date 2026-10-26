@@ -307,7 +307,7 @@ export default function AdminDashboard() {
           <p>{trustPipeline.message || 'Run classification from a supervisor dashboard to populate organization-wide results.'}</p>
           <div className="admin-stat-grid" style={{ marginTop: '14px' }}>
             <StatCard label="Average Trust Score" value={trustPipeline.average_trust_score == null ? '—' : trustPipeline.average_trust_score + '%'} detail={(trustPipeline.scores_ready_count ?? 0) + ' complete runs'} />
-            <StatCard label="Runs awaiting review" value={trustPipeline.awaiting_review_count ?? 0} detail={(trustPipeline.pending_feedback_reviews ?? 0) + ' feedback answers pending'} />
+            <StatCard label="Auto-classified answers" value={(trustPipeline.feedback_categories || []).reduce((total, item) => total + (item.classified_answer_count || 0), 0)} detail="Supervisor appraisal answers" />
             <StatCard label="Incomplete runs" value={trustPipeline.incomplete_count ?? 0} detail={(trustPipeline.runs_count ?? 0) + ' total period runs'} />
             <StatCard label="Cash error alerts" value={trustPipeline.cash_zero_tolerance_alerts ?? 0} detail="Zero-tolerance control breaches" />
           </div>
@@ -325,7 +325,7 @@ export default function AdminDashboard() {
                 <article className="admin-ai-card" key={item.category}>
                   <span>Feedback · {item.label}</span>
                   <strong>{item.average_score_0_100 == null ? '—' : item.average_score_0_100 + '%'}</strong>
-                  <small>{item.reviewed_count} reviewed · {item.scored_run_count} scored runs</small>
+                  <small>{item.classified_answer_count} classified answers · {item.scored_run_count} scored runs</small>
                   <small>Suggestions: +{directions.positive || 0} / −{directions.negative || 0} / mixed {directions.mixed || 0} / neutral {directions.neutral || 0}</small>
                 </article>
               );

@@ -262,7 +262,7 @@ class AppraisalReport(Base):
 
 
 class FeedbackClassification(Base):
-    """Stored model suggestions and supervisor-reviewed directions for form answers."""
+    """Stored automatic model classifications for supervisor appraisal answers."""
     __tablename__ = "feedback_classifications"
     __table_args__ = (
         CheckConstraint(
@@ -278,7 +278,7 @@ class FeedbackClassification(Base):
             name="ck_feedback_classification_predicted_direction",
         ),
         CheckConstraint(
-            "review_status IN ('pending', 'confirmed', 'excluded')",
+            "review_status IN ('pending', 'confirmed', 'excluded', 'auto_classified', 'superseded')",
             name="ck_feedback_classification_review_status",
         ),
         CheckConstraint(
@@ -291,12 +291,12 @@ class FeedbackClassification(Base):
             name="ck_feedback_classification_one_source",
         ),
         UniqueConstraint(
-            "supervisor_appraisal_id", "item_key",
-            name="uq_feedback_classification_supervisor_item",
+            "supervisor_appraisal_id", "item_key", "category",
+            name="uq_feedback_classification_supervisor_item_category",
         ),
         UniqueConstraint(
-            "feedback_id", "item_key",
-            name="uq_feedback_classification_employee_item",
+            "feedback_id", "item_key", "category",
+            name="uq_feedback_classification_employee_item_category",
         ),
     )
 
@@ -315,7 +315,8 @@ class FeedbackClassification(Base):
     predicted_direction = Column(String(20), nullable=False)
     confidence = Column(Float, nullable=False)
     probabilities = Column(JSONB, nullable=False)
-    review_status = Column(String(20), nullable=False, default="pending", index=True)
+    review_status = Column(String(20), nullable=False, default="auto_classified", index=True)
+    is_current = Column(Boolean, nullable=False, default=False, index=True)
     confirmed_direction = Column(String(20), nullable=True)
     reviewed_by_employee_id = Column(Integer, ForeignKey("employees.employee_id"), nullable=True)
     reviewed_at = Column(DateTime(timezone=True), nullable=True)
@@ -325,7 +326,7 @@ class FeedbackClassification(Base):
 
 
 class TrustScoreRun(Base):
-    """Period-level KPI and reviewed-feedback group scores."""
+    """Period-level KPI and automatically classified supervisor-feedback scores."""
     __tablename__ = "trust_score_runs"
     __table_args__ = (
         CheckConstraint(

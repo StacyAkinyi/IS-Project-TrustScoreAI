@@ -1,5 +1,6 @@
 {
   "task": "appraisal direction classification",
+  "model_version": "tfidf-appraisal-direction-v1",
   "class_order": [
     "mixed",
     "negative",
@@ -7,12 +8,19 @@
     "positive"
   ],
   "input_format": "lowercase category + ' [SEP] ' + cleaned appraisal statement",
+  "input_scope": "Supervisor appraisal answers only; employee self-questionnaires are context for the supervisor and are not classified or scored.",
   "scoring_policy": {
+    "positive": "automatic score contribution of 100",
+    "negative": "automatic score contribution of 0",
     "mixed": "no numerical score",
     "neutral": "no numerical score",
-    "negative": "supervisor confirmation required",
-    "positive": "review before contributing to Trust Score"
+    "human_confirmation_required": false
   },
-  "grouped_test_accuracy": 0.8,
-  "grouped_test_macro_f1": 0.72
+  "training_row_count": 2679,
+  "scikit_learn_version": "1.9.0",
+  "historical_grouped_test": {
+    "accuracy": 0.8,
+    "macro_f1": 0.72,
+    "note": "Earlier grouped holdout result from the supplied notebook; the exported model is refit on all labeled rows."
+  }
 }
