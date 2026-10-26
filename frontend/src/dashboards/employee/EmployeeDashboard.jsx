@@ -12,6 +12,7 @@ export default function EmployeeDashboard({ userId }) {
   const [performanceRecords, setPerformanceRecords] = useState([]);
   const [reviewCount, setReviewCount] = useState(0);
   const [reports, setReports] = useState([]);
+  const [trustScoreRuns, setTrustScoreRuns] = useState([]);
   const [activeView, setActiveView] = useState('home'); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -56,6 +57,15 @@ export default function EmployeeDashboard({ userId }) {
           setReports(Array.isArray(repJson) ? repJson : repJson.data || []);
         }
 
+        // The Trust Score pipeline is separate from historical legacy appraisal reports.
+        const scoreRes = await fetch(`http://127.0.0.1:8000/api/v1/employees/${employeeId}/trust-score-runs`, { headers });
+        if (scoreRes.ok) {
+          const scoreJson = await scoreRes.json();
+          setTrustScoreRuns(Array.isArray(scoreJson) ? scoreJson : []);
+        } else {
+          console.warn(`Trust Score API returned status: ${scoreRes.status}`);
+        }
+
       } catch (err) {
         console.error("Dashboard fetch error:", err);
         setError(err.message);
@@ -70,8 +80,14 @@ export default function EmployeeDashboard({ userId }) {
   if (loading) return <div className="p-8 text-center text-slate-600 font-semibold">Loading secure profile...</div>;
   if (error) return <div className="p-8 text-center text-red-600 font-semibold">Error: {error}</div>;
 
-  const latestReport = reports.length > 0 ? reports[reports.length - 1] : null;
-  const latestScore = latestReport ? latestReport.unified_trust_score : 'N/A';
+  const latestTrustRun = trustScoreRuns[0] || null;
+  const latestScore = latestTrustRun?.score_status === 'ready' && latestTrustRun.trust_score != null
+    ? `${Number(latestTrustRun.trust_score).toFixed(1)}%`
+    : latestTrustRun?.score_status === 'awaiting_review'
+      ? 'Awaiting review'
+      : latestTrustRun?.score_status === 'incomplete'
+        ? 'Incomplete data'
+        : 'Not generated';
 
   return (
     <div className="space-y-6">
@@ -96,7 +112,8 @@ export default function EmployeeDashboard({ userId }) {
             <p className="text-slate-600 text-sm">Supervisor: <span className="font-semibold text-slate-800">{employeeData?.supervisor_name || 'Not assigned'}</span></p>
             <div className="inline-block mt-2 bg-blue-50 border border-blue-200 px-6 py-2 rounded-full">
               <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Latest Trust Score: </span>
-              <span className="text-lg font-extrabold text-blue-900">{latestScore} {latestScore !== 'N/A' && '%'}</span>
+              <span className="text-lg font-extrabold text-blue-900">{latestScore}</span>
+              {latestTrustRun && <span className="mt-1 block text-xs text-slate-500">{latestTrustRun.period_code} · based on four KPI groups and four reviewed feedback groups</span>}
             </div>
           </div>
 
@@ -139,6 +156,27 @@ export default function EmployeeDashboard({ userId }) {
           <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
             <h3 className="text-xl font-bold text-blue-900 mb-4">Performance Overview & KPI Traffic Light</h3>
             <PerformanceCharts performanceRecords={performanceRecords} />
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+            <h3 className="text-lg font-bold text-blue-900 mb-2">Grouped Trust Score history</h3>
+            <p className="mb-4 text-xs text-slate-500">A score appears only after the four KPI groups are available and feedback suggestions have been reviewed. Mixed and neutral feedback does not add a numeric score.</p>
+            {trustScoreRuns.length === 0 ? (
+              <p className="text-slate-500 text-sm">No Trust Score run has been generated for you yet. Your supervisor can run the appraisal classification for your team.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead><tr className="bg-slate-100 text-slate-700"><th className="p-3 border-b">Period</th><th className="p-3 border-b">Trust Score</th><th className="p-3 border-b">KPI groups</th><th className="p-3 border-b">Feedback groups</th><th className="p-3 border-b">Updated</th></tr></thead>
+                  <tbody>{trustScoreRuns.map((run) => {
+                    const statusLabel = run.score_status === 'ready' ? `${Number(run.trust_score).toFixed(1)}%` : run.score_status === 'awaiting_review' ? 'Awaiting review' : 'Incomplete';
+                    const groups = Object.values(run.kpi_groups || {});
+                    const feedback = Object.values(run.feedback_groups || {});
+                    const groupCell = (values) => values.filter((item) => item.score_0_100 != null).length + ' / ' + values.length + ' scored';
+                    return <tr key={run.run_id} className="hover:bg-slate-50"><td className="p-3 border-b font-semibold">{run.period_code}</td><td className="p-3 border-b font-bold text-blue-700">{statusLabel}</td><td className="p-3 border-b">{groupCell(groups)}</td><td className="p-3 border-b">{groupCell(feedback)}</td><td className="p-3 border-b text-slate-500">{new Date(run.generated_at).toLocaleDateString()}</td></tr>;
+                  })}</tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">

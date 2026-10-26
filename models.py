@@ -261,6 +261,106 @@ class AppraisalReport(Base):
     )
 
 
+class FeedbackClassification(Base):
+    """Stored model suggestions and supervisor-reviewed directions for form answers."""
+    __tablename__ = "feedback_classifications"
+    __table_args__ = (
+        CheckConstraint(
+            "source_type IN ('supervisor_appraisal', 'employee_followup')",
+            name="ck_feedback_classification_source_type",
+        ),
+        CheckConstraint(
+            "category IN ('communication', 'collaboration', 'compliance_awareness', 'learning_development')",
+            name="ck_feedback_classification_category",
+        ),
+        CheckConstraint(
+            "predicted_direction IN ('negative', 'positive', 'mixed', 'neutral')",
+            name="ck_feedback_classification_predicted_direction",
+        ),
+        CheckConstraint(
+            "review_status IN ('pending', 'confirmed', 'excluded')",
+            name="ck_feedback_classification_review_status",
+        ),
+        CheckConstraint(
+            "confirmed_direction IS NULL OR confirmed_direction IN ('negative', 'positive', 'mixed', 'neutral')",
+            name="ck_feedback_classification_confirmed_direction",
+        ),
+        CheckConstraint(
+            "(supervisor_appraisal_id IS NOT NULL AND feedback_id IS NULL) OR "
+            "(supervisor_appraisal_id IS NULL AND feedback_id IS NOT NULL)",
+            name="ck_feedback_classification_one_source",
+        ),
+        UniqueConstraint(
+            "supervisor_appraisal_id", "item_key",
+            name="uq_feedback_classification_supervisor_item",
+        ),
+        UniqueConstraint(
+            "feedback_id", "item_key",
+            name="uq_feedback_classification_employee_item",
+        ),
+    )
+
+    classification_id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.employee_id"), nullable=False, index=True)
+    source_type = Column(String(30), nullable=False)
+    supervisor_appraisal_id = Column(
+        Integer, ForeignKey("supervisor_appraisals.appraisal_id", ondelete="CASCADE"), nullable=True
+    )
+    feedback_id = Column(
+        Integer, ForeignKey("unstructured_feedback.feedback_id", ondelete="CASCADE"), nullable=True
+    )
+    item_key = Column(String(120), nullable=False)
+    category = Column(String(40), nullable=False)
+    statement_text = Column(Text, nullable=False)
+    predicted_direction = Column(String(20), nullable=False)
+    confidence = Column(Float, nullable=False)
+    probabilities = Column(JSONB, nullable=False)
+    review_status = Column(String(20), nullable=False, default="pending", index=True)
+    confirmed_direction = Column(String(20), nullable=True)
+    reviewed_by_employee_id = Column(Integer, ForeignKey("employees.employee_id"), nullable=True)
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+    model_version = Column(String(100), nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now)
+
+
+class TrustScoreRun(Base):
+    """Period-level KPI and reviewed-feedback group scores."""
+    __tablename__ = "trust_score_runs"
+    __table_args__ = (
+        CheckConstraint(
+            "period_type IN ('quarterly', 'semiannual', 'annual')",
+            name="ck_trust_score_run_period_type",
+        ),
+        CheckConstraint(
+            "score_status IN ('ready', 'awaiting_review', 'incomplete')",
+            name="ck_trust_score_run_status",
+        ),
+        CheckConstraint(
+            "trust_score IS NULL OR trust_score BETWEEN 0 AND 100",
+            name="ck_trust_score_run_score_range",
+        ),
+        UniqueConstraint(
+            "employee_id", "period_type", "period_code",
+            name="uq_trust_score_run_employee_period",
+        ),
+    )
+
+    run_id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.employee_id"), nullable=False, index=True)
+    generated_by_employee_id = Column(Integer, ForeignKey("employees.employee_id"), nullable=False)
+    period_type = Column(String(20), nullable=False)
+    period_code = Column(String(12), nullable=False, index=True)
+    period_start = Column(DateTime(timezone=True), nullable=False)
+    period_end = Column(DateTime(timezone=True), nullable=False)
+    kpi_groups = Column(JSONB, nullable=False)
+    feedback_groups = Column(JSONB, nullable=False)
+    data_coverage = Column(JSONB, nullable=False)
+    trust_score = Column(Float, nullable=True)
+    score_status = Column(String(20), nullable=False, default="incomplete", index=True)
+    generated_at = Column(DateTime(timezone=True), nullable=False, default=utc_now, index=True)
+
+
 class AIPerformanceReport(Base):
     __tablename__ = "ai_performance_reports"
     __table_args__ = (

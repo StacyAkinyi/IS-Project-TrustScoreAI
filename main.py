@@ -27,6 +27,15 @@ import schemas
 import auth
 from database import engine, get_db
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from trust_score_pipeline import (
+    build_feedback_groups,
+    generate_run as generate_trust_score_run,
+    get_period_classifications,
+    recalculate_run as recalculate_trust_score_run,
+    score_status as calculate_trust_score_status,
+    serialize_classification,
+    serialize_run,
+)
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
@@ -156,15 +165,7 @@ def active_executive_profile(db: Session, executive_id: int):
     ).first()
 
 
-# ---------------------------------------------------------
-# 1. Load the human-labeled unified score regressor, when trained
-# ---------------------------------------------------------
-trust_score_model_bundle = None
-try:
-    trust_score_model_bundle = joblib.load('trust_score_regressor.pkl')
-    print("Unified Trust Score regressor loaded.")
-except FileNotFoundError:
-    print("Unified Trust Score regressor is not trained yet; score reports are unavailable.")
+# The Trust Score is calculated from four KPI groups and four reviewed feedback groups in trust_score_pipeline.py.
 
 # Appraisal feedback direction model exported from grouped Colab training.
 DIRECTION_MODEL_PATH = Path(__file__).resolve().parent / "trustscore_direction_model.joblib"
@@ -233,11 +234,11 @@ QUESTION_METRICS = [
     {"key": "task_deadline_fulfillment_pct", "label": "tasks completed on time", "unit": "%", "max": 100, "direction": "high", "decimals": 1},
     {"key": "complaint_resolution_rate_pct", "label": "complaint resolution", "unit": "%", "max": 100, "direction": "high", "decimals": 1},
     {"key": "customer_satisfaction", "label": "customer satisfaction", "unit": " / 5", "max": 5, "direction": "high", "decimals": 2},
-    {"key": "error_frequencies", "label": "processing errors", "unit": "", "max": 15, "direction": "low", "decimals": 0},
-    {"key": "loan_processing_turnaround_hours", "label": "loan processing time", "unit": " hours", "max": 96, "direction": "low", "decimals": 1},
+    {"key": "error_frequencies", "label": "processing errors", "unit": "", "max": 10, "direction": "low", "decimals": 0},
+    {"key": "loan_processing_turnaround_hours", "label": "loan processing time", "unit": " hours", "max": 168, "direction": "low", "decimals": 1},
     {"key": "non_performing_credit_pct", "label": "non-performing credit", "unit": "%", "max": 18, "direction": "low", "decimals": 1},
-    {"key": "cash_reconciliation_errors", "label": "cash reconciliation errors", "unit": "", "max": 10, "direction": "low", "decimals": 0},
-    {"key": "compliance_incidents", "label": "compliance incidents", "unit": "", "max": 4, "direction": "low", "decimals": 0},
+    {"key": "cash_reconciliation_errors", "label": "cash reconciliation errors", "unit": "", "max": 1, "direction": "low", "decimals": 0, "zero_tolerance": True},
+    {"key": "compliance_incidents", "label": "compliance incidents", "unit": "", "max": 2, "direction": "low", "decimals": 0},
 ]
 
 
@@ -250,14 +251,20 @@ def _format_metric_value(value, metric):
     return f"{value:.{metric['decimals']}f}{metric['unit']}"
 
 
-def _metric_status(record, metric):
-    value = _metric_value(record, metric)
+def _metric_status_for_value(value, metric, observed_values=None):
     if value is None:
         return None
-    normalized = value / metric["max"]
+    observations = observed_values if observed_values is not None else [value]
+    if metric.get("zero_tolerance") and any(float(item) > 0 for item in observations):
+        return "Danger"
+    normalized = value / max(float(metric["max"]), 1e-9)
     if metric["direction"] == "high":
         return "Danger" if normalized < 1 / 3 else "Warning" if normalized < 2 / 3 else "Safe"
     return "Safe" if normalized <= 1 / 3 else "Warning" if normalized <= 2 / 3 else "Danger"
+
+
+def _metric_status(record, metric):
+    return _metric_status_for_value(_metric_value(record, metric), metric)
 
 
 def _aggregate_team_kpis(latest_records, employee_ids):
@@ -276,11 +283,7 @@ def _aggregate_team_kpis(latest_records, employee_ids):
                               "state": "No data", "sample_count": 0})
             continue
         average = sum(values) / len(values)
-        normalized = average / metric["max"]
-        if metric["direction"] == "high":
-            state = "Danger" if normalized < 1 / 3 else "Warning" if normalized < 2 / 3 else "Safe"
-        else:
-            state = "Safe" if normalized <= 1 / 3 else "Warning" if normalized <= 2 / 3 else "Danger"
+        state = _metric_status_for_value(average, metric, values)
         aggregate.append({"key": metric["key"], "label": metric["label"],
                           "unit": metric["unit"], "value": average,
                           "state": state, "sample_count": len(values)})
@@ -658,6 +661,23 @@ class AIReportGenerateRequest(BaseModel):
     period_number: Optional[int] = None
 
 
+class TrustScoreRunRequest(BaseModel):
+    employee_id: int = Field(ge=1)
+    period_type: Literal["quarterly", "semiannual", "annual"]
+    year: int = Field(ge=2000, le=9998)
+    period_number: Optional[int] = None
+
+
+class TrustScoreBatchRequest(BaseModel):
+    period_type: Literal["quarterly", "semiannual", "annual"]
+    year: int = Field(ge=2000, le=9998)
+    period_number: Optional[int] = None
+
+
+class FeedbackClassificationReviewRequest(BaseModel):
+    decision: Literal["negative", "positive", "mixed", "neutral", "exclude"]
+
+
 def _report_period(payload: AIReportGenerateRequest):
     if payload.year < 2000 or payload.year > datetime.now(timezone.utc).year + 1:
         raise HTTPException(status_code=422, detail="Choose a valid report year")
@@ -684,23 +704,234 @@ def _report_period(payload: AIReportGenerateRequest):
     return start, end, code
 
 
+def _trust_period(payload):
+    return _report_period(AIReportGenerateRequest(
+        employee_id=getattr(payload, "employee_id", 1),
+        period_type=payload.period_type,
+        year=payload.year,
+        period_number=payload.period_number,
+    ))
+
+
+def _trust_run_model_version():
+    return str((direction_metadata or {}).get("model_version", "trustscore_direction_model.joblib"))
+
+
+def _serialize_trust_run_for_api(db: Session, run: models.TrustScoreRun):
+    classifications, _, _ = get_period_classifications(
+        db, run.employee_id, run.period_start, run.period_end
+    )
+    return serialize_run(run, classifications)
+
+
+def _check_trust_score_access(db: Session, current_user: dict, employee: models.Employee):
+    if current_user.get("role") == "admin":
+        ensure_admin(current_user)
+        return
+    ensure_employee_access(db, current_user, employee)
+
+
+def _generate_trust_score_for_employee(db: Session, employee_id: int, actor_id: int, payload):
+    if direction_model is None:
+        raise HTTPException(status_code=503, detail="The appraisal direction model is unavailable.")
+    start, end, period_code = _trust_period(payload)
+    try:
+        run, _ = generate_trust_score_run(
+            db=db,
+            employee_id=employee_id,
+            generated_by_employee_id=actor_id,
+            period_type=payload.period_type,
+            period_code=period_code,
+            start=start,
+            end=end,
+            direction_model=direction_model,
+            model_version=_trust_run_model_version(),
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return run
+
+
+@app.post("/api/v1/trust-score-runs")
+def generate_employee_trust_score_run(
+    payload: TrustScoreRunRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    employee = db.query(models.Employee).filter_by(employee_id=payload.employee_id, is_active=True).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    _check_trust_score_access(db, current_user, employee)
+    try:
+        run = _generate_trust_score_for_employee(db, employee.employee_id, current_user["employee_id"], payload)
+        db.commit()
+        db.refresh(run)
+        return _serialize_trust_run_for_api(db, run)
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="The Trust Score pipeline could not finish. Please retry.") from exc
+
+
+@app.get("/api/v1/employees/{employee_id}/trust-score-runs")
+def list_employee_trust_score_runs(
+    employee_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    employee = db.query(models.Employee).filter_by(employee_id=employee_id, is_active=True).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    _check_trust_score_access(db, current_user, employee)
+    rows = db.query(models.TrustScoreRun).filter_by(employee_id=employee_id).order_by(
+        models.TrustScoreRun.generated_at.desc()
+    ).limit(12).all()
+    return [_serialize_trust_run_for_api(db, row) for row in rows]
+
+
+@app.post("/api/v1/supervisors/{supervisor_id}/trust-score-runs")
+def generate_supervisor_team_trust_score_runs(
+    supervisor_id: int,
+    payload: TrustScoreBatchRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    ensure_supervisor_access(db, current_user, supervisor_id)
+    if current_user.get("role") != "supervisor":
+        raise HTTPException(status_code=403, detail="Only the immediate supervisor can run team appraisal classification")
+    employees = db.query(models.Employee).filter_by(
+        supervisor_id=supervisor_id, user_type="employee", is_active=True
+    ).order_by(models.Employee.employee_id).all()
+    try:
+        runs = [
+            _generate_trust_score_for_employee(db, employee.employee_id, current_user["employee_id"], payload)
+            for employee in employees
+        ]
+        db.commit()
+        return {
+            "period_type": payload.period_type,
+            "period_code": runs[0].period_code if runs else None,
+            "employees_processed": len(runs),
+            "awaiting_review": sum(run.score_status == "awaiting_review" for run in runs),
+            "scores_ready": sum(run.score_status == "ready" for run in runs),
+            "runs": [_serialize_trust_run_for_api(db, run) for run in runs],
+        }
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="The team Trust Score pipeline could not finish. Please retry.") from exc
+
+
+@app.get("/api/v1/supervisors/{supervisor_id}/feedback-classifications/pending")
+def list_supervisor_feedback_review_queue(
+    supervisor_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    ensure_supervisor_access(db, current_user, supervisor_id)
+    if current_user.get("role") != "supervisor":
+        raise HTTPException(status_code=403, detail="Only the immediate supervisor can review team feedback classifications")
+    rows = db.query(models.FeedbackClassification, models.Employee.full_name).join(
+        models.Employee, models.Employee.employee_id == models.FeedbackClassification.employee_id
+    ).filter(
+        models.Employee.supervisor_id == supervisor_id,
+        models.Employee.is_active.is_(True),
+        models.FeedbackClassification.review_status == "pending",
+    ).order_by(
+        models.Employee.full_name,
+        models.FeedbackClassification.category,
+        models.FeedbackClassification.classification_id,
+    ).limit(500).all()
+    return [
+        {**serialize_classification(row), "employee_name": employee_name}
+        for row, employee_name in rows
+    ]
+
+
+@app.patch("/api/v1/feedback-classifications/{classification_id}/review")
+def review_feedback_classification(
+    classification_id: int,
+    payload: FeedbackClassificationReviewRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    if current_user.get("role") not in {"supervisor", "executive", "admin"}:
+        raise HTTPException(status_code=403, detail="A supervisor or executive must review this model suggestion")
+    row = db.query(models.FeedbackClassification).filter_by(classification_id=classification_id).first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Feedback classification not found")
+    employee = db.query(models.Employee).filter_by(employee_id=row.employee_id, is_active=True).first()
+    if employee is None:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    _check_trust_score_access(db, current_user, employee)
+    row.reviewed_by_employee_id = current_user["employee_id"]
+    row.reviewed_at = datetime.now(timezone.utc)
+    if payload.decision == "exclude":
+        row.review_status = "excluded"
+        row.confirmed_direction = None
+    else:
+        row.review_status = "confirmed"
+        row.confirmed_direction = payload.decision
+    try:
+        db.flush()
+        runs = db.query(models.TrustScoreRun).filter_by(employee_id=employee.employee_id).all()
+        updated = []
+        for run in runs:
+            source_time = None
+            if row.supervisor_appraisal_id is not None:
+                source = db.query(models.SupervisorAppraisal).filter_by(
+                    appraisal_id=row.supervisor_appraisal_id
+                ).first()
+                source_time = source.created_at if source else None
+            elif row.feedback_id is not None:
+                source = db.query(models.UnstructuredFeedback).filter_by(
+                    feedback_id=row.feedback_id
+                ).first()
+                source_time = source.created_at if source else None
+            if source_time and run.period_start <= source_time < run.period_end:
+                recalculate_trust_score_run(db, run)
+                updated.append(run)
+        db.commit()
+        db.refresh(row)
+        return {
+            "classification": serialize_classification(row),
+            "updated_runs": [{
+                "run_id": run.run_id,
+                "period_code": run.period_code,
+                "trust_score": run.trust_score,
+                "score_status": run.score_status,
+                "feedback_groups": run.feedback_groups,
+            } for run in updated],
+        }
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="The review could not be saved. Please retry.") from exc
+
+
 REPORT_METRICS = {
     "transaction_accuracy": (0, 100, "high", "Transaction accuracy", "%"),
-    "error_frequencies": (0, 15, "low", "Processing errors", ""),
-    "cash_reconciliation_errors": (0, 10, "low", "Cash reconciliation errors", ""),
+    "error_frequencies": (0, 10, "low", "Processing errors", ""),
+    "cash_reconciliation_errors": (0, 1, "low", "Cash reconciliation errors", ""),
     "workplan_completion": (0, 120, "high", "Workplan completion", "%"),
     "task_deadline_fulfillment_pct": (0, 100, "high", "Tasks completed on time", "%"),
-    "loan_processing_turnaround_hours": (0, 96, "low", "Loan processing time", " hours"),
+    "loan_processing_turnaround_hours": (0, 168, "low", "Loan processing time", " hours"),
     "customer_satisfaction": (1, 5, "high", "Customer satisfaction", " / 5"),
     "complaint_resolution_rate_pct": (0, 100, "high", "Complaint resolution", "%"),
     "non_performing_credit_pct": (0, 18, "low", "Non-performing credit", "%"),
-    "compliance_incidents": (0, 4, "low", "Compliance incidents", ""),
+    "compliance_incidents": (0, 2, "low", "Compliance incidents", ""),
 }
 REPORT_GROUPS = {
-    "operational_quality": ["transaction_accuracy", "error_frequencies", "cash_reconciliation_errors"],
+    "operational_quality": ["transaction_accuracy", "error_frequencies"],
     "delivery_timeliness": ["workplan_completion", "task_deadline_fulfillment_pct", "loan_processing_turnaround_hours"],
     "customer_outcomes": ["customer_satisfaction", "complaint_resolution_rate_pct"],
-    "risk_controls": ["non_performing_credit_pct", "compliance_incidents"],
+    "risk_controls": ["non_performing_credit_pct", "cash_reconciliation_errors", "compliance_incidents"],
 }
 REPORT_DIMENSIONS = [
     "communication", "collaboration", "compliance_awareness", "learning_development"
@@ -731,13 +962,18 @@ def _build_report_telemetry(records):
                 metrics.append({"key": key, "label": label, "mean": None, "unit": unit, "normalized_score": None, "state": "No data"})
                 continue
             mean_value = sum(values) / len(values)
-            normalized = max(0.0, min(100.0, (mean_value - low) * 100 / (high - low)))
-            if direction == "low":
-                normalized = 100.0 - normalized
+            zero_tolerance_breach = key == "cash_reconciliation_errors" and any(value > 0 for value in values)
+            if key == "cash_reconciliation_errors":
+                normalized = 0.0 if zero_tolerance_breach else 100.0
+            else:
+                normalized = max(0.0, min(100.0, (mean_value - low) * 100 / max(high - low, 1e-9)))
+                if direction == "low":
+                    normalized = 100.0 - normalized
             normalized_values.append(normalized)
             metrics.append({"key": key, "label": label, "mean": round(mean_value, 2), "unit": unit,
                             "normalized_score": round(normalized, 1), "state": _report_state(normalized),
-                            "record_count": len(values)})
+                            "record_count": len(values),
+                            "zero_tolerance_breach": zero_tolerance_breach if key == "cash_reconciliation_errors" else False})
         group_score = round(sum(normalized_values) / len(normalized_values), 1) if normalized_values else None
         group_outputs[group_key] = {"label": group_key.replace("_", " ").title(),
                                     "score_0_100": group_score, "state": _report_state(group_score),
@@ -1666,13 +1902,13 @@ def get_supervisor_team_overview(
         ).order_by(models.PerformanceRecord.recorded_at.desc()).all()
         for record in records:
             latest_records.setdefault(record.employee_id, record)
-    latest_reports = {}
+    latest_trust_runs = {}
     if employee_ids:
-        reports = db.query(models.AppraisalReport).filter(
-            models.AppraisalReport.employee_id.in_(employee_ids)
-        ).order_by(models.AppraisalReport.generation_date.desc()).all()
-        for report in reports:
-            latest_reports.setdefault(report.employee_id, report)
+        runs = db.query(models.TrustScoreRun).filter(
+            models.TrustScoreRun.employee_id.in_(employee_ids)
+        ).order_by(models.TrustScoreRun.generated_at.desc()).all()
+        for run in runs:
+            latest_trust_runs.setdefault(run.employee_id, run)
     overview = []
     for employee in employees:
         record = latest_records.get(employee.employee_id)
@@ -1684,10 +1920,14 @@ def get_supervisor_team_overview(
                     metrics.append({"key": metric["key"], "label": metric["label"],
                                     "value": value, "unit": metric["unit"],
                                     "state": _metric_status(record, metric)})
-        report = latest_reports.get(employee.employee_id)
+        trust_run = latest_trust_runs.get(employee.employee_id)
         overview.append({"employee_id": employee.employee_id, "full_name": employee.full_name,
                          "role": employee.role, "recorded_at": record.recorded_at if record else None,
-                         "trust_score": report.unified_trust_score if report else None,
+                         "trust_score": trust_run.trust_score if trust_run else None,
+                         "trust_score_status": trust_run.score_status if trust_run else "not_generated",
+                         "trust_score_period": trust_run.period_code if trust_run else None,
+                         "trust_score_generated_at": trust_run.generated_at if trust_run else None,
+                         "pending_feedback_review_count": (trust_run.data_coverage or {}).get("pending_review_count", 0) if trust_run else 0,
                          "metrics": metrics})
     aggregate = _aggregate_team_kpis(latest_records, employee_ids)
     return {"period_code": current_review_period(), "employees": overview, "aggregate": aggregate}
@@ -2277,6 +2517,87 @@ def get_admin_overview(
     ]
     has_ratings = any(item["ratings_count"] for item in category_items)
 
+    pipeline_runs = db.query(models.TrustScoreRun).order_by(
+        models.TrustScoreRun.generated_at.desc()
+    ).all()
+    pipeline_classifications = db.query(models.FeedbackClassification).all()
+    direction_counts = {
+        category: {
+            direction: sum(
+                row.category == category and row.predicted_direction == direction
+                for row in pipeline_classifications
+            )
+            for direction in ("positive", "negative", "mixed", "neutral")
+        }
+        for category in REPORT_DIMENSIONS
+    }
+    reviewed_counts = {
+        category: sum(
+            row.category == category and row.review_status == "confirmed"
+            for row in pipeline_classifications
+        )
+        for category in REPORT_DIMENSIONS
+    }
+    pending_count = sum(row.review_status == "pending" for row in pipeline_classifications)
+    ready_runs = [run for run in pipeline_runs if run.score_status == "ready" and run.trust_score is not None]
+    pipeline_categories = []
+    for key in REPORT_DIMENSIONS:
+        scores = [
+            float(run.feedback_groups[key]["score_0_100"])
+            for run in ready_runs
+            if isinstance(run.feedback_groups, dict)
+            and isinstance(run.feedback_groups.get(key), dict)
+            and run.feedback_groups[key].get("score_0_100") is not None
+        ]
+        pipeline_categories.append({
+            "category": key,
+            "label": dimension_labels[key],
+            "average_score_0_100": round(sum(scores) / len(scores), 1) if scores else None,
+            "scored_run_count": len(scores),
+            "predicted_directions": direction_counts[key],
+            "reviewed_count": reviewed_counts[key],
+        })
+    pipeline_kpi_groups = []
+    for key, label in (
+        ("operational_quality", "Operational quality"),
+        ("delivery_timeliness", "Delivery and timeliness"),
+        ("customer_outcomes", "Customer outcomes"),
+        ("risk_controls", "Risk and controls"),
+    ):
+        scores = [
+            float(run.kpi_groups[key]["score_0_100"])
+            for run in pipeline_runs
+            if isinstance(run.kpi_groups, dict)
+            and isinstance(run.kpi_groups.get(key), dict)
+            and run.kpi_groups[key].get("score_0_100") is not None
+        ]
+        pipeline_kpi_groups.append({
+            "category": key,
+            "label": label,
+            "average_score_0_100": round(sum(scores) / len(scores), 1) if scores else None,
+            "sample_count": len(scores),
+        })
+    trust_pipeline = {
+        "available": bool(pipeline_runs or pipeline_classifications),
+        "runs_count": len(pipeline_runs),
+        "scores_ready_count": len(ready_runs),
+        "awaiting_review_count": sum(run.score_status == "awaiting_review" for run in pipeline_runs),
+        "incomplete_count": sum(run.score_status == "incomplete" for run in pipeline_runs),
+        "average_trust_score": round(sum(float(run.trust_score) for run in ready_runs) / len(ready_runs), 1) if ready_runs else None,
+        "pending_feedback_reviews": pending_count,
+        "cash_zero_tolerance_alerts": sum(
+            bool((run.data_coverage or {}).get("cash_reconciliation_zero_tolerance_alert"))
+            for run in pipeline_runs
+        ),
+        "kpi_groups": pipeline_kpi_groups,
+        "feedback_categories": pipeline_categories,
+        "message": (
+            "Trust Scores average four KPI groups and four reviewed feedback categories. Model predictions stay pending until a supervisor confirms or excludes them."
+            if pipeline_runs or pipeline_classifications
+            else "Run the appraisal pipeline for a team to classify its stored supervisor and employee form answers."
+        ),
+    }
+
     return {
         "accounts": accounts,
         "telemetry": telemetry,
@@ -2293,6 +2614,7 @@ def get_admin_overview(
                 if has_ratings else "AI competency summaries will appear after an AI appraisal report has saved competency ratings."
             ),
         },
+        "trust_pipeline": trust_pipeline,
     }
 
 

@@ -220,6 +220,7 @@ export default function AdminDashboard() {
   const accounts = overview?.accounts || {};
   const telemetry = overview?.telemetry || {};
   const reports = overview?.reports || {};
+  const trustPipeline = overview?.trust_pipeline || {};
 
   return (
     <section className="admin-dashboard">
@@ -295,8 +296,42 @@ export default function AdminDashboard() {
             ))}
           </div>
         ) : (
-          <div className="admin-ai-status">Waiting for saved classifications</div>
+          <div className="admin-ai-status">No saved competency ratings yet.</div>
         )}
+      </section>
+
+      <section className="admin-ai-panel">
+        <div style={{ width: '100%' }}>
+          <p className="admin-eyebrow">Model pipeline</p>
+          <h3>Unified Trust Score pipeline</h3>
+          <p>{trustPipeline.message || 'Run classification from a supervisor dashboard to populate organization-wide results.'}</p>
+          <div className="admin-stat-grid" style={{ marginTop: '14px' }}>
+            <StatCard label="Average Trust Score" value={trustPipeline.average_trust_score == null ? '—' : trustPipeline.average_trust_score + '%'} detail={(trustPipeline.scores_ready_count ?? 0) + ' complete runs'} />
+            <StatCard label="Runs awaiting review" value={trustPipeline.awaiting_review_count ?? 0} detail={(trustPipeline.pending_feedback_reviews ?? 0) + ' feedback answers pending'} />
+            <StatCard label="Incomplete runs" value={trustPipeline.incomplete_count ?? 0} detail={(trustPipeline.runs_count ?? 0) + ' total period runs'} />
+            <StatCard label="Cash error alerts" value={trustPipeline.cash_zero_tolerance_alerts ?? 0} detail="Zero-tolerance control breaches" />
+          </div>
+          <div className="admin-ai-grid" style={{ marginTop: '12px', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))' }}>
+            {(trustPipeline.kpi_groups || []).map((item) => (
+              <article className="admin-ai-card" key={item.category}>
+                <span>KPI · {item.label}</span>
+                <strong>{item.average_score_0_100 == null ? '—' : item.average_score_0_100 + '%'}</strong>
+                <small>{item.sample_count} period groups</small>
+              </article>
+            ))}
+            {(trustPipeline.feedback_categories || []).map((item) => {
+              const directions = item.predicted_directions || {};
+              return (
+                <article className="admin-ai-card" key={item.category}>
+                  <span>Feedback · {item.label}</span>
+                  <strong>{item.average_score_0_100 == null ? '—' : item.average_score_0_100 + '%'}</strong>
+                  <small>{item.reviewed_count} reviewed · {item.scored_run_count} scored runs</small>
+                  <small>Suggestions: +{directions.positive || 0} / −{directions.negative || 0} / mixed {directions.mixed || 0} / neutral {directions.neutral || 0}</small>
+                </article>
+              );
+            })}
+          </div>
+        </div>
       </section>
 
       <div className="admin-section-head admin-section-spaced">
