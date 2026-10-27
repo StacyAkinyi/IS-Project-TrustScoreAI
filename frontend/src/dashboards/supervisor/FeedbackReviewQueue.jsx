@@ -123,6 +123,11 @@ export default function FeedbackReviewQueue({ supervisorId, onChanged }) {
               <p className="mt-2 text-xs text-slate-500">
                 {run.data_coverage?.supervisor_answer_count || 0} supervisor answers · {run.data_coverage?.classified_answer_category_count || 0} competency assignments · {run.data_coverage?.unassigned_supervisor_answer_count || 0} answers below every category cutoff
               </p>
+              {(run.data_coverage?.supervisor_answer_count || 0) === 0 && (
+                <p className="mt-2 rounded bg-amber-50 p-3 text-xs text-amber-900">
+                  No supervisor appraisal answers are available for this period. Category scores and the Trust Score will appear after a completed supervisor form is classified.
+                </p>
+              )}
               <details className="mt-3">
                 <summary className="cursor-pointer text-xs font-semibold text-indigo-700">Show automatic answer classifications ({(run.classifications || []).length})</summary>
                 <div className="mt-2 space-y-2">
