@@ -9,6 +9,19 @@ const LABELS = {
   learning_development: 'Learning and development',
 };
 
+const KPI_UNITS = {
+  transaction_accuracy: '%',
+  error_frequencies: ' errors',
+  workplan_completion: '%',
+  task_deadline_fulfillment_pct: '%',
+  loan_processing_turnaround_hours: ' hrs',
+  customer_satisfaction: ' / 5',
+  complaint_resolution_rate_pct: '%',
+  non_performing_credit_pct: '%',
+  cash_reconciliation_errors: ' errors',
+  compliance_incidents: ' incidents',
+};
+
 const periodCode = (year, half) => `${year}-H${half}`;
 
 export default function FeedbackReviewQueue({ supervisorId, onChanged }) {
@@ -120,9 +133,48 @@ export default function FeedbackReviewQueue({ supervisorId, onChanged }) {
                   </div>
                 ))}
               </div>
+              <div className="mt-4">
+                <h4 className="text-sm font-bold text-slate-800">Telemetry KPI groups</h4>
+                <p className="mt-1 text-xs text-slate-500">Each group contributes one of the four KPI scores in the Trust Score.</p>
+                <div className="mt-2 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {Object.entries(run.kpi_groups || {}).map(([groupKey, group]) => (
+                    <section key={groupKey} className="rounded-lg border border-slate-200 bg-white p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <strong className="text-xs text-slate-700">{group.label || groupKey.replaceAll('_', ' ')}</strong>
+                        <span className="text-xs font-bold text-blue-800">{group.score_0_100 == null ? 'No score' : Number(group.score_0_100).toFixed(1) + '%'}</span>
+                      </div>
+                      <span className={'mt-2 inline-block rounded px-2 py-0.5 text-[11px] font-semibold ' + (group.state === 'Safe' ? 'bg-green-100 text-green-800' : group.state === 'Warning' ? 'bg-orange-100 text-orange-800' : group.state === 'Danger' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-600')}>{group.state || 'No data'}</span>
+                      <div className="mt-2 space-y-2">
+                        {(group.metrics || []).map((metric) => (
+                          <div key={metric.key} className="border-t border-slate-100 pt-2">
+                            <div className="flex items-start justify-between gap-2 text-xs">
+                              <span className="text-slate-600">{metric.label}</span>
+                              <span className="shrink-0 font-semibold text-slate-800">
+                                {metric.mean == null ? 'No data' : Number(metric.mean).toLocaleString(undefined, { maximumFractionDigits: 2 }) + (KPI_UNITS[metric.key] || '')}
+                              </span>
+                            </div>
+                            <div className="mt-1 flex items-center justify-between gap-2 text-[11px]">
+                              <span className={'rounded px-1.5 py-0.5 font-semibold ' + (metric.state === 'Safe' ? 'bg-green-100 text-green-800' : metric.state === 'Warning' ? 'bg-orange-100 text-orange-800' : metric.state === 'Danger' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-600')}>{metric.state || 'No data'}</span>
+                              <span className="text-slate-400">n={metric.sample_count || 0}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              </div>
               <p className="mt-2 text-xs text-slate-500">
                 {run.data_coverage?.supervisor_answer_count || 0} supervisor answers · {run.data_coverage?.classified_answer_category_count || 0} competency assignments · {run.data_coverage?.unassigned_supervisor_answer_count || 0} answers below every category cutoff
               </p>
+              {run.score_status !== 'ready' && (
+                <p className="mt-2 rounded bg-amber-50 p-3 text-xs text-amber-900">
+                  Trust Score incomplete. Groups without a score: <strong>{[
+                    ...Object.values(run.kpi_groups || {}),
+                    ...Object.values(run.feedback_groups || {}),
+                  ].filter((group) => group.score_0_100 == null).map((group) => group.label).filter(Boolean).join(', ') || 'one or more required groups'}</strong>. Mixed and neutral feedback does not receive a numeric score.
+                </p>
+              )}
               {(run.data_coverage?.supervisor_answer_count || 0) === 0 && (
                 <p className="mt-2 rounded bg-amber-50 p-3 text-xs text-amber-900">
                   No supervisor appraisal answers are available for this period. Category scores and the Trust Score will appear after a completed supervisor form is classified.
