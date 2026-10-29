@@ -26,9 +26,11 @@ from models import Base
 import schemas
 import auth
 from database import engine, get_db
+from report_templates import build_local_report
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from trust_score_pipeline import (
     build_feedback_groups,
+    build_kpi_groups,
     generate_run as generate_trust_score_run,
     get_period_classifications,
     recalculate_run as recalculate_trust_score_run,
@@ -739,10 +741,61 @@ def _trust_run_model_version():
 
 
 def _serialize_trust_run_for_api(db: Session, run: models.TrustScoreRun):
-    classifications, _, _ = get_period_classifications(
+    classifications, appraisals, _ = get_period_classifications(
         db, run.employee_id, run.period_start, run.period_end
     )
-    return serialize_run(run, classifications)
+    records = db.query(models.PerformanceRecord).filter(
+        models.PerformanceRecord.employee_id == run.employee_id,
+        models.PerformanceRecord.recorded_at >= run.period_start,
+        models.PerformanceRecord.recorded_at < run.period_end,
+    ).all()
+    kpi_groups, cash_alert = build_kpi_groups(records)
+    feedback_groups, _ = build_feedback_groups(classifications)
+    trust_score, score_status = calculate_trust_score_status(kpi_groups, feedback_groups)
+
+    supervisor_answer_count = sum(
+        1
+        for appraisal in appraisals
+        for answer in (
+            appraisal.answers_snapshot
+            if isinstance(appraisal.answers_snapshot, list)
+            else []
+        )
+        if isinstance(answer, dict)
+        and isinstance(answer.get("answer"), str)
+        and answer["answer"].strip()
+    )
+    assigned_answer_keys = {
+        (row.supervisor_appraisal_id, row.item_key)
+        for row in classifications
+    }
+    coverage = dict(run.data_coverage or {})
+    coverage.update({
+        "performance_record_count": len(records),
+        "supervisor_form_count": len(appraisals),
+        "supervisor_answer_count": supervisor_answer_count,
+        "unassigned_supervisor_answer_count": max(
+            0, supervisor_answer_count - len(assigned_answer_keys)
+        ),
+        "classified_answer_category_count": len(classifications),
+        "employee_followups_scored": False,
+        "pending_review_count": 0,
+        "scored_group_count": sum(
+            item.get("score_0_100") is not None
+            for item in [*kpi_groups.values(), *feedback_groups.values()]
+        ),
+        "cash_reconciliation_zero_tolerance_alert": cash_alert,
+    })
+
+    result = serialize_run(run, classifications)
+    result.update({
+        "kpi_groups": kpi_groups,
+        "feedback_groups": feedback_groups,
+        "trust_score": trust_score,
+        "score_status": score_status,
+        "data_coverage": coverage,
+    })
+    return result
 
 
 def _check_trust_score_access(db: Session, current_user: dict, employee: models.Employee):
@@ -1013,35 +1066,24 @@ def _report_state(score):
 
 
 def _build_report_telemetry(records):
-    group_outputs = {}
-    if not records:
-        return group_outputs
-    for group_key, metric_keys in REPORT_GROUPS.items():
-        metrics = []
-        normalized_values = []
-        for key in metric_keys:
-            low, high, direction, label, unit = REPORT_METRICS[key]
-            values = [float(getattr(record, key)) for record in records if getattr(record, key, None) is not None]
-            if not values:
-                metrics.append({"key": key, "label": label, "mean": None, "unit": unit, "normalized_score": None, "state": "No data"})
-                continue
-            mean_value = sum(values) / len(values)
-            zero_tolerance_breach = key == "cash_reconciliation_errors" and any(value > 0 for value in values)
-            if key == "cash_reconciliation_errors":
-                normalized = 0.0 if zero_tolerance_breach else 100.0
-            else:
-                normalized = max(0.0, min(100.0, (mean_value - low) * 100 / max(high - low, 1e-9)))
-                if direction == "low":
-                    normalized = 100.0 - normalized
-            normalized_values.append(normalized)
-            metrics.append({"key": key, "label": label, "mean": round(mean_value, 2), "unit": unit,
-                            "normalized_score": round(normalized, 1), "state": _report_state(normalized),
-                            "record_count": len(values),
-                            "zero_tolerance_breach": zero_tolerance_breach if key == "cash_reconciliation_errors" else False})
-        group_score = round(sum(normalized_values) / len(normalized_values), 1) if normalized_values else None
-        group_outputs[group_key] = {"label": group_key.replace("_", " ").title(),
-                                    "score_0_100": group_score, "state": _report_state(group_score),
-                                    "metrics": metrics}
+    group_outputs, _cash_alert = build_kpi_groups(records)
+    units = {
+        "transaction_accuracy": "%",
+        "error_frequencies": "",
+        "cash_reconciliation_errors": "",
+        "workplan_completion": "%",
+        "task_deadline_fulfillment_pct": "%",
+        "loan_processing_turnaround_hours": " hours",
+        "customer_satisfaction": " / 5",
+        "complaint_resolution_rate_pct": "%",
+        "non_performing_credit_pct": "%",
+        "compliance_incidents": "",
+    }
+    for group in group_outputs.values():
+        for metric in group["metrics"]:
+            metric["unit"] = units.get(metric["key"], "")
+            metric["normalized_score"] = metric.get("score_0_100")
+            metric["record_count"] = metric.get("sample_count", 0)
     return group_outputs
 
 
@@ -1106,85 +1148,145 @@ def generate_ai_performance_report(payload: AIReportGenerateRequest, db: Session
         models.PerformanceRecord.recorded_at >= start,
         models.PerformanceRecord.recorded_at < end,
     ).order_by(models.PerformanceRecord.recorded_at.asc()).all()
-    feedback = db.query(models.UnstructuredFeedback).filter(
-        models.UnstructuredFeedback.employee_id == employee.employee_id,
-        models.UnstructuredFeedback.created_at >= start,
-        models.UnstructuredFeedback.created_at < end,
-    ).order_by(models.UnstructuredFeedback.created_at.asc()).limit(60).all()
-    if not records and not feedback:
-        raise HTTPException(status_code=422, detail="No telemetry or feedback exists for that report period")
+
+    classifications, appraisals, _ = get_period_classifications(
+        db, employee.employee_id, start, end
+    )
+    classifier_rows = [
+        row for row in classifications
+        if row.review_status == "auto_classified"
+    ]
+
+    # Do not generate a report from stale or missing classifications. Each
+    # supervisor form in the selected period must be covered by a current run.
+    overlapping_runs = db.query(models.TrustScoreRun).filter(
+        models.TrustScoreRun.employee_id == employee.employee_id,
+        models.TrustScoreRun.period_start < end,
+        models.TrustScoreRun.period_end > start,
+    ).all()
+    current_run_ids = set()
+    for trust_run in overlapping_runs:
+        actual_form_count = db.query(func.count(models.SupervisorAppraisal.appraisal_id)).filter(
+            models.SupervisorAppraisal.employee_id == employee.employee_id,
+            models.SupervisorAppraisal.created_at >= trust_run.period_start,
+            models.SupervisorAppraisal.created_at < trust_run.period_end,
+        ).scalar() or 0
+        saved_form_count = int((trust_run.data_coverage or {}).get("supervisor_form_count") or 0)
+        if saved_form_count == actual_form_count:
+            current_run_ids.add(trust_run.run_id)
+
+    unprocessed_appraisals = [
+        appraisal for appraisal in appraisals
+        if not any(
+            trust_run.run_id in current_run_ids
+            and trust_run.period_start <= appraisal.created_at < trust_run.period_end
+            for trust_run in overlapping_runs
+        )
+    ]
+    if unprocessed_appraisals:
+        raise HTTPException(
+            status_code=422,
+            detail="Run automatic classification for every supervisor appraisal in this period before generating the report.",
+        )
+    if not records and not classifier_rows:
+        raise HTTPException(
+            status_code=422,
+            detail="No telemetry or supervisor-classified evidence exists for that report period.",
+        )
 
     telemetry_groups = _build_report_telemetry(records)
-    all_names = [row[0] for row in db.query(models.Employee.full_name).all()]
-    feedback_items = [{"item": index + 1, "text": _sanitize_feedback_for_report(item.narrative_text, all_names)}
-                      for index, item in enumerate(feedback)]
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise HTTPException(status_code=503, detail="The AI report service is not configured. Add OPENAI_API_KEY to the backend .env file.")
-    instructions = (
-        "Create a concise, evidence-based workplace performance report from the supplied period telemetry and feedback. "
-        "Treat the telemetry group scores and their Safe/Warning/Danger labels as the measured numeric data. "
-        "Rate feedback only from explicit work-related evidence, separately for Communication, Collaboration, Compliance awareness, "
-        "and Learning and development. For each dimension return score_1_5 (integer 1-5 or null when evidence is insufficient), "
-        "evidence_summary, and evidence_count. Do not infer personality, protected traits, health, intent, causes, or potential. "
-        "Positive or negative tone alone is not evidence. Do not turn missing evidence into a low score. "
-        "Return JSON with keys feedback_dimensions, summary, strengths, development_priorities, and caveats. "
-        "Each feedback_dimensions value must contain score_1_5, evidence_summary, evidence_count. "
-        "Mark all feedback ratings as provisional AI draft ratings requiring human review. Do not calculate or claim an overall Trust Score. "
-        "Do not make hiring, promotion, discipline, or termination recommendations. Do not repeat identifying or customer information."
-    )
-    input_data = {"period": period_code, "telemetry_groups": telemetry_groups,
-                  "feedback_items": feedback_items,
-                  "coverage": {"telemetry_records": len(records), "feedback_items": len(feedback)}}
-    try:
-        response = OpenAI(api_key=api_key).responses.create(
-            model=os.getenv("OPENAI_MODEL", "gpt-6-luna"), instructions=instructions,
-            input=json.dumps(input_data, ensure_ascii=False), max_output_tokens=1100, store=False,
-        )
-        narrative = json.loads(response.output_text.strip())
-        if not isinstance(narrative, dict):
-            raise ValueError("AI report response must be a JSON object")
-    except (OpenAIError, json.JSONDecodeError, AttributeError, TypeError, ValueError):
-        raise HTTPException(status_code=502, detail="The AI report could not be generated in the required format. Please try again.")
+    feedback_groups, _ = build_feedback_groups(classifier_rows)
+    all_names = [
+        row[0] for row in db.query(models.Employee.full_name).all()
+    ]
 
-    dimensions = narrative.get("feedback_dimensions", {})
-    normalized_dimensions = {}
+    # Include only supervisor answers already assigned by the competency model.
+    # Employee self-follow-ups are deliberately excluded from reports and scores.
+    supervisor_evidence = {}
     for dimension in REPORT_DIMENSIONS:
-        item = dimensions.get(dimension, {}) if isinstance(dimensions, dict) else {}
-        score = item.get("score_1_5") if isinstance(item, dict) else None
-        if not isinstance(score, int) or score < 1 or score > 5:
-            score = None
-        normalized_dimensions[dimension] = {
-            "score_1_5": score,
-            "evidence_summary": str(item.get("evidence_summary", "Insufficient evidence to rate."))[:500] if isinstance(item, dict) else "Insufficient evidence to rate.",
-            "evidence_count": max(0, int(item.get("evidence_count", 0))) if isinstance(item, dict) and str(item.get("evidence_count", 0)).isdigit() else 0,
-            "rating_source": "ai_draft_requires_human_review",
+        group_rows = [row for row in classifier_rows if row.category == dimension]
+        supervisor_evidence[dimension] = {
+            "score_0_100": feedback_groups[dimension]["score_0_100"],
+            "positive_count": feedback_groups[dimension]["positive_count"],
+            "negative_count": feedback_groups[dimension]["negative_count"],
+            "mixed_or_neutral_count": feedback_groups[dimension]["mixed_or_neutral_count"],
+            "classification_count": feedback_groups[dimension]["classification_count"],
+            "evidence": [
+                {
+                    "direction": row.predicted_direction,
+                    "statement": _sanitize_feedback_for_report(row.statement_text, all_names)[:500],
+                }
+                for row in group_rows[:25]
+            ],
+            "evidence_truncated": max(0, len(group_rows) - 25),
         }
-    narrative["feedback_dimensions"] = normalized_dimensions
-    for list_key in ("strengths", "development_priorities", "caveats"):
-        if not isinstance(narrative.get(list_key), list):
-            narrative[list_key] = []
-        narrative[list_key] = [str(value)[:500] for value in narrative[list_key][:6]]
-    narrative["summary"] = str(narrative.get("summary", "Report generated from the available period data."))[:2000]
+
+    feedback_answer_keys = {
+        (row.supervisor_appraisal_id, row.item_key)
+        for row in classifier_rows
+    }
+    supervisor_answer_count = sum(
+        1
+        for appraisal in appraisals
+        for answer in (
+            appraisal.answers_snapshot
+            if isinstance(appraisal.answers_snapshot, list)
+            else []
+        )
+        if isinstance(answer, dict)
+        and isinstance(answer.get("answer"), str)
+        and answer["answer"].strip()
+    )
+    narrative, normalized_dimensions = build_local_report(
+        period_type=payload.period_type,
+        period_code=period_code,
+        telemetry_groups=telemetry_groups,
+        feedback_groups=feedback_groups,
+        supervisor_evidence=supervisor_evidence,
+        coverage={
+            "telemetry_records": len(records),
+            "telemetry_months": len({record.recorded_at.strftime("%Y-%m") for record in records}),
+            "supervisor_forms": len(appraisals),
+            "supervisor_answers": supervisor_answer_count,
+            "classified_answer_category_assignments": len(classifier_rows),
+            "distinct_classified_answers": len(feedback_answer_keys),
+        },
+    )
 
     sources = sorted({record.data_source or "unknown" for record in records})
-    feedback_sources = sorted({item.data_source or "unknown" for item in feedback})
-    data_coverage = {"telemetry_record_count": len(records), "feedback_item_count": len(feedback),
-                     "telemetry_months_covered": len({record.recorded_at.strftime("%Y-%m") for record in records}),
-                     "data_sources": sources, "feedback_data_sources": feedback_sources,
-                     "feedback_ratings_are_human_reviewed": False}
+    data_coverage = {
+        "telemetry_record_count": len(records),
+        "telemetry_months_covered": len({record.recorded_at.strftime("%Y-%m") for record in records}),
+        "data_sources": sources,
+        "supervisor_form_count": len(appraisals),
+        "supervisor_answer_count": supervisor_answer_count,
+        "classified_answer_count": len(feedback_answer_keys),
+        "classified_answer_category_count": len(classifier_rows),
+        "feedback_item_count": len(classifier_rows),
+        "feedback_data_sources": ["supervisor_appraisal_classifier"] if classifier_rows else [],
+        "feedback_score_source": "supervisor_appraisal_classifier",
+        "employee_followups_included": False,
+        "feedback_ratings_are_human_reviewed": False,
+        "report_generation_method": "local_templates_v1",
+    }
     report = models.AIPerformanceReport(
-        employee_id=employee.employee_id, generated_by_employee_id=current_user["employee_id"],
-        period_type=payload.period_type, period_code=period_code, period_start=start, period_end=end,
-        telemetry_groups=telemetry_groups, feedback_dimensions=normalized_dimensions,
-        narrative=narrative, data_coverage=data_coverage, report_status="ai_draft",
-        model_name=os.getenv("OPENAI_MODEL", "gpt-6-luna"),
+        employee_id=employee.employee_id,
+        generated_by_employee_id=current_user["employee_id"],
+        period_type=payload.period_type,
+        period_code=period_code,
+        period_start=start,
+        period_end=end,
+        telemetry_groups=telemetry_groups,
+        feedback_dimensions=normalized_dimensions,
+        narrative=narrative,
+        data_coverage=data_coverage,
+        report_status="ai_draft",
+        model_name="local_templates_v1",
     )
     db.add(report)
     db.commit()
     db.refresh(report)
     return _serialize_ai_report(report)
-
 
 @app.post("/api/v1/coaching/chat")
 def coaching_chat(
