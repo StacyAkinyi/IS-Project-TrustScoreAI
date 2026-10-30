@@ -1,4 +1,5 @@
 import React from 'react';
+import TableControls from '../../components/TableControls';
 
 export default function StaffDirectory({ teamMembers, onSelectEmployee, onScheduleMeeting, branchCode }) {
   return (
@@ -13,7 +14,8 @@ export default function StaffDirectory({ teamMembers, onSelectEmployee, onSchedu
         </span>
       </div>
 
-      <div className="overflow-x-auto">
+      <TableControls rows={teamMembers} label="staff" searchText={(member) => `${member.employee_id} ${member.full_name} ${member.role} ${member.branch_location}`}>
+      {(pageRows) => <div className="overflow-x-auto">
         <table className="w-full text-left text-sm text-slate-300">
           <thead className="bg-slate-900 text-xs uppercase text-slate-400 border-b border-slate-700">
             <tr>
@@ -25,7 +27,7 @@ export default function StaffDirectory({ teamMembers, onSelectEmployee, onSchedu
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-700">
-            {teamMembers.map((member) => (
+            {pageRows.map((member) => (
               <tr key={member.employee_id} className="hover:bg-slate-700/50 transition">
                 <td className="p-3 font-mono text-teal-300">#{member.employee_id}</td>
                 <td className="p-3 font-semibold text-slate-100">{member.full_name}</td>
@@ -50,7 +52,8 @@ export default function StaffDirectory({ teamMembers, onSelectEmployee, onSchedu
             ))}
           </tbody>
         </table>
-      </div>
+      </div>}
+      </TableControls>
     </div>
   );
 }

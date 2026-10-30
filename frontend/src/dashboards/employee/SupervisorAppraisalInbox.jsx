@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import TableControls from '../../components/TableControls';
 
 const API = 'http://127.0.0.1:8000/api/v1';
 const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` });
@@ -99,10 +100,11 @@ export default function SupervisorAppraisalInbox({ employeeId }) {
     {error && <p role="alert" className="rounded bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
     {bookings.length > 0 && <section className="rounded-xl border-2 border-blue-200 bg-blue-50 p-4"><h3 className="mb-3 font-bold text-blue-900">Meeting bookings · please review first</h3><div className="space-y-3">{bookings.map((meeting) => <article key={meeting.meeting_id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-100 bg-white p-3"><div><p className="font-semibold text-slate-800">{meeting.meeting_type === 'appraisal' ? `Supervisor appraisal · ${meeting.period_code}` : 'Check-in with your supervisor'}</p><p className="text-sm text-slate-600">{new Date(meeting.scheduled_at).toLocaleString()}</p><p className="text-xs font-semibold text-blue-800">{meeting.status === 'confirmed' ? `Confirmed${meeting.confirmed_at ? ` · ${new Date(meeting.confirmed_at).toLocaleString()}` : ''}` : 'Waiting for your confirmation'}</p></div>{meeting.status !== 'confirmed' && <button type="button" onClick={() => confirmMeeting(meeting)} disabled={busyId === meeting.meeting_id} className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{busyId === meeting.meeting_id ? 'Confirming…' : 'Confirm meeting'}</button>}</article>)}</div></section>}
     {items.length === 0 && !error ? <p className="rounded-lg bg-white p-5 text-sm text-slate-600">No supervisor appraisal has been submitted for you yet.</p> : items.length > 0 ?
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <TableControls rows={items} label="appraisals" searchText={(item) => `${item.period_code} ${item.form_number} ${item.status} ${item.self_questionnaire_submitted ? 'follow-up submitted' : 'follow-up pending'} ${item.review_request_text}`}>
+      {(pageRows) => <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-[850px] text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="p-3">Appraisal</th><th className="p-3">Submitted</th><th className="p-3">Responses</th><th className="p-3">Self-questionnaire</th><th className="p-3">Review status</th><th className="p-3">Actions</th></tr></thead>
-          <tbody>{items.map((item) => {
+          <tbody>{pageRows.map((item) => {
             const status = item.status || (item.satisfied_at ? 'satisfied' : item.review_requested_at ? 'review_requested' : 'awaiting_employee');
             const statusLabel = { satisfied: 'Satisfied · closed', review_requested: 'Review requested', reviewed: 'Revised · awaiting you', awaiting_employee: 'Awaiting your response' }[status];
             const canMarkSatisfied = status === 'awaiting_employee' || status === 'reviewed';
@@ -136,6 +138,7 @@ export default function SupervisorAppraisalInbox({ employeeId }) {
             </React.Fragment>;
           })}</tbody>
         </table>
-      </div> : null}
+      </div>}
+      </TableControls> : null}
   </div>;
 }

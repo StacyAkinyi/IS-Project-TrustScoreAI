@@ -4,6 +4,16 @@ import AppraisalForm from './AppraisalForm';
 import AIPerformanceReportGenerator from '../../components/AIPerformanceReportGenerator';
 import SupervisorAppraisalInbox from './SupervisorAppraisalInbox';
 import AIQuestionGenerator from './AIQuestionGenerator';
+import DashboardSidebar from '../../components/DashboardSidebar';
+import TableControls from '../../components/TableControls';
+
+const EMPLOYEE_NAV = [
+  { id: 'home', label: 'Overview', icon: 'home' },
+  { id: 'kpis', label: 'Performance', icon: 'performance' },
+  { id: 'appraisals', label: 'Follow-up', icon: 'appraisals' },
+  { id: 'reviews', label: 'Appraisal log', icon: 'team' },
+  { id: 'chatbot', label: 'Reports', icon: 'reports' },
+];
 
 
 
@@ -91,7 +101,9 @@ export default function EmployeeDashboard({ userId }) {
         : 'Not generated';
 
   return (
-    <div className="space-y-6">
+    <div className="ts-dashboard-shell">
+      <DashboardSidebar items={EMPLOYEE_NAV} activeId={activeView} onSelect={(item) => setActiveView(item.id)} />
+      <div className="ts-dashboard-content space-y-6">
       {/* Back button */}
       {activeView !== 'home' && (
         <button 
@@ -171,10 +183,11 @@ export default function EmployeeDashboard({ userId }) {
             {trustScoreRuns.length === 0 ? (
               <p className="text-slate-500 text-sm">No Trust Score run has been generated for you yet. Your supervisor can run the appraisal classification for your team.</p>
             ) : (
-              <div className="overflow-x-auto">
+              <TableControls rows={trustScoreRuns} label="Trust Score periods" searchText={(run) => `${run.period_code} ${run.score_status} ${run.generated_at}`}>
+                {(pageRows) => <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead><tr className="bg-slate-100 text-slate-700"><th className="p-3 border-b">Period</th><th className="p-3 border-b">Trust Score</th><th className="p-3 border-b">KPI groups</th><th className="p-3 border-b">Feedback groups</th><th className="p-3 border-b">Updated</th></tr></thead>
-                  <tbody>{trustScoreRuns.map((run) => {
+                  <tbody>{pageRows.map((run) => {
                     const statusLabel = run.score_status === 'ready' ? `${Number(run.trust_score).toFixed(1)}%` : run.score_status === 'awaiting_review' ? 'Awaiting review' : 'Incomplete';
                     const groups = Object.values(run.kpi_groups || {});
                     const feedback = Object.values(run.feedback_groups || {});
@@ -182,7 +195,8 @@ export default function EmployeeDashboard({ userId }) {
                     return <tr key={run.run_id} className="hover:bg-slate-50"><td className="p-3 border-b font-semibold">{run.period_code}</td><td className="p-3 border-b font-bold text-blue-700">{statusLabel}</td><td className="p-3 border-b">{groupCell(groups)}</td><td className="p-3 border-b">{groupCell(feedback)}</td><td className="p-3 border-b text-slate-500">{new Date(run.generated_at).toLocaleDateString()}</td></tr>;
                   })}</tbody>
                 </table>
-              </div>
+              </div>}
+              </TableControls>
             )}
           </div>
 
@@ -191,7 +205,8 @@ export default function EmployeeDashboard({ userId }) {
             {reports.length === 0 ? (
               <p className="text-slate-500 text-sm">No appraisal history recorded yet.</p>
             ) : (
-              <div className="overflow-x-auto">
+              <TableControls rows={reports} label="historical appraisal reports" searchText={(report) => `${report.report_id} ${report.unified_trust_score} ${report.compliance_override_status ? 'overridden' : 'verified'} ${report.generation_date}`}>
+                {(pageRows) => <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
                     <tr className="bg-slate-100 text-slate-700">
@@ -202,7 +217,7 @@ export default function EmployeeDashboard({ userId }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {reports.map((rep) => (
+                    {pageRows.map((rep) => (
                       <tr key={rep.report_id} className="hover:bg-slate-50">
                         <td className="p-3 border-b">#{rep.report_id}</td>
                         <td className="p-3 border-b font-bold text-blue-700">{rep.unified_trust_score}%</td>
@@ -218,7 +233,8 @@ export default function EmployeeDashboard({ userId }) {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </div>}
+              </TableControls>
             )}
           </div>
         </div>
@@ -251,6 +267,7 @@ export default function EmployeeDashboard({ userId }) {
         </div>
       )}
       {trustScoreDetailsOpen && <TrustScoreBreakdown run={latestTrustRun} onClose={() => setTrustScoreDetailsOpen(false)} />}
+      </div>
     </div>
   );
 }

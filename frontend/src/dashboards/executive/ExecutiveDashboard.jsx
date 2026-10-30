@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import AIPerformanceReportGenerator from '../../components/AIPerformanceReportGenerator';
 import ExecutiveComplianceOverrideModal from './ExecutiveComplianceOverrideModal';
+import DashboardSidebar from '../../components/DashboardSidebar';
+import TableControls from '../../components/TableControls';
 
 const API = 'http://127.0.0.1:8000/api/v1';
+const EXECUTIVE_NAV = [
+  { id: 'overview', label: 'Overview', icon: 'home' },
+  { id: 'supervisors', label: 'Supervisors', icon: 'team' },
+  { id: 'reports', label: 'Appraisal reports', icon: 'appraisals' },
+  { id: 'report-generator', label: 'Generate report', icon: 'reports' },
+];
 
 export default function ExecutiveDashboard({ executiveId }) {
   const [profile, setProfile] = useState(null);
@@ -15,6 +23,7 @@ export default function ExecutiveDashboard({ executiveId }) {
   const [selectedOverrideReport, setSelectedOverrideReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeNav, setActiveNav] = useState('overview');
 
   useEffect(() => {
     let cancelled = false;
@@ -94,8 +103,10 @@ export default function ExecutiveDashboard({ executiveId }) {
   };
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="ts-dashboard-shell">
+      <DashboardSidebar items={EXECUTIVE_NAV} activeId={activeNav} onSelect={(item) => { setActiveNav(item.id); document.getElementById(`executive-${item.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} />
+      <div className="ts-dashboard-content space-y-6">
+      <section id="executive-overview" className="scroll-mt-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-2xl font-bold text-blue-900">Welcome, {profile?.full_name || 'Executive Manager'}</h2>
         <p className="mt-1 text-sm text-slate-600">Oversight region: {profile?.oversight_region || 'Not assigned'}</p>
       </section>
@@ -107,15 +118,16 @@ export default function ExecutiveDashboard({ executiveId }) {
         <SummaryCard label="Supervisor appraisals" value={supervisors.reduce((sum, item) => sum + Number(item.supervisor_appraisal_count || 0), 0)} />
         <SummaryCard label="Average trust score" value={averageScore === '—' ? averageScore : `${averageScore}%`} />
       </section>
-      <section className="grid gap-6 lg:grid-cols-2">
+      <section id="executive-supervisors" className="scroll-mt-4 grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 className="mb-1 text-lg font-bold text-blue-900">Supervisors in your region</h3>
           <p className="mb-4 text-xs text-slate-500">KPI averages use each employee’s latest telemetry record and the same safe, warning, and danger bands as the supervisor dashboard.</p>
           {supervisors.length === 0 ? <p className="text-sm text-slate-500">No supervisor profiles are assigned to this region.</p> : (
-            <div className="overflow-x-auto">
+            <TableControls rows={supervisors} label="supervisors" searchText={(item) => `${item.full_name} ${item.supervisor_id} ${item.department_code} ${item.branch_code} ${item.oversight_region}`}>
+            {(pageRows) => <div className="overflow-x-auto">
               <table className="w-full min-w-[850px] text-left text-sm">
                 <thead><tr className="border-b text-slate-500"><th className="p-2">Supervisor</th><th className="p-2">Department</th><th className="p-2">Branch</th><th className="p-2">Team KPI averages</th><th className="p-2">Supervisor forms</th></tr></thead>
-                <tbody>{supervisors.map((item) => <React.Fragment key={item.supervisor_id}>
+                <tbody>{pageRows.map((item) => <React.Fragment key={item.supervisor_id}>
                   <tr className="border-b last:border-0">
                     <td className="p-2 font-medium text-slate-800">{item.full_name || `Supervisor #${item.supervisor_id}`}</td>
                     <td className="p-2 text-slate-600">{item.department_code || '—'}</td>
@@ -123,32 +135,38 @@ export default function ExecutiveDashboard({ executiveId }) {
                     <td className="p-2">{!item.employees_with_telemetry ? <span className="text-xs text-slate-400">No team telemetry</span> : <details><summary className="cursor-pointer font-semibold text-blue-700">View averages · {item.employees_with_telemetry}/{item.team_size} with telemetry</summary><div className="mt-2 grid min-w-[300px] gap-2 sm:grid-cols-2">{(item.team_kpi_averages || []).map((metric) => <div key={metric.key} className="rounded border border-slate-200 bg-white p-2 text-xs"><span className="font-semibold text-slate-700">{metric.label}: </span>{metric.value == null ? <span className="text-slate-400">No data</span> : <><span>{Number(metric.value).toFixed(1)}{metric.unit}</span><span className={`ml-2 rounded px-1.5 py-0.5 font-semibold ${metric.state === 'Safe' ? 'bg-green-100 text-green-800' : metric.state === 'Warning' ? 'bg-orange-100 text-orange-800' : metric.state === 'Danger' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-600'}`}>{metric.state}</span><span className="ml-1 text-slate-400">n={metric.sample_count}</span></>}</div>)}</div></details>}</td>
                     <td className="p-2"><button type="button" onClick={() => toggleSupervisorForms(item)} className="rounded border border-blue-700 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-50">{loadingFormsId === item.supervisor_id ? 'Loading…' : `${item.supervisor_appraisal_count || 0} forms · ${expandedSupervisorId === item.supervisor_id ? 'Hide' : 'View'}`}</button></td>
                   </tr>
-                  {expandedSupervisorId === item.supervisor_id && <tr className="border-b bg-slate-50"><td colSpan="5" className="p-3">{formsError && <p role="alert" className="mb-2 rounded bg-rose-50 p-2 text-xs text-rose-800">{formsError}</p>}{loadingFormsId === item.supervisor_id ? <p className="text-xs text-slate-500">Loading supervisor forms…</p> : (formsBySupervisor[item.supervisor_id] || []).length === 0 ? <p className="text-xs text-slate-500">No semiannual supervisor appraisal forms for this team yet.</p> : <div className="overflow-x-auto"><table className="w-full min-w-[600px] text-left text-xs"><thead><tr className="border-b text-slate-500"><th className="p-2">Employee</th><th className="p-2">Period</th><th className="p-2">Responses</th><th className="p-2">Status</th><th className="p-2">Download</th></tr></thead><tbody>{formsBySupervisor[item.supervisor_id].map((form) => <tr key={form.appraisal_id} className="border-b last:border-0"><td className="p-2">{form.employee_name}</td><td className="p-2">Form {form.form_number || 1} · {form.period_code}</td><td className="p-2">{form.question_count ?? form.answers?.length ?? 0}</td><td className="p-2">{form.satisfied_at ? 'Satisfied' : form.review_requested_at && !form.review_edit_count ? 'Review requested' : form.review_edit_count ? 'Revised once' : 'Awaiting employee'}</td><td className="p-2"><button type="button" onClick={async () => { setFormsError(''); try { await downloadAppraisal(form.appraisal_id); } catch (err) { setFormsError(err.message); } }} className="font-semibold text-blue-700 hover:underline">Download PDF</button></td></tr>)}</tbody></table></div>}</td></tr>}
+                  {expandedSupervisorId === item.supervisor_id && <tr className="border-b bg-slate-50"><td colSpan="5" className="p-3">{formsError && <p role="alert" className="mb-2 rounded bg-rose-50 p-2 text-xs text-rose-800">{formsError}</p>}{loadingFormsId === item.supervisor_id ? <p className="text-xs text-slate-500">Loading supervisor forms…</p> : (formsBySupervisor[item.supervisor_id] || []).length === 0 ? <p className="text-xs text-slate-500">No semiannual supervisor appraisal forms for this team yet.</p> : <TableControls rows={formsBySupervisor[item.supervisor_id] || []} label="supervisor forms" searchText={(form) => `${form.employee_name} ${form.period_code} ${form.form_number} ${form.satisfied_at ? 'satisfied' : ''} ${form.review_requested_at ? 'review requested' : ''}`}>
+                    {(pageForms) => <div className="overflow-x-auto"><table className="w-full min-w-[600px] text-left text-xs"><thead><tr className="border-b text-slate-500"><th className="p-2">Employee</th><th className="p-2">Period</th><th className="p-2">Responses</th><th className="p-2">Status</th><th className="p-2">Download</th></tr></thead><tbody>{pageForms.map((form) => <tr key={form.appraisal_id} className="border-b last:border-0"><td className="p-2">{form.employee_name}</td><td className="p-2">Form {form.form_number || 1} · {form.period_code}</td><td className="p-2">{form.question_count ?? form.answers?.length ?? 0}</td><td className="p-2">{form.satisfied_at ? 'Satisfied' : form.review_requested_at && !form.review_edit_count ? 'Review requested' : form.review_edit_count ? 'Revised once' : 'Awaiting employee'}</td><td className="p-2"><button type="button" onClick={async () => { setFormsError(''); try { await downloadAppraisal(form.appraisal_id); } catch (err) { setFormsError(err.message); } }} className="font-semibold text-blue-700 hover:underline">Download PDF</button></td></tr>)}</tbody></table></div>}
+                  </TableControls>}</td></tr>}
                 </React.Fragment>)}</tbody>
               </table>
-            </div>
+            </div>}
+            </TableControls>
           )}
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div id="executive-reports" className="scroll-mt-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 className="mb-4 text-lg font-bold text-blue-900">Recent appraisal reports</h3>
           {reports.length === 0 ? <p className="text-sm text-slate-500">No appraisal reports are available yet.</p> : (
-            <div className="max-h-80 overflow-auto">
+            <TableControls rows={[...reports].sort((a, b) => new Date(b.generation_date) - new Date(a.generation_date))} label="appraisal reports" searchText={(report) => `${report.employee_id} ${report.unified_trust_score} ${report.report_status} ${report.compliance_override_status ? 'override active' : 'no override'} ${report.generation_date}`}>
+            {(pageRows) => <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="sticky top-0 bg-white"><tr className="border-b text-slate-500"><th className="p-2">Employee</th><th className="p-2">Trust score</th><th className="p-2">Report status</th><th className="p-2">Compliance override</th></tr></thead>
-                <tbody>{[...reports].sort((a, b) => new Date(b.generation_date) - new Date(a.generation_date)).slice(0, 12).map((report) => <tr key={report.report_id} className="border-b last:border-0">
+                <tbody>{pageRows.map((report) => <tr key={report.report_id} className="border-b last:border-0">
                   <td className="p-2 text-slate-700">#{report.employee_id}</td>
                   <td className="p-2 font-semibold text-slate-800">{Number(report.unified_trust_score).toFixed(1)}%</td>
                   <td className="p-2 text-slate-600">{report.report_status}</td>
                   <td className="p-2"><span className={`mr-2 rounded px-2 py-1 text-xs font-semibold ${report.compliance_override_status ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-600'}`}>{report.compliance_override_status ? 'Active' : 'None'}</span><button type="button" onClick={() => setSelectedOverrideReport(report)} className="whitespace-nowrap font-semibold text-blue-700 hover:underline">{report.compliance_override_status ? 'Review / remove' : 'Apply override'}</button></td>
                 </tr>)}</tbody>
               </table>
-            </div>
+            </div>}
+            </TableControls>
           )}
           <p className="mt-3 text-xs text-slate-500">Compliance overrides applied: {overrideCount}</p>
         </div>
       </section>
-      <AIPerformanceReportGenerator />
+      <div id="executive-report-generator" className="scroll-mt-4"><AIPerformanceReportGenerator /></div>
       {selectedOverrideReport && <ExecutiveComplianceOverrideModal report={selectedOverrideReport} executiveId={executiveId} onClose={() => setSelectedOverrideReport(null)} onUpdated={handleOverrideUpdated} />}
+      </div>
     </div>
   );
 }

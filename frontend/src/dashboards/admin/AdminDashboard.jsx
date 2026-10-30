@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import './AdminDashboard.css';
+import DashboardSidebar from '../../components/DashboardSidebar';
+import TableControls from '../../components/TableControls';
+
+const ADMIN_NAV = [
+  { id: 'overview', label: 'Overview', icon: 'home' },
+  { id: 'directory', label: 'Accounts', icon: 'accounts' },
+];
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 
@@ -65,9 +72,9 @@ export default function AdminDashboard() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeNav, setActiveNav] = useState('overview');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
@@ -98,23 +105,10 @@ export default function AdminDashboard() {
   }, [loadData]);
 
   const visibleEmployees = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
     return employees
       .filter((employee) => employee.user_type !== 'admin')
-      .filter((employee) => roleFilter === 'all' || employee.user_type === roleFilter)
-      .filter((employee) => {
-        if (!normalizedSearch) return true;
-        return [
-          employee.full_name,
-          employee.email,
-          employee.department,
-          employee.role,
-          employee.supervisor_name,
-          employee.executive_name,
-          employee.branch_code,
-        ].some((value) => String(value || '').toLowerCase().includes(normalizedSearch));
-      });
-  }, [employees, roleFilter, search]);
+      .filter((employee) => roleFilter === 'all' || employee.user_type === roleFilter);
+  }, [employees, roleFilter]);
 
   const supervisors = employees.filter((employee) => employee.user_type === 'supervisor' && employee.is_active);
   const executives = employees.filter((employee) => employee.user_type === 'executive' && employee.is_active);
@@ -223,8 +217,11 @@ export default function AdminDashboard() {
   const trustPipeline = overview?.trust_pipeline || {};
 
   return (
-    <section className="admin-dashboard">
-      <div className="admin-page-heading">
+    <div className="ts-dashboard-shell">
+      <DashboardSidebar items={ADMIN_NAV} activeId={activeNav} onSelect={(item) => { setActiveNav(item.id); document.getElementById(`admin-${item.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} />
+      <div className="ts-dashboard-content">
+      <section className="admin-dashboard">
+      <div id="admin-overview" className="admin-page-heading scroll-mt-4">
         <div>
           <p className="admin-eyebrow">TrustScoreAI · Administration</p>
           <h2>Organization overview</h2>
@@ -341,13 +338,7 @@ export default function AdminDashboard() {
         </div>
         <span className="admin-feedback-count">{overview?.feedback_count ?? 0} feedback entries</span>
       </div>
-      <div className="admin-directory-controls">
-        <input
-          aria-label="Search accounts"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search name, email, department, or manager"
-        />
+      <div id="admin-directory" className="admin-directory-controls scroll-mt-4">
         <select aria-label="Filter by account type" value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)}>
           <option value="all">All account types</option>
           <option value="employee">Employees</option>
@@ -355,7 +346,8 @@ export default function AdminDashboard() {
           <option value="executive">Executives</option>
         </select>
       </div>
-      <div className="admin-table-wrap">
+      <TableControls rows={visibleEmployees} label="accounts" searchText={(employee) => `${employee.full_name} ${employee.email} ${employee.department} ${employee.role} ${employee.supervisor_name} ${employee.executive_name} ${employee.branch_code}`}>
+      {(pageRows) => <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>
             <tr>
@@ -370,9 +362,9 @@ export default function AdminDashboard() {
           <tbody>
             {loading ? (
               <tr><td colSpan="6" className="admin-empty">Loading accounts…</td></tr>
-            ) : visibleEmployees.length === 0 ? (
+            ) : pageRows.length === 0 ? (
               <tr><td colSpan="6" className="admin-empty">No accounts match this search.</td></tr>
-            ) : visibleEmployees.map((employee) => (
+            ) : pageRows.map((employee) => (
               <tr key={employee.employee_id}>
                 <td>
                   <strong>{employee.full_name}</strong>
@@ -398,7 +390,8 @@ export default function AdminDashboard() {
             ))}
           </tbody>
         </table>
-      </div>
+      </div>}
+      </TableControls>
 
       {modalOpen && (
         <div className="admin-modal-backdrop" role="presentation" onMouseDown={(event) => {
@@ -470,7 +463,9 @@ export default function AdminDashboard() {
           </section>
         </div>
       )}
-    </section>
+      </section>
+      </div>
+    </div>
   );
 }
 
