@@ -5,7 +5,11 @@ import TableControls from '../../components/TableControls';
 
 const ADMIN_NAV = [
   { id: 'overview', label: 'Overview', icon: 'home' },
+  { id: 'people', label: 'People', icon: 'team' },
+  { id: 'telemetry', label: 'Telemetry', icon: 'performance' },
+  { id: 'regions', label: 'Regions', icon: 'regions' },
   { id: 'directory', label: 'Accounts', icon: 'accounts' },
+  { id: 'organization-insights', label: 'Org insights', icon: 'trust' },
 ];
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
@@ -70,10 +74,12 @@ function roleLabel(userType) {
 export default function AdminDashboard() {
   const [overview, setOverview] = useState(null);
   const [employees, setEmployees] = useState([]);
+  const [regions, setRegions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeNav, setActiveNav] = useState('overview');
   const [error, setError] = useState('');
+  const [regionError, setRegionError] = useState('');
   const [notice, setNotice] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
@@ -86,12 +92,24 @@ export default function AdminDashboard() {
     else setLoading(true);
     setError('');
     try {
-      const [summary, directory] = await Promise.all([
+      const [summaryResult, directoryResult, regionResult] = await Promise.allSettled([
         apiRequest('/api/v1/admin/overview'),
         apiRequest('/api/v1/admin/employees'),
+        apiRequest('/api/v1/admin/regions'),
       ]);
-      setOverview(summary);
-      setEmployees(directory);
+      const errors = [];
+      if (summaryResult.status === 'fulfilled') setOverview(summaryResult.value);
+      else errors.push(`Organization summary: ${summaryResult.reason?.message || 'Could not load.'}`);
+      if (directoryResult.status === 'fulfilled') setEmployees(directoryResult.value);
+      else errors.push(`Account list: ${directoryResult.reason?.message || 'Could not load.'}`);
+      if (regionResult.status === 'fulfilled') {
+        setRegions(regionResult.value);
+        setRegionError('');
+      } else {
+        setRegions([]);
+        setRegionError(regionResult.reason?.message || 'Could not load oversight regions.');
+      }
+      setError(errors.join(' '));
     } catch (requestError) {
       setError(requestError.message || 'Could not load organization data.');
     } finally {
@@ -235,7 +253,7 @@ export default function AdminDashboard() {
       {error && !modalOpen && <div className="admin-alert admin-alert-error" role="alert">{error}</div>}
       {notice && !modalOpen && <div className="admin-alert admin-alert-success" role="status">{notice}</div>}
 
-      <div className="admin-section-head">
+      <div id="admin-people" className="admin-section-head scroll-mt-4">
         <div>
           <h3>People and access</h3>
           <p>Account counts across the organization</p>
@@ -251,7 +269,7 @@ export default function AdminDashboard() {
         <StatCard label="Active accounts" value={accounts.active_accounts} detail={`${accounts.total_accounts ?? 0} total, including admins`} />
       </div>
 
-      <div className="admin-section-head admin-section-spaced">
+      <div id="admin-telemetry" className="admin-section-head admin-section-spaced scroll-mt-4">
         <div>
           <h3>Organization-wide telemetry</h3>
           <p>Average across {telemetry.records_count ?? 0} stored performance records</p>
@@ -276,59 +294,103 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      <section className="admin-ai-panel">
-        <div>
-          <p className="admin-eyebrow">AI insight summary</p>
-          <h3>Appraisal competency categories</h3>
-          <p>{overview?.ai_categories?.message || 'Category summaries will appear here when classification results are stored.'}</p>
-        </div>
-        {overview?.ai_categories?.available && overview.ai_categories.items?.length > 0 ? (
-          <div className="admin-ai-grid">
-            {overview.ai_categories.items.map((item) => (
-              <article className="admin-ai-card" key={item.category}>
-                <span>{item.label}</span>
-                <strong>{item.average_score == null ? '—' : `${item.average_score} / 5`}</strong>
-                <small>{item.ratings_count} ratings · {item.human_reviewed_count} human reviewed</small>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="admin-ai-status">No saved competency ratings yet.</div>
-        )}
-      </section>
-
-      <section className="admin-ai-panel">
-        <div style={{ width: '100%' }}>
-          <p className="admin-eyebrow">Model pipeline</p>
-          <h3>Unified Trust Score pipeline</h3>
-          <p>{trustPipeline.message || 'Run classification from a supervisor dashboard to populate organization-wide results.'}</p>
-          <div className="admin-stat-grid" style={{ marginTop: '14px' }}>
-            <StatCard label="Average Trust Score" value={trustPipeline.average_trust_score == null ? '—' : trustPipeline.average_trust_score + '%'} detail={(trustPipeline.scores_ready_count ?? 0) + ' complete runs'} />
-            <StatCard label="Auto-classified answers" value={(trustPipeline.feedback_categories || []).reduce((total, item) => total + (item.classified_answer_count || 0), 0)} detail="Supervisor appraisal answers" />
-            <StatCard label="Incomplete runs" value={trustPipeline.incomplete_count ?? 0} detail={(trustPipeline.runs_count ?? 0) + ' total period runs'} />
-            <StatCard label="Cash error alerts" value={trustPipeline.cash_zero_tolerance_alerts ?? 0} detail="Zero-tolerance control breaches" />
-          </div>
-          <div className="admin-ai-grid" style={{ marginTop: '12px', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))' }}>
-            {(trustPipeline.kpi_groups || []).map((item) => (
-              <article className="admin-ai-card" key={item.category}>
-                <span>KPI · {item.label}</span>
-                <strong>{item.average_score_0_100 == null ? '—' : item.average_score_0_100 + '%'}</strong>
-                <small>{item.sample_count} period groups</small>
-              </article>
-            ))}
-            {(trustPipeline.feedback_categories || []).map((item) => {
-              const directions = item.predicted_directions || {};
-              return (
-                <article className="admin-ai-card" key={item.category}>
-                  <span>Feedback · {item.label}</span>
-                  <strong>{item.average_score_0_100 == null ? '—' : item.average_score_0_100 + '%'}</strong>
-                  <small>{item.classified_answer_count} classified answers · {item.scored_run_count} scored runs</small>
-                  <small>Suggestions: +{directions.positive || 0} / −{directions.negative || 0} / mixed {directions.mixed || 0} / neutral {directions.neutral || 0}</small>
-                </article>
-              );
-            })}
+      <section id="admin-regions" className="admin-region-section scroll-mt-4">
+        <div className="admin-section-head">
+          <div>
+            <h3>Oversight regions</h3>
+            <p>Expand a region to follow its executive, supervisors, employees, saved records, and eight Trust Score groups.</p>
           </div>
         </div>
+        {loading ? (
+          <div className="admin-loading">Loading oversight regions…</div>
+        ) : regionError ? (
+          <div className="admin-alert admin-alert-error" role="alert">Could not load region details: {regionError}</div>
+        ) : regions.length === 0 ? (
+          <div className="admin-loading">No executive oversight regions have been set up yet.</div>
+        ) : regions.map((region) => (
+          <details className="admin-region-card" key={region.executive_id}>
+            <summary className="admin-region-summary">
+              <div>
+                <strong>{region.oversight_region || 'Unassigned region'}</strong>
+                <span>Executive: {region.executive?.full_name || 'Unassigned'}</span>
+              </div>
+              <div className="admin-region-counts">
+                <span>{region.summary.employee_count} employees</span>
+                <span>{region.summary.supervisor_count} supervisors</span>
+                <span>{region.summary.telemetry_records} telemetry records</span>
+              </div>
+            </summary>
+            <div className="admin-region-body">
+              <div className="admin-region-metrics">
+                <span>{region.summary.saved_appraisals} saved appraisals</span>
+                <span>{region.summary.historical_reports} historical score reports</span>
+                <span>{region.summary.saved_reports} saved performance reports</span>
+              </div>
+              <h4>Latest team KPI telemetry</h4>
+              <div className="admin-kpi-grid admin-region-kpis">
+                {KPI_CARDS.map((metric) => (
+                  <article className="admin-kpi-card" key={metric.key}>
+                    <span>{metric.label}</span>
+                    <strong>{formatValue(region.summary.latest_kpi_averages?.[metric.key], metric.unit)}</strong>
+                    <small>Average of employees’ latest readings</small>
+                  </article>
+                ))}
+              </div>
+              <GroupBars groups={region.summary.group_scores} title="Latest classified group scores · region average" />
+              <div className="admin-hierarchy-root">
+                <div className="admin-hierarchy-person admin-hierarchy-executive">
+                  <span>EXECUTIVE</span>
+                  <strong>{region.executive?.full_name || 'Executive'}</strong>
+                </div>
+                {region.supervisors.map((team) => (
+                  <details className="admin-supervisor-branch" key={team.supervisor_id}>
+                    <summary>
+                      <span className="admin-hierarchy-person admin-hierarchy-supervisor">
+                        <span>SUPERVISOR · {team.branch_code || 'Branch not set'}</span>
+                        <strong>{team.supervisor?.full_name || 'Supervisor'}</strong>
+                      </span>
+                      <span className="admin-hierarchy-count">{team.employees.length} employees</span>
+                    </summary>
+                    <div className="admin-hierarchy-employees">
+                      {team.employees.map((person) => (
+                        <details className="admin-person-card" key={person.employee_id}>
+                          <summary>
+                            <span><strong>{person.full_name}</strong><small>{person.role || person.department || 'Employee'} · #{person.employee_id}</small></span>
+                            <span className="admin-person-counts">
+                              <small>{person.saved_appraisals} appraisals</small>
+                              <small>{person.historical_reports + person.saved_reports} reports</small>
+                              <small>{person.telemetry_record_count} KPI records</small>
+                            </span>
+                          </summary>
+                          <div className="admin-person-detail">
+                            <p className="admin-detail-date">Latest telemetry: {person.latest_telemetry_at ? new Date(person.latest_telemetry_at).toLocaleDateString() : 'No telemetry saved'}</p>
+                            <div className="admin-kpi-grid admin-person-kpis">
+                              {KPI_CARDS.map((metric) => (
+                                <article className="admin-kpi-card" key={metric.key}>
+                                  <span>{metric.label}</span>
+                                  <strong>{formatValue(person.latest_telemetry?.[metric.key], metric.unit)}</strong>
+                                  <small>Latest reading</small>
+                                </article>
+                              ))}
+                            </div>
+                            <div className="admin-region-metrics">
+                              <span>{person.saved_appraisals} saved appraisals</span>
+                              <span>{person.historical_reports} historical score reports</span>
+                              <span>{person.saved_reports} saved performance reports</span>
+                            </div>
+                            <GroupBars groups={person.group_scores} title="Latest eight-group classification" />
+                          </div>
+                        </details>
+                      ))}
+                      {team.employees.length === 0 && <p className="admin-hierarchy-empty">No employees are assigned to this supervisor.</p>}
+                    </div>
+                  </details>
+                ))}
+                {region.supervisors.length === 0 && <p className="admin-hierarchy-empty">No supervisors are assigned to this oversight region.</p>}
+              </div>
+            </div>
+          </details>
+        ))}
       </section>
 
       <div className="admin-section-head admin-section-spaced">
@@ -392,6 +454,32 @@ export default function AdminDashboard() {
         </table>
       </div>}
       </TableControls>
+
+      <section id="admin-organization-insights" className="admin-ai-panel admin-organization-insights scroll-mt-4">
+        <div style={{ width: '100%' }}>
+          <p className="admin-eyebrow">Organization overview</p>
+          <h3>Organization insights</h3>
+          <p>Summary of saved Trust Score runs and supervisor-answer classifications. Group values are averages across employees with saved scores.</p>
+          <div className="admin-stat-grid" style={{ marginTop: '14px' }}>
+            <StatCard label="Average Trust Score" value={trustPipeline.average_trust_score == null ? '—' : trustPipeline.average_trust_score + '%'} detail={(trustPipeline.scores_ready_count ?? 0) + ' complete runs'} />
+            <StatCard label="Classified answers" value={(trustPipeline.feedback_categories || []).reduce((total, item) => total + (item.classified_answer_count || 0), 0)} detail="Supervisor appraisal answers" />
+            <StatCard label="Incomplete scores" value={trustPipeline.incomplete_count ?? 0} detail={(trustPipeline.runs_count ?? 0) + ' total period runs'} />
+            <StatCard label="Cash error alerts" value={trustPipeline.cash_zero_tolerance_alerts ?? 0} detail="Saved zero-tolerance alerts" />
+          </div>
+          <GroupBars
+            title="Eight-group averages across saved Trust Scores"
+            groups={[
+              ...(trustPipeline.kpi_groups || []),
+              ...(trustPipeline.feedback_categories || []),
+            ].map((item) => ({
+              category: item.category,
+              label: item.label,
+              score: item.average_score_0_100,
+            }))}
+          />
+          {!trustPipeline.available && <div className="admin-ai-status">No saved Trust Score classifications are available yet.</div>}
+        </div>
+      </section>
 
       {modalOpen && (
         <div className="admin-modal-backdrop" role="presentation" onMouseDown={(event) => {
@@ -476,5 +564,25 @@ function StatCard({ label, value, detail }) {
       <strong>{value === undefined || value === null ? '—' : Number(value).toLocaleString()}</strong>
       <small>{detail}</small>
     </article>
+  );
+}
+
+function GroupBars({ groups = [], title }) {
+  const available = groups.some((group) => group.score !== null && group.score !== undefined);
+  return (
+    <div className="admin-group-chart">
+      <h4>{title}</h4>
+      {!available ? (
+        <p>No saved eight-group classification is available for this view.</p>
+      ) : groups.map((group) => (
+        <div className="admin-group-bar-row" key={group.category}>
+          <span>{group.label}</span>
+          <div className="admin-group-track" aria-label={`${group.label}: ${group.score}%`}>
+            <div className="admin-group-fill" style={{ width: `${Math.max(0, Math.min(100, Number(group.score) || 0))}%` }} />
+          </div>
+          <strong>{group.score == null ? '—' : `${group.score}%`}</strong>
+        </div>
+      ))}
+    </div>
   );
 }

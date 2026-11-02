@@ -2398,6 +2398,68 @@ def get_executive_supervisors(
     } for supervisor in supervisors]
 
 
+@app.get("/api/v1/executives/{executive_id}/compliance-overview")
+def get_executive_compliance_overview(
+    executive_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    if current_user.get("role") != "executive" or current_user.get("user_id") != executive_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    supervisors = db.query(models.ImmediateSupervisor).filter_by(executive_id=executive_id).all()
+    supervisor_ids = [row.supervisor_id for row in supervisors]
+    employees = db.query(models.Employee).filter(
+        models.Employee.supervisor_id.in_(supervisor_ids),
+        models.Employee.user_type == "employee",
+        models.Employee.is_active.is_(True),
+    ).all() if supervisor_ids else []
+    employee_by_id = {row.employee_id: row for row in employees}
+    supervisor_by_id = {row.supervisor_id: row for row in supervisors}
+    employee_ids = list(employee_by_id)
+    latest_records = {}
+    all_records = db.query(models.PerformanceRecord).filter(
+        models.PerformanceRecord.employee_id.in_(employee_ids)
+    ).order_by(models.PerformanceRecord.recorded_at.desc(), models.PerformanceRecord.record_id.desc()).all() if employee_ids else []
+    for record in all_records:
+        latest_records.setdefault(record.employee_id, record)
+    cash_alerts = []
+    for employee_id, record in latest_records.items():
+        value = _metric_value(record, next(metric for metric in QUESTION_METRICS if metric["key"] == "cash_reconciliation_errors"))
+        if value is not None and value > 0:
+            employee = employee_by_id[employee_id]
+            supervisor = supervisor_by_id.get(employee.supervisor_id)
+            cash_alerts.append({
+                "employee_id": employee_id,
+                "employee_name": employee.full_name,
+                "supervisor_name": supervisor.full_name if supervisor else "-",
+                "value": value,
+                "recorded_at": record.recorded_at,
+            })
+    saved_reports = db.query(models.AIPerformanceReport).filter(
+        models.AIPerformanceReport.employee_id.in_(employee_ids)
+    ).order_by(models.AIPerformanceReport.generated_at.desc()).all() if employee_ids else []
+    flagged_reports = []
+    for report in saved_reports:
+        flags = []
+        for group in (report.telemetry_groups or {}).values():
+            for metric in group.get("metrics", []):
+                state = str(metric.get("state") or "").lower()
+                if state in {"danger", "warning"}:
+                    flags.append(f"{metric.get('label') or metric.get('key')}: {state.title()}")
+        if flags:
+            employee = employee_by_id.get(report.employee_id)
+            flagged_reports.append({
+                "report_id": report.report_id,
+                "employee_id": report.employee_id,
+                "employee_name": employee.full_name if employee else f"Employee #{report.employee_id}",
+                "period_code": report.period_code,
+                "generated_at": report.generated_at,
+                "flags": sorted(set(flags)),
+                "summary": (report.narrative or {}).get("summary"),
+                "telemetry_groups": report.telemetry_groups or {},
+            })
+    return {"cash_reconciliation_alerts": cash_alerts, "flagged_reports": flagged_reports}
+
 @app.post("/api/v1/executives/override-compliance")
 def execute_compliance_override(
     payload: schemas.ExecutiveOverrideRequest,
@@ -2799,6 +2861,171 @@ def get_admin_overview(
         },
         "trust_pipeline": trust_pipeline,
     }
+
+
+@app.get("/api/v1/admin/regions")
+def get_admin_regions(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Return saved organization data grouped by executive oversight region."""
+    ensure_admin(current_user)
+
+    metric_columns = {
+        "loan_volumes": models.PerformanceRecord.loan_volumes,
+        "transaction_accuracy": models.PerformanceRecord.transaction_accuracy,
+        "workplan_completion": models.PerformanceRecord.workplan_completion,
+        "tasks_on_time": models.PerformanceRecord.task_deadline_fulfillment_pct,
+        "accounts_opened": models.PerformanceRecord.accounts_opened,
+        "complaint_resolution": models.PerformanceRecord.complaint_resolution_rate_pct,
+        "customer_satisfaction": models.PerformanceRecord.customer_satisfaction,
+        "processing_errors": models.PerformanceRecord.error_frequencies,
+        "loan_processing_hours": models.PerformanceRecord.loan_processing_turnaround_hours,
+        "non_performing_credit": models.PerformanceRecord.non_performing_credit_pct,
+        "cash_reconciliation_errors": models.PerformanceRecord.cash_reconciliation_errors,
+        "compliance_incidents": models.PerformanceRecord.compliance_incidents,
+        "digital_channel_adoption": models.PerformanceRecord.digital_channel_adoption_pct,
+    }
+    group_labels = {
+        "operational_quality": "Operational quality",
+        "delivery_timeliness": "Delivery and timeliness",
+        "customer_outcomes": "Customer outcomes",
+        "risk_controls": "Risk and controls",
+        "communication": "Communication",
+        "collaboration": "Collaboration",
+        "compliance_awareness": "Compliance awareness",
+        "learning_development": "Learning and development",
+    }
+
+    executives = db.query(models.ExecutiveManager).all()
+    supervisors = db.query(models.ImmediateSupervisor).all()
+    employees = db.query(models.Employee).filter(models.Employee.user_type == "employee").all()
+    all_ids = [row.employee_id for row in employees]
+    all_ids += [row.emp_id for row in supervisors]
+    all_ids += [row.emp_id for row in executives]
+    all_ids = list(set(all_ids))
+
+    latest_records = {}
+    record_counts = {}
+    if all_ids:
+        records = db.query(models.PerformanceRecord).filter(
+            models.PerformanceRecord.employee_id.in_(all_ids)
+        ).order_by(models.PerformanceRecord.recorded_at.desc(), models.PerformanceRecord.record_id.desc()).all()
+        for record in records:
+            record_counts[record.employee_id] = record_counts.get(record.employee_id, 0) + 1
+            latest_records.setdefault(record.employee_id, record)
+
+    appraisal_counts = {}
+    appraisal_rows = db.query(
+        models.SupervisorAppraisal.employee_id,
+        func.count(models.SupervisorAppraisal.appraisal_id),
+    ).group_by(models.SupervisorAppraisal.employee_id).all()
+    appraisal_counts = {employee_id: int(count) for employee_id, count in appraisal_rows}
+    historical_counts = {}
+    historical_rows = db.query(
+        models.AppraisalReport.employee_id,
+        func.count(models.AppraisalReport.report_id),
+    ).group_by(models.AppraisalReport.employee_id).all()
+    historical_counts = {employee_id: int(count) for employee_id, count in historical_rows}
+    saved_report_counts = {}
+    saved_report_rows = db.query(
+        models.AIPerformanceReport.employee_id,
+        func.count(models.AIPerformanceReport.report_id),
+    ).group_by(models.AIPerformanceReport.employee_id).all()
+    saved_report_counts = {employee_id: int(count) for employee_id, count in saved_report_rows}
+
+    latest_runs = {}
+    runs = db.query(models.TrustScoreRun).filter(
+        models.TrustScoreRun.employee_id.in_(all_ids)
+    ).order_by(models.TrustScoreRun.generated_at.desc(), models.TrustScoreRun.run_id.desc()).all() if all_ids else []
+    for run in runs:
+        latest_runs.setdefault(run.employee_id, run)
+
+    employee_by_id = {row.employee_id: row for row in employees}
+    supervisors_by_executive = {}
+    for supervisor in supervisors:
+        supervisors_by_executive.setdefault(supervisor.executive_id, []).append(supervisor)
+    employees_by_supervisor = {}
+    for employee in employees:
+        if employee.supervisor_id is not None:
+            employees_by_supervisor.setdefault(employee.supervisor_id, []).append(employee)
+
+    def group_scores(employee_id):
+        run = latest_runs.get(employee_id)
+        result = []
+        for key, label in group_labels.items():
+            source = (run.kpi_groups if key in {"operational_quality", "delivery_timeliness", "customer_outcomes", "risk_controls"} else run.feedback_groups) if run else {}
+            item = source.get(key) if isinstance(source, dict) else None
+            score = item.get("score_0_100") if isinstance(item, dict) else None
+            result.append({"category": key, "label": label, "score": round(float(score), 1) if isinstance(score, (int, float)) else None})
+        return result
+
+    def person_payload(person, user_type, supervisor_id=None):
+        record = latest_records.get(person.employee_id)
+        return {
+            "employee_id": person.employee_id,
+            "full_name": person.full_name,
+            "department": person.department,
+            "role": person.role,
+            "user_type": user_type,
+            "is_active": person.is_active,
+            "supervisor_id": supervisor_id,
+            "telemetry_record_count": record_counts.get(person.employee_id, 0),
+            "latest_telemetry_at": record.recorded_at.isoformat() if record else None,
+            "latest_telemetry": {key: getattr(record, column.key) for key, column in metric_columns.items()} if record else None,
+            "saved_appraisals": appraisal_counts.get(person.employee_id, 0),
+            "historical_reports": historical_counts.get(person.employee_id, 0),
+            "saved_reports": saved_report_counts.get(person.employee_id, 0),
+            "group_scores": group_scores(person.employee_id),
+        }
+
+    result = []
+    for executive in executives:
+        executive_person = db.query(models.Employee).filter_by(employee_id=executive.emp_id).first()
+        team = []
+        region_employee_ids = []
+        for supervisor in sorted(supervisors_by_executive.get(executive.executive_id, []), key=lambda row: (row.branch_code or "", row.full_name or "")):
+            supervisor_person = supervisor.employee_profile
+            direct_reports = sorted(employees_by_supervisor.get(supervisor.supervisor_id, []), key=lambda row: row.full_name.lower())
+            region_employee_ids.extend(row.employee_id for row in direct_reports)
+            team.append({
+                "supervisor": person_payload(supervisor_person, "supervisor") if supervisor_person else None,
+                "supervisor_id": supervisor.supervisor_id,
+                "branch_code": supervisor.branch_code,
+                "employees": [person_payload(row, "employee", supervisor.supervisor_id) for row in direct_reports],
+            })
+
+        region_people = [employee_by_id[employee_id] for employee_id in region_employee_ids if employee_id in employee_by_id]
+        region_latest = [latest_records[row.employee_id] for row in region_people if row.employee_id in latest_records]
+        region_run_groups = {key: [] for key in group_labels}
+        for employee in region_people:
+            for group in group_scores(employee.employee_id):
+                if group["score"] is not None:
+                    region_run_groups[group["category"]].append(group["score"])
+        latest_metrics = {row.employee_id: latest_records[row.employee_id] for row in region_people if row.employee_id in latest_records}
+        result.append({
+            "executive": person_payload(executive_person, "executive") if executive_person else {"employee_id": executive.emp_id, "full_name": "Executive"},
+            "executive_id": executive.executive_id,
+            "oversight_region": executive.oversight_region,
+            "supervisors": team,
+            "summary": {
+                "employee_count": len(region_people),
+                "supervisor_count": len(team),
+                "telemetry_records": sum(record_counts.get(row.employee_id, 0) for row in region_people),
+                "saved_appraisals": sum(appraisal_counts.get(row.employee_id, 0) for row in region_people),
+                "historical_reports": sum(historical_counts.get(row.employee_id, 0) for row in region_people),
+                "saved_reports": sum(saved_report_counts.get(row.employee_id, 0) for row in region_people),
+                "latest_kpi_averages": {
+                    key: round(sum(getattr(row, column.key) for row in latest_metrics.values()) / len(latest_metrics), 2) if latest_metrics else None
+                    for key, column in metric_columns.items()
+                },
+                "group_scores": [
+                    {"category": key, "label": label, "score": round(sum(region_run_groups[key]) / len(region_run_groups[key]), 1) if region_run_groups[key] else None}
+                    for key, label in group_labels.items()
+                ],
+            },
+        })
+    return result
 
 
 @app.get("/api/v1/admin/employees", response_model=List[schemas.AdminEmployeeResponse])

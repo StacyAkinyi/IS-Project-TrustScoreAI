@@ -19,7 +19,7 @@ const SUPERVISOR_NAV = [
   { id: 'appraisals', label: 'Appraisals', icon: 'appraisals' },
   { id: 'followups', label: 'Follow-ups', icon: 'search' },
   { id: 'classification', label: 'Classification', icon: 'compliance' },
-  { id: 'reports', label: 'Reports', icon: 'reports' },
+  { id: 'reports', label: 'Performance reports', icon: 'reports' },
 ];
 
 async function downloadAppraisal(appraisalId) {

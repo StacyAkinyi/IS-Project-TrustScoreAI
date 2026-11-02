@@ -467,6 +467,67 @@
 .admin-loading { padding: 20px; border: 1px solid #e5e9f1; border-radius: 10px; background: #fff; color: #667085; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
+.admin-region-section { margin: 28px 0; }
+.admin-region-card,
+.admin-supervisor-branch,
+.admin-person-card { border: 1px solid #e4e8f0; border-radius: 12px; background: #fff; }
+.admin-region-card { margin: 12px 0; box-shadow: 0 3px 10px rgba(16, 24, 40, 0.035); }
+.admin-region-summary,
+.admin-supervisor-branch > summary,
+.admin-person-card > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px; cursor: pointer; list-style: none; }
+.admin-region-summary::-webkit-details-marker,
+.admin-supervisor-branch > summary::-webkit-details-marker,
+.admin-person-card > summary::-webkit-details-marker { display: none; }
+.admin-region-summary::before,
+.admin-supervisor-branch > summary::before,
+.admin-person-card > summary::before { content: '›'; color: #635bdb; font-size: 22px; font-weight: 800; transform: rotate(0deg); transition: transform .15s ease; }
+.admin-region-card[open] > .admin-region-summary::before,
+.admin-supervisor-branch[open] > summary::before,
+.admin-person-card[open] > summary::before { transform: rotate(90deg); }
+.admin-region-summary > div:first-of-type { flex: 1; }
+.admin-region-summary strong { display: block; color: #20304a; font-size: 16px; }
+.admin-region-summary span { display: block; margin-top: 4px; color: #667085; font-size: 12px; }
+.admin-region-counts,
+.admin-region-metrics,
+.admin-person-counts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.admin-region-counts span,
+.admin-region-metrics span,
+.admin-person-counts small { border-radius: 999px; padding: 6px 9px; background: #f2f4fb; color: #475467; font-size: 10px; font-weight: 700; white-space: nowrap; }
+.admin-region-body { padding: 0 18px 20px; }
+.admin-region-body > h4,
+.admin-group-chart h4 { margin: 20px 0 10px; color: #344054; font-size: 13px; }
+.admin-region-kpis { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.admin-region-metrics { margin: 8px 0 14px; }
+.admin-group-chart { margin-top: 18px; padding: 4px 0 10px; }
+.admin-group-chart > p { color: #667085; font-size: 12px; }
+.admin-group-bar-row { display: grid; grid-template-columns: minmax(150px, 1.2fr) minmax(120px, 3fr) 48px; align-items: center; gap: 12px; margin: 9px 0; }
+.admin-group-bar-row > span { color: #475467; font-size: 11px; font-weight: 650; }
+.admin-group-bar-row > strong { color: #344054; font-size: 11px; text-align: right; }
+.admin-group-track { height: 11px; overflow: hidden; border-radius: 999px; background: #eceef5; }
+.admin-group-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #7770ed, #4238ca); transition: width .25s ease; }
+.admin-hierarchy-root { margin-top: 20px; padding: 16px; border-left: 2px solid #d8d6ff; background: #fafaff; }
+.admin-hierarchy-person { display: inline-flex; flex-direction: column; gap: 4px; padding: 11px 14px; border-radius: 9px; }
+.admin-hierarchy-person > span { color: #667085; font-size: 9px; font-weight: 800; letter-spacing: .07em; }
+.admin-hierarchy-person strong { color: #24324b; font-size: 13px; }
+.admin-hierarchy-executive { background: #ecebff; }
+.admin-hierarchy-supervisor { background: #f1f4ff; }
+.admin-supervisor-branch { margin: 12px 0 0 18px; border-color: #e2e5f0; }
+.admin-supervisor-branch > summary { justify-content: flex-start; }
+.admin-hierarchy-count { margin-left: auto; color: #667085; font-size: 11px; }
+.admin-hierarchy-employees { display: grid; gap: 9px; padding: 0 14px 14px 28px; }
+.admin-person-card { border-radius: 9px; background: #fff; }
+.admin-person-card > summary { padding: 12px 14px; }
+.admin-person-card > summary > span:first-of-type { flex: 1; }
+.admin-person-card > summary strong,
+.admin-person-card > summary small { display: block; }
+.admin-person-card > summary strong { color: #25344d; font-size: 12px; }
+.admin-person-card > summary small { margin-top: 3px; color: #667085; font-size: 10px; }
+.admin-person-counts { justify-content: flex-end; }
+.admin-person-detail { padding: 0 16px 16px; }
+.admin-detail-date { margin: 2px 0 10px; color: #667085; font-size: 11px; }
+.admin-person-kpis { grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); }
+.admin-hierarchy-empty { padding: 4px 12px; color: #667085; font-size: 12px; }
+
 .admin-modal-backdrop {
   position: fixed;
   z-index: 1000;
@@ -576,4 +637,12 @@
   .admin-form-grid { grid-template-columns: 1fr; }
   .admin-form-wide { grid-column: auto; }
   .admin-modal { padding: 18px; }
+  .admin-region-summary,
+  .admin-supervisor-branch > summary,
+  .admin-person-card > summary { align-items: flex-start; flex-wrap: wrap; }
+  .admin-region-counts,
+  .admin-person-counts { width: 100%; justify-content: flex-start; padding-left: 26px; }
+  .admin-group-bar-row { grid-template-columns: minmax(110px, 1.2fr) minmax(80px, 2fr) 42px; gap: 7px; }
+  .admin-hierarchy-root { padding: 10px; }
+  .admin-hierarchy-employees { padding-left: 14px; }
 }

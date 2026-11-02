@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import AIPerformanceReportGenerator from '../../components/AIPerformanceReportGenerator';
 import ExecutiveComplianceOverrideModal from './ExecutiveComplianceOverrideModal';
 import DashboardSidebar from '../../components/DashboardSidebar';
 import TableControls from '../../components/TableControls';
@@ -9,13 +8,14 @@ const EXECUTIVE_NAV = [
   { id: 'overview', label: 'Overview', icon: 'home' },
   { id: 'supervisors', label: 'Supervisors', icon: 'team' },
   { id: 'reports', label: 'Appraisal reports', icon: 'appraisals' },
-  { id: 'report-generator', label: 'Generate report', icon: 'reports' },
+  { id: 'compliance', label: 'Compliance', icon: 'compliance' },
 ];
 
 export default function ExecutiveDashboard({ executiveId }) {
   const [profile, setProfile] = useState(null);
   const [supervisors, setSupervisors] = useState([]);
   const [reports, setReports] = useState([]);
+  const [complianceOverview, setComplianceOverview] = useState({ cash_reconciliation_alerts: [], flagged_reports: [] });
   const [expandedSupervisorId, setExpandedSupervisorId] = useState(null);
   const [formsBySupervisor, setFormsBySupervisor] = useState({});
   const [loadingFormsId, setLoadingFormsId] = useState(null);
@@ -37,6 +37,7 @@ export default function ExecutiveDashboard({ executiveId }) {
           `${API}/executives/${executiveId}`,
           `${API}/executives/${executiveId}/supervisors`,
           `${API}/executives/${executiveId}/reports`,
+          `${API}/executives/${executiveId}/compliance-overview`,
         ];
         const responses = await Promise.all(paths.map((url) => fetch(url, { headers })));
         const bodies = await Promise.all(responses.map((response) => response.json()));
@@ -48,6 +49,7 @@ export default function ExecutiveDashboard({ executiveId }) {
           setProfile(bodies[0]);
           setSupervisors(Array.isArray(bodies[1]) ? bodies[1] : []);
           setReports(Array.isArray(bodies[2]) ? bodies[2] : []);
+          setComplianceOverview(bodies[3] || { cash_reconciliation_alerts: [], flagged_reports: [] });
         }
       } catch (err) {
         if (!cancelled) setError(err.message || 'Could not load the executive dashboard.');
@@ -164,8 +166,28 @@ export default function ExecutiveDashboard({ executiveId }) {
           <p className="mt-3 text-xs text-slate-500">Compliance overrides applied: {overrideCount}</p>
         </div>
       </section>
-      <div id="executive-report-generator" className="scroll-mt-4"><AIPerformanceReportGenerator /></div>
-      {selectedOverrideReport && <ExecutiveComplianceOverrideModal report={selectedOverrideReport} executiveId={executiveId} onClose={() => setSelectedOverrideReport(null)} onUpdated={handleOverrideUpdated} />}
+      <section id="executive-compliance" className="scroll-mt-4 space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div>
+          <h3 className="text-lg font-bold text-blue-900">Compliance monitoring</h3>
+          <p className="mt-1 text-xs text-slate-500">Cash reconciliation errors have zero tolerance. Other flags use demonstration bands.</p>
+        </div>
+        <div>
+          <h4 className="mb-2 text-sm font-bold text-slate-800">Cash reconciliation alerts</h4>
+          {(complianceOverview.cash_reconciliation_alerts || []).length === 0 ? <p className="text-sm text-slate-500">No cash reconciliation errors are flagged in the latest employee telemetry.</p> : (
+            <TableControls rows={complianceOverview.cash_reconciliation_alerts} label="cash reconciliation alerts" searchText={(row) => `${row.employee_name} ${row.supervisor_name} ${row.recorded_at} ${row.value}`}>
+              {(pageRows) => <div className="overflow-x-auto"><table className="w-full min-w-[620px] text-left text-sm"><thead><tr className="border-b text-slate-500"><th className="p-2">Employee</th><th className="p-2">Supervisor</th><th className="p-2">Errors</th><th className="p-2">Telemetry date</th></tr></thead><tbody>{pageRows.map((row) => <tr key={`${row.employee_id}-${row.recorded_at}`} className="border-b"><td className="p-2 font-semibold">{row.employee_name}</td><td className="p-2">{row.supervisor_name}</td><td className="p-2 font-bold text-red-700">{row.value}</td><td className="p-2">{new Date(row.recorded_at).toLocaleDateString()}</td></tr>)}</tbody></table></div>}
+            </TableControls>
+          )}
+        </div>
+        <div>
+          <h4 className="mb-2 text-sm font-bold text-slate-800">Saved reports to review</h4>
+          {(complianceOverview.flagged_reports || []).length === 0 ? <p className="text-sm text-slate-500">No saved reports contain warning- or danger-band telemetry.</p> : (
+            <TableControls rows={complianceOverview.flagged_reports} label="flagged performance reports" searchText={(row) => `${row.employee_name} ${row.period_code} ${row.flags.join(' ')}`}>
+              {(pageRows) => <div className="overflow-x-auto"><table className="w-full min-w-[620px] text-left text-sm"><thead><tr className="border-b text-slate-500"><th className="p-2">Employee</th><th className="p-2">Period</th><th className="p-2">Flag</th><th className="p-2">Saved</th><th className="p-2">Review</th></tr></thead><tbody>{pageRows.map((row) => <tr key={row.report_id} className="border-b"><td className="p-2 font-semibold">{row.employee_name}</td><td className="p-2">{row.period_code}</td><td className="p-2 text-amber-800">{row.flags.join(' , ')}</td><td className="p-2">{new Date(row.generated_at).toLocaleDateString()}</td><td className="p-2"><details><summary className="cursor-pointer font-semibold text-blue-700">Open</summary><div className="mt-2 min-w-[240px] space-y-1 text-xs text-slate-600"><p>{row.summary}</p><p>{Object.entries(row.telemetry_groups || {}).map(([key, group]) => `${group.label || key}: ${group.state || "No data"}`).join(", ")}</p></div></details></td></tr>)}</tbody></table></div>}
+            </TableControls>
+          )}
+        </div>
+      </section>      {selectedOverrideReport && <ExecutiveComplianceOverrideModal report={selectedOverrideReport} executiveId={executiveId} onClose={() => setSelectedOverrideReport(null)} onUpdated={handleOverrideUpdated} />}
       </div>
     </div>
   );

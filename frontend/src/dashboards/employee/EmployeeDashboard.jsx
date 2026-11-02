@@ -12,7 +12,7 @@ const EMPLOYEE_NAV = [
   { id: 'kpis', label: 'Performance', icon: 'performance' },
   { id: 'appraisals', label: 'Follow-up', icon: 'appraisals' },
   { id: 'reviews', label: 'Appraisal log', icon: 'team' },
-  { id: 'chatbot', label: 'Reports', icon: 'reports' },
+  { id: 'reports', label: 'Reports', icon: 'reports' },
 ];
 
 
@@ -159,11 +159,11 @@ export default function EmployeeDashboard({ userId }) {
             </div>
 
             <div 
-              onClick={() => setActiveView('chatbot')}
+              onClick={() => setActiveView('reports')}
               className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 hover:border-blue-500 cursor-pointer transition text-center space-y-2"
             >
-              <h3 className="text-lg font-bold text-blue-900">AI Performance Report</h3>
-              <p className="text-slate-500 text-sm">Generate a period report from telemetry and feedback dimensions.</p>
+              <h3 className="text-lg font-bold text-blue-900">Performance reports</h3>
+              <p className="text-slate-500 text-sm">Open your saved performance reports.</p>
             </div>
           </div>
         </div>
@@ -259,10 +259,10 @@ export default function EmployeeDashboard({ userId }) {
       )}
 
       {/* 4. Sub-Page: AI Chatbot */}
-      {activeView === 'chatbot' && (
+      {activeView === 'reports' && (
         <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-          <h3 className="text-xl font-bold text-blue-900 mb-2">AI Performance Report Generator</h3>
-          <p className="text-slate-600 text-sm mb-4">Choose a quarter, half-year, or year to generate a report from your performance data.</p>
+          <h3 className="text-xl font-bold text-blue-900 mb-2">Performance reports</h3>
+          <p className="text-slate-600 text-sm mb-4">View your saved reports by period.</p>
           <AIPerformanceReportGenerator />
         </div>
       )}

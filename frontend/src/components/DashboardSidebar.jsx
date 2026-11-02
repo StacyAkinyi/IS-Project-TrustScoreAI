@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, ChartNoAxesCombined, Users, ClipboardList, CalendarDays, FileText, ShieldCheck, Settings2, Search } from 'lucide-react';
+import { Home, ChartNoAxesCombined, Users, ClipboardList, CalendarDays, FileText, ShieldCheck, Settings2, Search, Gauge, Network } from 'lucide-react';
 import './DashboardShell.css';
 
 const ICONS = {
@@ -12,6 +12,8 @@ const ICONS = {
   compliance: ShieldCheck,
   accounts: Settings2,
   search: Search,
+  trust: Gauge,
+  regions: Network,
 };
 
 export default function DashboardSidebar({ items, activeId, onSelect }) {
