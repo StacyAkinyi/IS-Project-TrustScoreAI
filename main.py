@@ -29,6 +29,7 @@ from database import engine, get_db
 from report_templates import build_local_report
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from trust_score_pipeline import (
+    _classify_direction,
     build_feedback_groups,
     build_kpi_groups,
     generate_run as generate_trust_score_run,
@@ -622,25 +623,19 @@ def classify_appraisal_feedback(
         raise HTTPException(status_code=404, detail="Employee not found")
     ensure_employee_access(db, current_user, employee)
 
-    category_text = payload.category.strip().lower().replace("_", " ")
+    category_text = payload.category.strip().lower()
     cleaned_statement = " ".join(payload.statement.strip().lower().split())
-    model_input = f"{category_text} [SEP] {cleaned_statement}"
     try:
-        classifier = direction_model.named_steps["classifier"]
-        labels = [str(label) for label in classifier.classes_]
-        probabilities = direction_model.predict_proba([model_input])[0]
-        predicted_direction = str(direction_model.predict([model_input])[0])
+        predicted_direction, confidence, confidence_by_direction, review_reason = _classify_direction(
+            direction_model, category_text, cleaned_statement
+        )
     except Exception as exc:
         raise HTTPException(status_code=503, detail="The direction model could not classify this statement.") from exc
 
-    confidence_by_direction = {
-        label: round(float(probability), 4)
-        for label, probability in zip(labels, probabilities)
-    }
-    if predicted_direction == "negative":
-        scoring_action = "supervisor_confirmation_required"
-    elif predicted_direction == "positive":
-        scoring_action = "human_review_required"
+    if review_reason:
+        scoring_action = "review_no_score"
+    elif predicted_direction in {"negative", "positive"}:
+        scoring_action = "automatic_direction_suggestion"
     else:
         scoring_action = "do_not_score"
 
@@ -648,9 +643,11 @@ def classify_appraisal_feedback(
         "employee_id": payload.employee_id,
         "category": payload.category,
         "predicted_direction": predicted_direction,
-        "confidence": confidence_by_direction.get(predicted_direction, 0.0),
+        "confidence": confidence,
         "probabilities": confidence_by_direction,
         "scoring_action": scoring_action,
+        "review_reason": review_reason,
+        "score_eligible": predicted_direction in {"negative", "positive"} and review_reason is None,
         "numerical_score": None,
         "notice": "This is a review suggestion only; it does not change the employee's Trust Score.",
     }
@@ -750,8 +747,8 @@ def _serialize_trust_run_for_api(db: Session, run: models.TrustScoreRun):
         models.PerformanceRecord.recorded_at < run.period_end,
     ).all()
     kpi_groups, cash_alert = build_kpi_groups(records)
-    feedback_groups, _ = build_feedback_groups(classifications)
-    trust_score, score_status = calculate_trust_score_status(kpi_groups, feedback_groups)
+    feedback_groups, pending_count = build_feedback_groups(classifications)
+    trust_score, score_status = calculate_trust_score_status(kpi_groups, feedback_groups, pending_count)
 
     supervisor_answer_count = sum(
         1
@@ -779,7 +776,7 @@ def _serialize_trust_run_for_api(db: Session, run: models.TrustScoreRun):
         ),
         "classified_answer_category_count": len(classifications),
         "employee_followups_scored": False,
-        "pending_review_count": 0,
+        "pending_review_count": pending_count,
         "scored_group_count": sum(
             item.get("score_0_100") is not None
             for item in [*kpi_groups.values(), *feedback_groups.values()]
@@ -1166,8 +1163,14 @@ def generate_ai_performance_report(payload: AIReportGenerateRequest, db: Session
     )
     classifier_rows = [
         row for row in classifications
-        if row.review_status == "auto_classified"
+        if row.review_status in {"auto_classified", "confirmed"}
     ]
+    pending_classifications = [row for row in classifications if row.review_status == "pending"]
+    if pending_classifications:
+        raise HTTPException(
+            status_code=422,
+            detail=f"{len(pending_classifications)} supervisor answer(s) are awaiting review. Resolve them before generating this report.",
+        )
 
     # Do not generate a report from stale or missing classifications. Each
     # supervisor form in the selected period must be covered by a current run.
@@ -1225,7 +1228,7 @@ def generate_ai_performance_report(payload: AIReportGenerateRequest, db: Session
             "classification_count": feedback_groups[dimension]["classification_count"],
             "evidence": [
                 {
-                    "direction": row.predicted_direction,
+                    "direction": row.confirmed_direction if row.review_status == "confirmed" else row.predicted_direction,
                     "statement": _sanitize_feedback_for_report(row.statement_text, all_names)[:500],
                 }
                 for row in group_rows[:25]
@@ -2862,7 +2865,7 @@ def get_admin_overview(
         "available": bool(pipeline_runs or pipeline_classifications),
         "runs_count": len(pipeline_runs),
         "scores_ready_count": len(ready_runs),
-        "awaiting_review_count": 0,
+        "awaiting_review_count": sum(run.score_status == "awaiting_review" for run in pipeline_runs),
         "incomplete_count": sum(run.score_status == "incomplete" for run in pipeline_runs),
         "average_trust_score": round(sum(float(run.trust_score) for run in ready_runs) / len(ready_runs), 1) if ready_runs else None,
         "pending_feedback_reviews": pending_count,

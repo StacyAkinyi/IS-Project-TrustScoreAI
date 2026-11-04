@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+import re
 from typing import Iterable
 
 from sqlalchemy import and_, or_
@@ -54,6 +55,11 @@ LOWER_IS_BETTER_LIMITS = {
     "non_performing_credit_pct": 18.0,
     "compliance_incidents": 2.0,
 }
+
+# Conservative demo policy selected from grouped validation/test review.
+DIRECTION_SCORE_CONFIDENCE_CUTOFF = 0.50
+CONTRASTIVE_CLAUSE_EVIDENCE_CUTOFF = 0.40
+CONTRASTIVE_MARKER_RE = re.compile(r"\b(?:but|however|although|though|yet|whereas)\b", re.IGNORECASE)
 
 
 def _clamp(value: float, minimum: float = 0.0, maximum: float = 100.0) -> float:
@@ -161,7 +167,7 @@ def _predict_competencies(model, thresholds: dict[str, float], statement: str) -
     return predicted
 
 
-def _classify_direction(model, category: str, statement: str) -> tuple[str, float, dict]:
+def _classify_direction(model, category: str, statement: str) -> tuple[str, float, dict, str | None]:
     model_input = f"{category.lower()} [SEP] {' '.join(statement.lower().split())}"
     classifier = model.named_steps["classifier"]
     labels = [str(label) for label in classifier.classes_]
@@ -170,7 +176,33 @@ def _classify_direction(model, category: str, statement: str) -> tuple[str, floa
     direction = str(model.predict([model_input])[0]).lower()
     if direction not in {"negative", "positive", "mixed", "neutral"}:
         raise ValueError(f"Unsupported appraisal direction label: {direction}")
-    return direction, probability_map.get(direction, 0.0), probability_map
+    confidence = probability_map.get(direction, 0.0)
+    review_reason = None
+    if direction in {"negative", "positive"}:
+        if confidence < DIRECTION_SCORE_CONFIDENCE_CUTOFF:
+            review_reason = "below_direction_confidence_cutoff"
+        else:
+            clauses = [part.strip(" ,;:") for part in CONTRASTIVE_MARKER_RE.split(statement) if part.strip(" ,;:")]
+            if len(clauses) > 1:
+                clause_inputs = [
+                    f"{category.lower()} [SEP] {' '.join(clause.lower().split())}"
+                    for clause in clauses
+                ]
+                clause_probabilities = model.predict_proba(clause_inputs)
+                labels_to_index = {str(label).lower(): index for index, label in enumerate(labels)}
+                negative_index = labels_to_index.get("negative")
+                positive_index = labels_to_index.get("positive")
+                if negative_index is not None and positive_index is not None:
+                    opposing_evidence = any(
+                        float(probs[negative_index]) >= CONTRASTIVE_CLAUSE_EVIDENCE_CUTOFF
+                        for probs in clause_probabilities
+                    ) and any(
+                        float(probs[positive_index]) >= CONTRASTIVE_CLAUSE_EVIDENCE_CUTOFF
+                        for probs in clause_probabilities
+                    )
+                    if opposing_evidence:
+                        review_reason = "opposing_clause_evidence"
+    return direction, confidence, probability_map, review_reason
 
 
 def _upsert_classification(
@@ -187,12 +219,14 @@ def _upsert_classification(
         category=category,
     )
     existing = query.first()
-    direction, confidence, direction_probabilities = _classify_direction(
+    direction, confidence, direction_probabilities, review_reason = _classify_direction(
         direction_model, category, item["statement_text"]
     )
     probability_payload = {
         "competency_probability": round(category_probability, 6),
         "direction_probabilities": direction_probabilities,
+        "review_reason": review_reason,
+        "score_eligible": direction in {"negative", "positive"} and review_reason is None,
     }
     if existing:
         changed_text = existing.statement_text != item["statement_text"]
@@ -203,7 +237,7 @@ def _upsert_classification(
         existing.probabilities = probability_payload
         # Keep the supervisor's correction for the same unchanged answer.
         if changed_text or existing.review_status not in {"confirmed", "excluded"}:
-            existing.review_status = "auto_classified"
+            existing.review_status = "pending" if review_reason else "auto_classified"
             existing.confirmed_direction = None
             existing.reviewed_by_employee_id = None
             existing.reviewed_at = None
@@ -219,7 +253,7 @@ def _upsert_classification(
         predicted_direction=direction,
         confidence=confidence,
         probabilities=probability_payload,
-        review_status="auto_classified",
+        review_status="pending" if review_reason else "auto_classified",
         is_current=True,
         model_version=model_version,
     )
@@ -255,11 +289,14 @@ def get_period_classifications(
 
 
 def build_feedback_groups(rows: Iterable[models.FeedbackClassification]) -> tuple[dict, int]:
-    """Score automatic predictions, applying any saved supervisor correction."""
-    rows = [row for row in rows if row.is_current and row.review_status in {"auto_classified", "confirmed"}]
+    """Score automatic predictions and saved corrections; exclude pending rows."""
+    all_rows = [row for row in rows if row.is_current]
+    pending_count = sum(row.review_status == "pending" for row in all_rows)
+    rows = [row for row in all_rows if row.review_status in {"auto_classified", "confirmed"}]
     direction_for = lambda row: row.confirmed_direction if row.review_status == "confirmed" else row.predicted_direction
     groups = {}
     for category in CATEGORIES:
+        all_category_rows = [row for row in all_rows if row.category == category]
         category_rows = [row for row in rows if row.category == category]
         positive = [row for row in category_rows if direction_for(row) == "positive"]
         negative = [row for row in category_rows if direction_for(row) == "negative"]
@@ -274,12 +311,15 @@ def build_feedback_groups(rows: Iterable[models.FeedbackClassification]) -> tupl
             "positive_count": len(positive),
             "negative_count": len(negative),
             "mixed_or_neutral_count": len(mixed_neutral),
+            "pending_review_count": sum(row.review_status == "pending" for row in all_category_rows),
             "score_rule": "Automatic direction predictions on supervisor answers: positive=100, negative=0; mixed/neutral are not numerically scored.",
         }
-    return groups, 0
+    return groups, pending_count
 
 
 def score_status(kpi_groups: dict, feedback_groups: dict, pending_count: int = 0) -> tuple[float | None, str]:
+    if pending_count:
+        return None, "awaiting_review"
     group_scores = [
         item.get("score_0_100")
         for item in [*kpi_groups.values(), *feedback_groups.values()]
@@ -290,6 +330,8 @@ def score_status(kpi_groups: dict, feedback_groups: dict, pending_count: int = 0
 
 
 def serialize_classification(row: models.FeedbackClassification) -> dict:
+    probabilities = row.probabilities if isinstance(row.probabilities, dict) else {}
+    effective_direction = row.confirmed_direction if row.review_status == "confirmed" else row.predicted_direction
     return {
         "classification_id": row.classification_id,
         "employee_id": row.employee_id,
@@ -301,7 +343,9 @@ def serialize_classification(row: models.FeedbackClassification) -> dict:
         "statement_text": row.statement_text,
         "predicted_direction": row.predicted_direction,
         "confidence": round(float(row.confidence), 4),
-        "probabilities": row.probabilities,
+        "probabilities": probabilities,
+        "review_reason": probabilities.get("review_reason"),
+        "score_eligible": row.review_status in {"auto_classified", "confirmed"} and effective_direction in {"negative", "positive"},
         "review_status": row.review_status,
         "confirmed_direction": row.confirmed_direction,
         "model_version": row.model_version,
@@ -331,8 +375,8 @@ def recalculate_run(db: Session, run: models.TrustScoreRun) -> list[models.Feedb
     rows, appraisals, _ = get_period_classifications(
         db, run.employee_id, run.period_start, run.period_end
     )
-    feedback_groups, _ = build_feedback_groups(rows)
-    trust_score, status = score_status(run.kpi_groups, feedback_groups)
+    feedback_groups, pending_count = build_feedback_groups(rows)
+    trust_score, status = score_status(run.kpi_groups, feedback_groups, pending_count)
     run.feedback_groups = feedback_groups
     run.trust_score = trust_score
     run.score_status = status
@@ -342,7 +386,7 @@ def recalculate_run(db: Session, run: models.TrustScoreRun) -> list[models.Feedb
         "employee_followup_count": 0,
         "employee_followups_scored": False,
         "classified_answer_category_count": len(rows),
-        "pending_review_count": 0,
+        "pending_review_count": pending_count,
         "scored_group_count": sum(
             item.get("score_0_100") is not None
             for item in [*run.kpi_groups.values(), *feedback_groups.values()]
@@ -412,8 +456,8 @@ def generate_run(
         db, employee_id, start, end
     )
     kpi_groups, cash_alert = build_kpi_groups(records)
-    feedback_groups, _ = build_feedback_groups(classifications)
-    trust_score, status = score_status(kpi_groups, feedback_groups)
+    feedback_groups, pending_count = build_feedback_groups(classifications)
+    trust_score, status = score_status(kpi_groups, feedback_groups, pending_count)
     coverage = {
         "performance_record_count": len(records),
         "supervisor_form_count": len(appraisals),
@@ -421,7 +465,7 @@ def generate_run(
         "supervisor_answer_count": len(items),
         "unassigned_supervisor_answer_count": unassigned_answer_count,
         "classified_answer_category_count": assigned_category_count,
-        "pending_review_count": 0,
+        "pending_review_count": pending_count,
         "scored_group_count": sum(
             item.get("score_0_100") is not None
             for item in [*kpi_groups.values(), *feedback_groups.values()]

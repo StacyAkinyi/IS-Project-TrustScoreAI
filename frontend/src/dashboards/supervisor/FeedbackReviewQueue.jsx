@@ -90,10 +90,10 @@ export default function FeedbackReviewQueue({ supervisorId, onChanged, refreshKe
         <div>
           <h3 className="text-lg font-bold text-blue-900">Automatic appraisal classification</h3>
           <p className="mt-1 max-w-3xl text-sm text-slate-600">
-            The model assigns each supervisor answer to zero or more competencies, then predicts its direction within each one. These are automatic results; no answer-by-answer approval is required.
+            The model assigns each supervisor answer to zero or more competencies, then predicts its direction within each one. Clear positive or negative results are scored automatically. Low-confidence positive or negative predictions and answers with both positive and negative clause evidence are held for review. Mixed and neutral predictions are not scored.
           </p>
           <p className="mt-1 max-w-3xl text-xs text-slate-500">
-            Employee self-questionnaires are shown separately as context and are not classified or included in the Trust Score. Mixed and neutral direction predictions do not receive a numeric score. You may correct a label below; corrections are saved for a future training update and do not retrain the model immediately.
+            Employee self-questionnaires are context only and are not classified or included in the Trust Score. Mixed and neutral answers never receive a numeric score. Saved corrections can support a future training update; they do not retrain the model immediately.
           </p>
         </div>
         <div className="flex flex-wrap items-end gap-2">
@@ -125,7 +125,7 @@ export default function FeedbackReviewQueue({ supervisorId, onChanged, refreshKe
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div><strong className="text-slate-800">{run.employee_name || `Employee #${run.employee_id}`}</strong><span className="ml-2 text-xs text-slate-500">{run.period_code}</span></div>
                 <span className={`rounded-full px-2 py-1 text-xs font-semibold ${run.score_status === 'ready' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
-                  {run.score_status === 'ready' ? `Trust Score ${Number(run.trust_score).toFixed(1)}%` : 'Score incomplete'}
+                  {run.score_status === 'ready' ? `Trust Score ${Number(run.trust_score).toFixed(1)}%` : run.score_status === 'awaiting_review' ? 'Awaiting review' : 'Score incomplete'}
                 </span>
               </div>
               <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
@@ -173,10 +173,10 @@ export default function FeedbackReviewQueue({ supervisorId, onChanged, refreshKe
               </p>
               {run.score_status !== 'ready' && (
                 <p className="mt-2 rounded bg-amber-50 p-3 text-xs text-amber-900">
-                  Trust Score incomplete. Groups without a score: <strong>{[
+                  {run.score_status === 'awaiting_review' ? <><strong>{run.data_coverage?.pending_review_count || 0} competency assignment(s) need review.</strong> They are excluded from scoring until you confirm or correct them. </> : <>Trust Score incomplete. Groups without a score: <strong>{[
                     ...Object.values(run.kpi_groups || {}),
                     ...Object.values(run.feedback_groups || {}),
-                  ].filter((group) => group.score_0_100 == null).map((group) => group.label).filter(Boolean).join(', ') || 'one or more required groups'}</strong>. Mixed and neutral feedback does not receive a numeric score.
+                  ].filter((group) => group.score_0_100 == null).map((group) => group.label).filter(Boolean).join(', ') || 'one or more required groups'}</strong>. </>}Mixed and neutral feedback does not receive a numeric score.
                 </p>
               )}
               {(run.data_coverage?.supervisor_answer_count || 0) === 0 && (
@@ -193,7 +193,9 @@ export default function FeedbackReviewQueue({ supervisorId, onChanged, refreshKe
                         <span className="rounded-full bg-blue-50 px-2 py-1 font-semibold text-blue-800">{LABELS[row.category] || row.category}</span>{row.synthetic_demo && <span className="rounded-full bg-violet-50 px-2 py-1 font-semibold text-violet-800">Synthetic demo</span>}
                         <span className={`rounded-full px-2 py-1 font-semibold ${row.predicted_direction === 'negative' ? 'bg-red-100 text-red-800' : row.predicted_direction === 'positive' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-700'}`}>{row.predicted_direction} evidence</span>
                         <span className="text-slate-500">Competency {Math.round((row.probabilities?.competency_probability || 0) * 100)}% · direction {Math.round((row.confidence || 0) * 100)}%</span>
+                        {row.review_status === 'pending' && <span className="rounded-full bg-amber-100 px-2 py-1 font-semibold text-amber-900">Held for review · no score</span>}
                       </div>
+                      {row.review_status === 'pending' && <p className="mt-2 text-xs text-amber-800">{row.review_reason === 'opposing_clause_evidence' ? 'The answer contains clauses with both positive and negative evidence.' : 'The predicted direction is below the confidence cutoff.'}</p>}
                       <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{row.statement_text}</p>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         {row.review_status === 'confirmed' && <span className="text-xs text-emerald-700">Supervisor label: {row.confirmed_direction}</span>}

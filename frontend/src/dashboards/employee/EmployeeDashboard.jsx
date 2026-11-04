@@ -304,10 +304,13 @@ function TrustScoreBreakdown({ run, onClose }) {
 
   const countsFor = (category, sourceType) => {
     const rows = classifications.filter((item) => item.category === category && (!sourceType || item.source_type === sourceType));
+    const directionOf = (item) => item.review_status === 'confirmed' ? item.confirmed_direction : item.predicted_direction;
+    const scoredRows = rows.filter((item) => ['auto_classified', 'confirmed'].includes(item.review_status));
     return {
-      positive: rows.filter((item) => item.review_status === 'auto_classified' && item.predicted_direction === 'positive').length,
-      negative: rows.filter((item) => item.review_status === 'auto_classified' && item.predicted_direction === 'negative').length,
-      mixedNeutral: rows.filter((item) => item.review_status === 'auto_classified' && ['mixed', 'neutral'].includes(item.predicted_direction)).length,
+      positive: scoredRows.filter((item) => directionOf(item) === 'positive').length,
+      negative: scoredRows.filter((item) => directionOf(item) === 'negative').length,
+      mixedNeutral: scoredRows.filter((item) => ['mixed', 'neutral'].includes(directionOf(item))).length,
+      pending: rows.filter((item) => item.review_status === 'pending').length,
     };
   };
   const sourceScore = (counts) => {
@@ -330,7 +333,8 @@ function TrustScoreBreakdown({ run, onClose }) {
         <div className="mt-5 rounded-lg bg-blue-50 p-4">
           <span className="text-sm font-semibold text-blue-900">Overall Trust Score: </span>
           <span className="text-lg font-bold text-blue-900">{scoreLabel}</span>
-          <p className="mt-1 text-xs text-blue-800">A numeric score is available when all eight groups have enough data to calculate a score.</p>
+          <p className="mt-1 text-xs text-blue-800">A numeric score is available when all eight groups have enough data and no answers are waiting for supervisor review.</p>
+          {run?.score_status === 'awaiting_review' && <p className="mt-2 text-sm font-semibold text-amber-800">{run.data_coverage?.pending_review_count || 0} supervisor answer classification(s) are held for review and are not included in this score yet.</p>}
         </div>
 
         <h3 className="mb-3 mt-6 text-lg font-bold text-slate-900">KPI groups</h3>
@@ -372,7 +376,7 @@ function TrustScoreBreakdown({ run, onClose }) {
                     const total = counts.positive + counts.negative + counts.mixedNeutral;
                     return <div key={sourceType} className="rounded bg-slate-50 px-3 py-2 text-xs">
                       <div className="flex justify-between gap-2"><strong className="text-slate-700">{sourceLabel}</strong><strong className="text-slate-800">{total ? sourceScore(counts) : 'No answers'}</strong></div>
-                      <p className="mt-1 text-slate-600">Positive {counts.positive} · Negative {counts.negative} · Mixed/neutral {counts.mixedNeutral}</p>
+                      <p className="mt-1 text-slate-600">Positive {counts.positive} · Negative {counts.negative} · Mixed/neutral {counts.mixedNeutral}{counts.pending ? ` · Awaiting review ${counts.pending}` : ''}</p>
                     </div>;
                   })}
                 </div>
