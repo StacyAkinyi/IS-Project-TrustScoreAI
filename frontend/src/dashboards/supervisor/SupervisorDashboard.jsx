@@ -145,9 +145,9 @@ export default function SupervisorDashboard() {
         </div>
       )}
     </section>
-    <div id="supervisor-classification" className="scroll-mt-4"><FeedbackReviewQueue supervisorId={supervisorId} onChanged={() => setRefreshKey((value) => value + 1)} /></div>
+    <div id="supervisor-classification" className="scroll-mt-4"><FeedbackReviewQueue supervisorId={supervisorId} refreshKey={refreshKey} onChanged={() => setRefreshKey((value) => value + 1)} /></div>
     <div id="supervisor-reports" className="scroll-mt-4"><AIPerformanceReportGenerator /></div>
-    {(selectedEmployee || selectedAppraisal) && <SemiannualAppraisalModal employee={selectedEmployee || { employee_id: selectedAppraisal.employee_id, full_name: selectedAppraisal.employee_name }} appraisal={selectedAppraisal} supervisorId={supervisorId} onClose={() => { setSelectedEmployee(null); setSelectedAppraisal(null); }} onSuccess={() => { setSelectedEmployee(null); setSelectedAppraisal(null); setRefreshKey((value) => value + 1); }} />}
+    {(selectedEmployee || selectedAppraisal) && <SemiannualAppraisalModal employee={selectedEmployee || { employee_id: selectedAppraisal.employee_id, full_name: selectedAppraisal.employee_name }} appraisal={selectedAppraisal} supervisorId={supervisorId} onClose={() => { setSelectedEmployee(null); setSelectedAppraisal(null); }} onSuccess={(result) => { if (result?.classification_status && result.classification_status !== 'complete') setError(result.classification_message || 'The appraisal was saved, but classification needs attention.'); setSelectedEmployee(null); setSelectedAppraisal(null); setRefreshKey((value) => value + 1); }} />}
     {scheduleTarget && <ScheduleAppraisalMeetingModal key={scheduleTarget.appraisal?.appraisal_id || scheduleTarget.employee.employee_id} employee={scheduleTarget.employee} appraisal={scheduleTarget.appraisal} existingMeetings={meetings} supervisorId={supervisorId} onClose={() => setScheduleTarget(null)} onSuccess={() => { setScheduleTarget(null); setRefreshKey((value) => value + 1); }} />}
     </div>
   </div>;

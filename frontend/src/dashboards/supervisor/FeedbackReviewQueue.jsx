@@ -24,12 +24,13 @@ const KPI_UNITS = {
 
 const periodCode = (year, half) => `${year}-H${half}`;
 
-export default function FeedbackReviewQueue({ supervisorId, onChanged }) {
+export default function FeedbackReviewQueue({ supervisorId, onChanged, refreshKey }) {
   const [runs, setRuns] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [running, setRunning] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [choices, setChoices] = useState({});
+  const [savingId, setSavingId] = useState(null);
   const [year, setYear] = useState(new Date().getFullYear());
   const [half, setHalf] = useState(new Date().getMonth() < 6 ? 1 : 2);
   const token = localStorage.getItem('access_token');
@@ -52,30 +53,34 @@ export default function FeedbackReviewQueue({ supervisorId, onChanged }) {
     } finally {
       setLoading(false);
     }
-  }, [supervisorId, token, year, half]);
+  }, [supervisorId, token, year, half, refreshKey]);
 
   useEffect(() => { loadRuns(); }, [loadRuns]);
 
-  const runPipeline = async () => {
-    setRunning(true);
-    setError('');
+  const refreshResults = async () => {
     setNotice('');
+    await loadRuns();
+    setNotice('Showing the latest automatically classified supervisor answers.');
+  };
+
+  const saveCorrection = async (row) => {
+    const decision = choices[row.classification_id];
+    if (!decision) return;
+    setSavingId(row.classification_id);
+    setError('');
     try {
-      const response = await axios.post(
-        `${API}/api/v1/supervisors/${supervisorId}/trust-score-runs`,
-        { period_type: 'semiannual', year: Number(year), period_number: Number(half) },
-        { headers: { Authorization: `Bearer ${token}` } },
+      await axios.patch(
+        API + '/api/v1/feedback-classifications/' + row.classification_id + '/review',
+        { decision },
+        { headers: { Authorization: 'Bearer ' + token } },
       );
-      setRuns(response.data.runs || []);
-      setNotice(
-        `Automatically classified supervisor answers for ${response.data.employees_processed} employees. ` +
-        `${response.data.scores_ready} Trust Scores ready; ${response.data.incomplete} incomplete.`,
-      );
+      setChoices((current) => ({ ...current, [row.classification_id]: '' }));
+      await loadRuns();
       onChanged?.();
     } catch (requestError) {
-      setError(requestError.response?.data?.detail || 'Automatic appraisal classification could not be completed.');
+      setError(requestError.response?.data?.detail || 'Could not save the supervisor correction.');
     } finally {
-      setRunning(false);
+      setSavingId(null);
     }
   };
 
@@ -88,7 +93,7 @@ export default function FeedbackReviewQueue({ supervisorId, onChanged }) {
             The model assigns each supervisor answer to zero or more competencies, then predicts its direction within each one. These are automatic results; no answer-by-answer approval is required.
           </p>
           <p className="mt-1 max-w-3xl text-xs text-slate-500">
-            Employee self-questionnaires are shown separately as context and are not classified or included in the Trust Score. Mixed and neutral direction predictions do not receive a numeric score.
+            Employee self-questionnaires are shown separately as context and are not classified or included in the Trust Score. Mixed and neutral direction predictions do not receive a numeric score. You may correct a label below; corrections are saved for a future training update and do not retrain the model immediately.
           </p>
         </div>
         <div className="flex flex-wrap items-end gap-2">
@@ -101,8 +106,8 @@ export default function FeedbackReviewQueue({ supervisorId, onChanged }) {
               <option value={2}>H2 · Jul–Dec</option>
             </select>
           </label>
-          <button type="button" onClick={runPipeline} disabled={running || loading} className="rounded bg-indigo-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">
-            {running ? 'Classifying…' : 'Run automatic classification'}
+          <button type="button" onClick={refreshResults} disabled={loading} className="rounded bg-indigo-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">
+            Refresh results
           </button>
         </div>
       </div>
@@ -110,10 +115,9 @@ export default function FeedbackReviewQueue({ supervisorId, onChanged }) {
       {notice && <p role="status" className="mt-3 rounded bg-green-50 p-3 text-sm text-green-800">{notice}</p>}
       <div className="mt-4 flex items-center justify-between gap-3">
         <p className="text-sm font-semibold text-slate-700">{loading ? 'Loading classification results…' : `${runs.length} employee result(s) · ${periodCode(year, half)}`}</p>
-        <button type="button" onClick={loadRuns} disabled={loading} className="rounded border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 disabled:opacity-50">Refresh</button>
       </div>
       {!loading && runs.length === 0 ? (
-        <p className="mt-3 rounded bg-slate-50 p-4 text-sm text-slate-600">No automatic classification runs for this period yet. Choose the period and run classification after supervisor appraisal forms have been submitted.</p>
+        <p className="mt-3 rounded bg-slate-50 p-4 text-sm text-slate-600">No saved results for this period yet. New supervisor forms are classified automatically when submitted; use the H1 seeding command for a one-time synthetic backfill.</p>
       ) : (
         <div className="mt-3 max-h-[680px] space-y-3 overflow-y-auto pr-1">
           {runs.map((run) => (
@@ -186,11 +190,36 @@ export default function FeedbackReviewQueue({ supervisorId, onChanged }) {
                   {(run.classifications || []).map((row) => (
                     <div key={row.classification_id} className="rounded border border-slate-100 p-3">
                       <div className="flex flex-wrap items-center gap-2 text-xs">
-                        <span className="rounded-full bg-blue-50 px-2 py-1 font-semibold text-blue-800">{LABELS[row.category] || row.category}</span>
+                        <span className="rounded-full bg-blue-50 px-2 py-1 font-semibold text-blue-800">{LABELS[row.category] || row.category}</span>{row.synthetic_demo && <span className="rounded-full bg-violet-50 px-2 py-1 font-semibold text-violet-800">Synthetic demo</span>}
                         <span className={`rounded-full px-2 py-1 font-semibold ${row.predicted_direction === 'negative' ? 'bg-red-100 text-red-800' : row.predicted_direction === 'positive' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-700'}`}>{row.predicted_direction} evidence</span>
                         <span className="text-slate-500">Competency {Math.round((row.probabilities?.competency_probability || 0) * 100)}% · direction {Math.round((row.confidence || 0) * 100)}%</span>
                       </div>
                       <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{row.statement_text}</p>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        {row.review_status === 'confirmed' && <span className="text-xs text-emerald-700">Supervisor label: {row.confirmed_direction}</span>}
+                        {row.review_status === 'excluded' && <span className="text-xs text-slate-500">Excluded by supervisor</span>}
+                        <select
+                          value={choices[row.classification_id] || ''}
+                          onChange={(event) => setChoices((current) => ({ ...current, [row.classification_id]: event.target.value }))}
+                          aria-label={'Correct classification for ' + (LABELS[row.category] || row.category)}
+                          className="rounded border border-slate-300 bg-white px-2 py-1.5 text-xs"
+                        >
+                          <option value="">Confirm or correct…</option>
+                          <option value="positive">Positive</option>
+                          <option value="negative">Negative</option>
+                          <option value="mixed">Mixed</option>
+                          <option value="neutral">Neutral</option>
+                          <option value="exclude">Exclude from scoring</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => saveCorrection(row)}
+                          disabled={!choices[row.classification_id] || savingId === row.classification_id}
+                          className="rounded bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+                        >
+                          {savingId === row.classification_id ? 'Saving…' : 'Save correction'}
+                        </button>
+                      </div>
                     </div>
                   ))}
                   {run.data_coverage?.unassigned_supervisor_answer_count > 0 && <p className="rounded bg-slate-50 p-3 text-xs text-slate-600">Some supervisor answers did not reach any category cutoff, so they were not assigned to a competency.</p>}

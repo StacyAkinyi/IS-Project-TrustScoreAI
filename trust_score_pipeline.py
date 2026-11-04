@@ -195,15 +195,18 @@ def _upsert_classification(
         "direction_probabilities": direction_probabilities,
     }
     if existing:
+        changed_text = existing.statement_text != item["statement_text"]
         existing.employee_id = item["employee_id"]
         existing.statement_text = item["statement_text"]
         existing.predicted_direction = direction
         existing.confidence = confidence
         existing.probabilities = probability_payload
-        existing.review_status = "auto_classified"
-        existing.confirmed_direction = None
-        existing.reviewed_by_employee_id = None
-        existing.reviewed_at = None
+        # Keep the supervisor's correction for the same unchanged answer.
+        if changed_text or existing.review_status not in {"confirmed", "excluded"}:
+            existing.review_status = "auto_classified"
+            existing.confirmed_direction = None
+            existing.reviewed_by_employee_id = None
+            existing.reviewed_at = None
         existing.model_version = model_version
         existing.is_current = True
         return existing
@@ -252,14 +255,15 @@ def get_period_classifications(
 
 
 def build_feedback_groups(rows: Iterable[models.FeedbackClassification]) -> tuple[dict, int]:
-    """Score only automatic direction predictions on supervisor appraisal answers."""
-    rows = [row for row in rows if row.review_status == "auto_classified"]
+    """Score automatic predictions, applying any saved supervisor correction."""
+    rows = [row for row in rows if row.is_current and row.review_status in {"auto_classified", "confirmed"}]
+    direction_for = lambda row: row.confirmed_direction if row.review_status == "confirmed" else row.predicted_direction
     groups = {}
     for category in CATEGORIES:
         category_rows = [row for row in rows if row.category == category]
-        positive = [row for row in category_rows if row.predicted_direction == "positive"]
-        negative = [row for row in category_rows if row.predicted_direction == "negative"]
-        mixed_neutral = [row for row in category_rows if row.predicted_direction in ("mixed", "neutral")]
+        positive = [row for row in category_rows if direction_for(row) == "positive"]
+        negative = [row for row in category_rows if direction_for(row) == "negative"]
+        mixed_neutral = [row for row in category_rows if direction_for(row) in ("mixed", "neutral")]
         scored_count = len(positive) + len(negative)
         category_score = round(100.0 * len(positive) / scored_count, 1) if scored_count else None
         groups[category] = {
@@ -388,7 +392,6 @@ def generate_run(
             models.FeedbackClassification.supervisor_appraisal_id.in_(appraisal_ids)
         ).update({
             models.FeedbackClassification.is_current: False,
-            models.FeedbackClassification.review_status: "superseded",
         }, synchronize_session=False)
     assigned_category_count = 0
     unassigned_answer_count = 0

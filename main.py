@@ -788,6 +788,18 @@ def _serialize_trust_run_for_api(db: Session, run: models.TrustScoreRun):
     })
 
     result = serialize_run(run, classifications)
+    synthetic_items = set()
+    for appraisal in appraisals:
+        answers = appraisal.answers_snapshot if isinstance(appraisal.answers_snapshot, list) else []
+        for index, answer in enumerate(answers):
+            if isinstance(answer, dict) and answer.get("seed_marker"):
+                key = str(answer.get("id") or answer.get("question_id") or f"answer_{index + 1}")
+                synthetic_items.add((appraisal.appraisal_id, key))
+    for classification in result["classifications"]:
+        classification["synthetic_demo"] = (
+            classification.get("supervisor_appraisal_id"),
+            classification.get("item_key"),
+        ) in synthetic_items
     result.update({
         "kpi_groups": kpi_groups,
         "feedback_groups": feedback_groups,
@@ -1558,10 +1570,34 @@ def submit_supervisor_appraisal(
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=409, detail=f"Form {form_number} is already submitted for this employee in this half-year period")
+    classification_status = "unavailable"
+    classification_message = "The form is saved; the classification models are unavailable, so results could not be generated."
+    score_status = None
+    if competency_model is not None and direction_model is not None:
+        try:
+            run = _generate_trust_score_for_employee(
+                db, employee.employee_id, current_user["employee_id"],
+                TrustScoreRunRequest(
+                    employee_id=employee.employee_id, period_type="semiannual",
+                    year=int(period_code[:4]), period_number=form_number,
+                ),
+            )
+            db.commit()
+            db.refresh(run)
+            classification_status = "complete"
+            classification_message = "Supervisor answers were classified automatically and are available on the Classification section."
+            score_status = run.score_status
+        except Exception:
+            db.rollback()
+            classification_status = "failed"
+            classification_message = "The form is saved, but automatic classification did not finish. Refresh the Classification section or retry later."
     return {"appraisal_id": record.appraisal_id, "employee_id": record.employee_id,
             "period_code": record.period_code, "form_number": record.form_number,
             "yes_count": record.yes_count,
             "employee_notified_at": record.employee_notified_at,
+            "classification_status": classification_status,
+            "classification_message": classification_message,
+            "score_status": score_status,
             "message": (("Form 1 is saved for the first half. Form 2 is now available for the second half."
                          if calendar_period.endswith("-H2") else
                          "Form 1 is saved. Form 2 becomes available on July 1.")
