@@ -275,9 +275,9 @@ export default function AdminDashboard() {
           <p>Average across {telemetry.records_count ?? 0} stored performance records</p>
         </div>
         <div className="admin-report-summary">
-          <span>{reports.count ?? 0} reports</span>
+          <span>{reports.count ?? 0} total reports</span>
           <strong>{reports.average_trust_score == null ? '—' : `${reports.average_trust_score}%`}</strong>
-          <small>Average TrustScore</small>
+          <small>Historical: {reports.historical_score_count ?? 0} · Performance: {reports.performance_report_count ?? 0} · Average TrustScore</small>
         </div>
       </div>
       {loading ? (

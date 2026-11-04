@@ -1147,6 +1147,9 @@ def _serialize_ai_report(row):
 
 @app.post("/api/v1/ai-reports/generate")
 def generate_ai_performance_report(payload: AIReportGenerateRequest, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") not in {"employee", "supervisor"}:
+        raise HTTPException(status_code=403, detail="Only employees and supervisors can generate performance reports")
+
     employee = db.query(models.Employee).filter_by(employee_id=payload.employee_id, is_active=True).first()
     if not employee:
         raise HTTPException(status_code=404, detail="Employee not found")
@@ -2757,6 +2760,9 @@ def get_admin_overview(
         func.count(models.AppraisalReport.report_id),
         func.avg(models.AppraisalReport.unified_trust_score),
     ).one()
+    performance_report_count = db.query(
+        func.count(models.AIPerformanceReport.report_id)
+    ).scalar() or 0
     feedback_count = db.query(func.count(models.UnstructuredFeedback.feedback_id)).scalar() or 0
 
     dimension_labels = {
@@ -2886,7 +2892,9 @@ def get_admin_overview(
         "accounts": accounts,
         "telemetry": telemetry,
         "reports": {
-            "count": int(report_count or 0),
+            "count": int(report_count or 0) + int(performance_report_count),
+            "historical_score_count": int(report_count or 0),
+            "performance_report_count": int(performance_report_count),
             "average_trust_score": round(float(average_score), 2) if average_score is not None else None,
         },
         "feedback_count": int(feedback_count),
