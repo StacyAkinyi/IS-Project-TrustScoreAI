@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional
-from datetime import datetime
+from datetime import date, datetime
 
 # --- Hierarchical User Schemas ---
 class ExecutiveManagerCreate(BaseModel):
@@ -182,6 +182,7 @@ class AdminEmployeeResponse(BaseModel):
     executive_name: Optional[str] = None
     branch_code: Optional[str] = None
     oversight_region: Optional[str] = None
+    start_date: Optional[date] = None
     created_at: datetime
 
 
@@ -192,6 +193,7 @@ class AdminEmployeeCreate(BaseModel):
     department: str = Field(min_length=2, max_length=100)
     role: str = Field(min_length=2, max_length=100)
     user_type: str
+    start_date: Optional[date] = None
     supervisor_id: Optional[int] = Field(default=None, ge=1)
     executive_id: Optional[int] = Field(default=None, ge=1)
     branch_code: Optional[str] = Field(default=None, max_length=30)
@@ -205,6 +207,7 @@ class AdminEmployeeUpdate(BaseModel):
     department: Optional[str] = Field(default=None, min_length=2, max_length=100)
     role: Optional[str] = Field(default=None, min_length=2, max_length=100)
     is_active: Optional[bool] = None
+    start_date: Optional[date] = None
     supervisor_id: Optional[int] = Field(default=None, ge=1)
     executive_id: Optional[int] = Field(default=None, ge=1)
     branch_code: Optional[str] = Field(default=None, max_length=30)

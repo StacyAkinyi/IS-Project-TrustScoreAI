@@ -37,6 +37,7 @@ const EMPTY_FORM = {
   department: '',
   role: '',
   user_type: 'employee',
+  start_date: '',
   supervisor_id: '',
   executive_id: '',
   branch_code: '',
@@ -148,6 +149,7 @@ export default function AdminDashboard() {
       department: employee.department || '',
       role: employee.role || '',
       user_type: employee.user_type,
+      start_date: employee.start_date || '',
       supervisor_id: employee.supervisor_id ? String(employee.supervisor_id) : '',
       executive_id: employee.executive_id ? String(employee.executive_id) : '',
       branch_code: employee.branch_code || '',
@@ -187,6 +189,7 @@ export default function AdminDashboard() {
       if (form.password) payload.password = form.password;
       if (form.user_type === 'employee') {
         payload.supervisor_id = form.supervisor_id ? Number(form.supervisor_id) : null;
+        if (form.start_date) payload.start_date = form.start_date;
       } else if (form.user_type === 'supervisor') {
         payload.executive_id = Number(form.executive_id);
         payload.branch_code = form.branch_code.trim();
@@ -196,6 +199,7 @@ export default function AdminDashboard() {
     } else {
       payload.password = form.password;
       payload.user_type = form.user_type;
+      if (form.user_type === 'employee') payload.start_date = form.start_date;
       if (form.user_type === 'employee' && form.supervisor_id) {
         payload.supervisor_id = Number(form.supervisor_id);
       } else if (form.user_type === 'supervisor') {
@@ -511,12 +515,18 @@ export default function AdminDashboard() {
                   <input type="password" minLength="12" maxLength="72" required={!editingEmployee} value={form.password} onChange={(event) => updateField('password', event.target.value)} autoComplete="new-password" placeholder={editingEmployee ? 'Leave blank to keep current password' : 'At least 12 characters'} />
                 </label>
                 {form.user_type === 'employee' && (
-                  <label className="admin-form-wide">Supervisor
-                    <select value={form.supervisor_id} onChange={(event) => updateField('supervisor_id', event.target.value)}>
-                      <option value="">Not assigned yet</option>
-                      {supervisors.map((supervisor) => <option key={supervisor.employee_id} value={supervisor.supervisor_profile_id}>{supervisor.full_name} · {supervisor.branch_code || 'No branch'}</option>)}
-                    </select>
-                  </label>
+                  <>
+                    <label>Employment start date
+                      <input type="date" required={!editingEmployee} value={form.start_date} onChange={(event) => updateField('start_date', event.target.value)} />
+                    </label>
+                    <label>Supervisor
+                      <select value={form.supervisor_id} onChange={(event) => updateField('supervisor_id', event.target.value)}>
+                        <option value="">Not assigned yet</option>
+                        {supervisors.map((supervisor) => <option key={supervisor.employee_id} value={supervisor.supervisor_profile_id}>{supervisor.full_name} · {supervisor.branch_code || 'No branch'}</option>)}
+                      </select>
+                    </label>
+                    {editingEmployee && !form.start_date && <p className="admin-form-hint admin-form-wide">Add the employee’s actual start date to enable the correct first appraisal form for late-year joiners.</p>}
+                  </>
                 )}
                 {form.user_type === 'supervisor' && (
                   <>

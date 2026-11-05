@@ -23,6 +23,7 @@ export default function AIPerformanceReportGenerator() {
   const [reports, setReports] = useState([]);
   const [selectedReport, setSelectedReport] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [loadingEmployees, setLoadingEmployees] = useState(true);
   const [error, setError] = useState('');
   const role = localStorage.getItem('user_role') || 'employee';
@@ -76,6 +77,33 @@ export default function AIPerformanceReportGenerator() {
     }
   };
 
+  const downloadReport = async (report) => {
+    if (!report || downloading) return;
+    setDownloading(true);
+    setError('');
+    try {
+      const response = await fetch(`${API}/ai-reports/${report.report_id}/download`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.detail || 'Could not download this report.');
+      }
+      const blobUrl = URL.createObjectURL(await response.blob());
+      const anchor = document.createElement('a');
+      anchor.href = blobUrl;
+      anchor.download = `performance-report-${report.employee_id}-${report.period_code || 'period'}.pdf`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    } catch (err) {
+      setError(err.message || 'Could not download this report.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const label = (id) => employees.find((item) => String(item.employee_id) === String(id))?.full_name || `Employee ${id}`;
   const options = periodType === 'quarterly' ? [1, 2, 3, 4] : [1, 2];
   const monthLabel = (code) => code?.replace('-Q', ' · Quarter ').replace('-H', ' · Half-year ') || '';
@@ -98,7 +126,7 @@ export default function AIPerformanceReportGenerator() {
     {role === 'supervisor' && employees.length > 0 && <div><h4 className="text-sm font-bold text-blue-900">Saved reports by employee</h4><div className="mt-2 flex flex-wrap gap-2">{employees.map((item) => <button key={item.employee_id} type="button" aria-pressed={String(item.employee_id) === String(employeeId)} onClick={() => { setEmployeeId(String(item.employee_id)); setSelectedReport(null); }} className={`rounded-full border px-3 py-2 text-sm font-semibold ${String(item.employee_id) === String(employeeId) ? 'border-blue-700 bg-blue-50 text-blue-800' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}>{item.full_name}</button>)}</div></div>}{error && <p role="alert" className="rounded bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
     {reports.length > 0 && <label className="block text-xs font-semibold text-slate-700">Saved reports ({reports.length})<select value={selectedReport?.report_id || ''} onChange={(event) => setSelectedReport(reports.find((row) => String(row.report_id) === event.target.value) || null)} className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm">{reports.map((row) => <option key={row.report_id} value={row.report_id}>{monthLabel(row.period_code)} · {label(row.employee_id)} · {new Date(row.generated_at).toLocaleString()}</option>)}</select></label>}
     {selectedReport && <div className="space-y-4 rounded-lg border border-slate-200 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2"><h4 className="font-bold text-slate-900">{label(selectedReport.employee_id)} · {monthLabel(selectedReport.period_code) || selectedReport.period_code}</h4><span className="rounded bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-900">{selectedReport.data_coverage?.report_generation_method === 'local_templates_v1' ? 'Template-based' : selectedReport.data_coverage?.feedback_score_source === 'supervisor_appraisal_classifier' ? 'Saved report · scores from classifier' : 'Previous report'}</span></div>
+      <div className="flex flex-wrap items-center justify-between gap-2"><h4 className="font-bold text-slate-900">{label(selectedReport.employee_id)} · {monthLabel(selectedReport.period_code) || selectedReport.period_code}</h4><div className="flex flex-wrap items-center gap-2"><span className="rounded bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-900">{selectedReport.data_coverage?.report_generation_method === 'local_templates_v1' ? 'Template-based' : selectedReport.data_coverage?.feedback_score_source === 'supervisor_appraisal_classifier' ? 'Saved report · scores from classifier' : 'Previous report'}</span><button type="button" onClick={() => downloadReport(selectedReport)} disabled={downloading} className="rounded border border-blue-700 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:cursor-wait disabled:opacity-60">{downloading ? 'Preparing PDF…' : 'Download PDF'}</button></div></div>
       <p className="text-sm leading-6 text-slate-700">{selectedReport.narrative?.summary}</p>
       <div><h5 className="mb-2 text-sm font-bold text-blue-900">Telemetry groups</h5><div className="grid gap-2 sm:grid-cols-2">{Object.entries(selectedReport.telemetry_groups || {}).map(([key, group]) => <div key={key} className="rounded border border-slate-200 p-3"><div className="flex items-center justify-between gap-2"><span className="font-semibold text-slate-800">{GROUP_LABELS[key] || group.label}</span><StateBadge state={group.state} /></div><p className="mt-1 text-sm text-slate-600">Group score: {group.score_0_100 == null ? 'No data' : `${group.score_0_100}/100`}</p><ul className="mt-2 space-y-1 text-xs text-slate-600">{(group.metrics || []).map((metric) => <li key={metric.key}>{metric.label}: {metric.mean == null ? 'No data' : `${metric.mean}${metric.unit}`} · {metric.state}</li>)}</ul></div>)}</div></div>
       <div><h5 className="mb-2 text-sm font-bold text-blue-900">Supervisor-classified feedback dimensions</h5><div className="grid gap-2 sm:grid-cols-2">{Object.entries(DIMENSION_LABELS).map(([key, title]) => { const item = selectedReport.feedback_dimensions?.[key]; return <div key={key} className="rounded border border-slate-200 p-3"><div className="flex items-center justify-between gap-2"><span className="font-semibold text-slate-800">{title}</span><span className="text-sm font-bold text-blue-800">{item?.score_0_100 != null ? Number(item.score_0_100).toFixed(1) + '%' : item?.score_1_5 != null ? Number(item.score_1_5).toFixed(1) + '/5 · legacy AI rating' : 'No scorable evidence'}</span></div><p className="mt-1 text-xs text-slate-600"><StateBadge state={item?.state || 'No data'} /></p><p className="mt-1 text-xs text-slate-600">+{item?.positive_count || 0} positive · −{item?.negative_count || 0} negative · {item?.mixed_or_neutral_count || 0} mixed/neutral</p><p className="mt-1 text-xs text-slate-600">{item?.evidence_summary || 'No supervisor classification evidence available.'}</p></div>; })}</div></div>

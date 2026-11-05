@@ -6,6 +6,7 @@ from sqlalchemy import (
     CheckConstraint,
     Column,
     DateTime,
+    Date,
     Float,
     ForeignKey,
     Integer,
@@ -38,6 +39,9 @@ class Employee(Base):
     department = Column(String(100), nullable=False)
     role = Column(String(100), nullable=False)
     user_type = Column(String(20), nullable=False, default="employee")
+    # Employment start date is separate from account creation time. Existing
+    # rows stay nullable until an administrator records their actual start date.
+    start_date = Column(Date, nullable=True)
     # Set only for base employees. Supervisor and executive accounts are also
     # employee identity rows, but their reporting relationships use their own
     # role-specific profile tables rather than this employee-to-supervisor link.

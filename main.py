@@ -19,7 +19,7 @@ from pathlib import Path
 import secrets
 import joblib
 import numpy as np
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import models
 from models import Base
@@ -146,6 +146,7 @@ def admin_employee_payload(db: Session, employee: models.Employee) -> dict:
         "executive_name": executive_profile.full_name if executive_profile else None,
         "branch_code": supervisor_profile.branch_code if supervisor_profile else None,
         "oversight_region": executive_profile.oversight_region if executive_profile else None,
+        "start_date": employee.start_date,
         "created_at": employee.created_at,
     }
 
@@ -1113,13 +1114,8 @@ def get_reportable_employees(db: Session = Depends(get_db), current_user: dict =
         rows = db.query(models.Employee).filter_by(employee_id=current_user["employee_id"], is_active=True).all()
     elif role == "supervisor":
         rows = db.query(models.Employee).filter_by(supervisor_id=current_user["user_id"], user_type="employee", is_active=True).order_by(models.Employee.full_name).all()
-    elif role == "executive":
-        rows = db.query(models.Employee).join(
-            models.ImmediateSupervisor, models.Employee.supervisor_id == models.ImmediateSupervisor.supervisor_id
-        ).filter(models.ImmediateSupervisor.executive_id == current_user["user_id"],
-                 models.Employee.user_type == "employee", models.Employee.is_active.is_(True)).order_by(models.Employee.full_name).all()
     else:
-        raise HTTPException(status_code=403, detail="This account cannot generate performance reports")
+        raise HTTPException(status_code=403, detail="Only employees and supervisors can generate performance reports")
     return [{"employee_id": row.employee_id, "full_name": row.full_name, "role": row.role} for row in rows]
 
 
@@ -1143,6 +1139,106 @@ def _serialize_ai_report(row):
             "narrative": row.narrative, "data_coverage": row.data_coverage,
             "report_status": row.report_status, "model_name": row.model_name,
             "generated_at": row.generated_at}
+
+
+@app.get("/api/v1/ai-reports/{report_id}/download")
+def download_ai_performance_report(
+    report_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    report = db.query(models.AIPerformanceReport).filter_by(report_id=report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Saved performance report not found")
+    employee = db.query(models.Employee).filter_by(
+        employee_id=report.employee_id, is_active=True
+    ).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    ensure_employee_access(db, current_user, employee)
+
+    narrative = report.narrative or {}
+    lines = [
+        "TrustScoreAI - Performance Report",
+        "",
+        f"Employee: {employee.full_name} (ID {employee.employee_id})",
+        f"Period: {narrative.get('period_label') or report.period_code}",
+        f"Generated: {report.generated_at.strftime('%Y-%m-%d %H:%M UTC') if report.generated_at else 'Unknown'}",
+        "Report method: Template-based local summary",
+        "",
+        "SUMMARY",
+        "",
+    ]
+    lines.extend(textwrap.wrap(str(narrative.get("summary") or "No summary available."), width=92))
+
+    lines.extend(["", "TELEMETRY GROUPS", ""])
+    for key, group in (report.telemetry_groups or {}).items():
+        label = group.get("label") or key.replace("_", " ").title()
+        score = group.get("score_0_100")
+        score_text = f"{float(score):.1f}/100" if score is not None else "No data"
+        lines.append(f"{label}: {score_text} · {group.get('state') or 'No data'}")
+        for metric in group.get("metrics") or []:
+            value = metric.get("mean")
+            value_text = f"{value}{metric.get('unit') or ''}" if value is not None else "No data"
+            metric_score = metric.get("score_0_100")
+            metric_score_text = f" · score {float(metric_score):.1f}/100" if metric_score is not None else ""
+            lines.extend(textwrap.wrap(
+                f"  {metric.get('label') or metric.get('key')}: {value_text} · "
+                f"{metric.get('state') or 'No data'}{metric_score_text}", width=92
+            ))
+
+    dimension_labels = {
+        "communication": "Communication",
+        "collaboration": "Collaboration",
+        "compliance_awareness": "Compliance awareness",
+        "learning_development": "Learning and development",
+    }
+    lines.extend(["", "SUPERVISOR-CLASSIFIED FEEDBACK", ""])
+    for key, item in (report.feedback_dimensions or {}).items():
+        label = dimension_labels.get(key, key.replace("_", " ").title())
+        score = item.get("score_0_100")
+        score_text = f"{float(score):.1f}%" if score is not None else "No scorable evidence"
+        lines.append(f"{label}: {score_text} · {item.get('state') or 'No data'}")
+        lines.append(
+            f"  {item.get('positive_count', 0)} positive · {item.get('negative_count', 0)} negative · "
+            f"{item.get('mixed_or_neutral_count', 0)} mixed/neutral (not scored)"
+        )
+        if item.get("evidence_summary"):
+            lines.extend(textwrap.wrap(f"  {item['evidence_summary']}", width=92))
+        for example in item.get("examples") or []:
+            text = example.get("text") or ""
+            direction = example.get("direction") or example.get("label") or "Context"
+            lines.extend(textwrap.wrap(f"  {direction}: {text}", width=92))
+
+    for title, key in (
+        ("EVIDENCE-BACKED STRENGTHS", "strengths"),
+        ("DEVELOPMENT PRIORITIES", "development_priorities"),
+        ("INTERPRETATION NOTES", "caveats"),
+    ):
+        values = narrative.get(key) or []
+        if values:
+            lines.extend(["", title, ""])
+            for value in values:
+                lines.extend(textwrap.wrap(f"- {value}", width=92))
+
+    coverage = report.data_coverage or {}
+    lines.extend([
+        "",
+        "DATA COVERAGE",
+        f"Telemetry records: {coverage.get('telemetry_record_count', 0)}",
+        f"Supervisor appraisal forms: {coverage.get('supervisor_form_count', 0)}",
+        f"Supervisor answers: {coverage.get('supervisor_answer_count', 0)}",
+        "Employee follow-up answers are excluded from classification, scoring, and this report.",
+        "This report does not calculate or change the Trust Score.",
+    ])
+    pdf = _simple_text_pdf(lines)
+    filename_period = re.sub(r"[^A-Za-z0-9_-]", "-", report.period_code or "period")
+    filename = f"performance-report-{employee.employee_id}-{filename_period}.pdf"
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @app.post("/api/v1/ai-reports/generate")
@@ -1471,6 +1567,7 @@ def get_supervisor_appraisal_template(
         form_period = calendar_period
         active_form_number = 1
         overdue_first_form = False
+        late_hire_first_form = False
     else:
         first_half_period = f"{calendar_period[:4]}-H1"
         first_form = db.query(models.SupervisorAppraisal).filter_by(
@@ -1481,11 +1578,20 @@ def get_supervisor_appraisal_template(
             form_period = calendar_period
             active_form_number = 2
             overdue_first_form = False
+            late_hire_first_form = False
+        elif employee.start_date and employee.start_date.year == int(calendar_period[:4]) and employee.start_date.month >= 7:
+            # A genuine H2 hire has no H1 appraisal obligation; Form 2 is their
+            # first appraisal for the year.
+            form_period = calendar_period
+            active_form_number = 2
+            overdue_first_form = False
+            late_hire_first_form = True
         else:
             # Permit a late first-half entry, then the second-half form can follow.
             form_period = first_half_period
             active_form_number = 1
             overdue_first_form = True
+            late_hire_first_form = False
 
     questions = SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM[active_form_number]
     existing = db.query(models.SupervisorAppraisal).filter_by(
@@ -1497,8 +1603,11 @@ def get_supervisor_appraisal_template(
                 "complete": True, "questions": []}
     return {"period_code": form_period, "form_number": active_form_number,
             "complete": False, "overdue_first_form": overdue_first_form,
+            "late_hire_first_form": late_hire_first_form,
             "message": ("Complete the first-half Form 1 to unlock Form 2."
-                        if overdue_first_form else None),
+                        if overdue_first_form else
+                        f"This employee joined after July; complete Form 2 for {form_period} as their first appraisal."
+                        if late_hire_first_form else None),
             "questions": questions}
 
 
@@ -1530,16 +1639,31 @@ def submit_supervisor_appraisal(
         if first_form:
             period_code = calendar_period
             active_form_number = 2
+        elif employee.start_date and employee.start_date.year == int(calendar_period[:4]) and employee.start_date.month >= 7:
+            period_code = calendar_period
+            active_form_number = 2
         else:
             period_code = first_half_period
             active_form_number = 1
 
     form_number = payload.form_number
     if form_number != active_form_number:
+        late_hire_first_form = (
+            calendar_period.endswith("-H2")
+            and employee.start_date is not None
+            and employee.start_date.year == int(calendar_period[:4])
+            and employee.start_date.month >= 7
+        )
+        if late_hire_first_form and form_number == 1:
+            detail = f"Form 2 for {calendar_period} is this employee's first appraisal because they joined in the second half of the year."
+        else:
+            detail = (
+                f"Form {form_number} is not active for this employee right now. "
+                f"Complete Form {active_form_number} for {period_code} first. "
+                "Form 2 is only available from July onward."
+            )
         raise HTTPException(status_code=409, detail=(
-            f"Form {form_number} is not active for this employee right now. "
-            f"Complete Form {active_form_number} for {period_code} first. "
-            "Form 2 is only available from July onward."
+            detail
         ))
     questions = SUPERVISOR_APPRAISAL_QUESTIONS_BY_FORM[form_number]
     if db.query(models.SupervisorAppraisal).filter_by(
@@ -3050,6 +3174,16 @@ def get_admin_regions(
                 if group["score"] is not None:
                     region_run_groups[group["category"]].append(group["score"])
         latest_metrics = {row.employee_id: latest_records[row.employee_id] for row in region_people if row.employee_id in latest_records}
+        latest_kpi_averages = {}
+        for key, column in metric_columns.items():
+            values = [
+                getattr(record, column.key, None)
+                for record in latest_metrics.values()
+            ]
+            values = [float(value) for value in values if value is not None]
+            latest_kpi_averages[key] = (
+                round(sum(values) / len(values), 2) if values else None
+            )
         result.append({
             "executive": person_payload(executive_person, "executive") if executive_person else {"employee_id": executive.emp_id, "full_name": "Executive"},
             "executive_id": executive.executive_id,
@@ -3062,10 +3196,7 @@ def get_admin_regions(
                 "saved_appraisals": sum(appraisal_counts.get(row.employee_id, 0) for row in region_people),
                 "historical_reports": sum(historical_counts.get(row.employee_id, 0) for row in region_people),
                 "saved_reports": sum(saved_report_counts.get(row.employee_id, 0) for row in region_people),
-                "latest_kpi_averages": {
-                    key: round(sum(getattr(row, column.key) for row in latest_metrics.values()) / len(latest_metrics), 2) if latest_metrics else None
-                    for key, column in metric_columns.items()
-                },
+                "latest_kpi_averages": latest_kpi_averages,
                 "group_scores": [
                     {"category": key, "label": label, "score": round(sum(region_run_groups[key]) / len(region_run_groups[key]), 1) if region_run_groups[key] else None}
                     for key, label in group_labels.items()
@@ -3096,6 +3227,11 @@ def create_admin_managed_employee(
     ensure_admin(current_user)
     if payload.user_type not in {"employee", "supervisor", "executive"}:
         raise HTTPException(status_code=422, detail="Account type must be employee, supervisor, or executive")
+    if payload.user_type == "employee":
+        if payload.start_date is None:
+            raise HTTPException(status_code=422, detail="Employment start date is required for an employee")
+        if payload.start_date > date.today():
+            raise HTTPException(status_code=422, detail="Employment start date cannot be in the future")
     password_error = _password_policy_error(payload.password)
     if password_error:
         raise HTTPException(status_code=422, detail=password_error)
@@ -3121,6 +3257,7 @@ def create_admin_managed_employee(
         password_hashed=auth.hash_password(payload.password),
         department=payload.department.strip(), role=payload.role.strip(),
         user_type=payload.user_type,
+        start_date=payload.start_date if payload.user_type == "employee" else None,
         supervisor_id=payload.supervisor_id if payload.user_type == "employee" else None,
     )
     db.add(employee)
@@ -3180,6 +3317,10 @@ def update_admin_managed_employee(
         employee.auth_token_version += 1
 
     if employee.user_type == "employee":
+        if "start_date" in supplied:
+            if payload.start_date is not None and payload.start_date > date.today():
+                raise HTTPException(status_code=422, detail="Employment start date cannot be in the future")
+            employee.start_date = payload.start_date
         if "supervisor_id" in supplied:
             supervisor_id = payload.supervisor_id
             if supervisor_id is not None and not active_supervisor_profile(db, supervisor_id):
@@ -3199,7 +3340,7 @@ def update_admin_managed_employee(
             if payload.executive_id is None or not active_executive_profile(db, payload.executive_id):
                 raise HTTPException(status_code=400, detail="Choose an active executive")
             profile.executive_id = payload.executive_id
-        if supplied.intersection({"supervisor_id", "oversight_region"}):
+        if supplied.intersection({"supervisor_id", "oversight_region", "start_date"}):
             raise HTTPException(status_code=400, detail="Those hierarchy fields do not apply to supervisors")
     elif employee.user_type == "executive":
         profile = db.query(models.ExecutiveManager).filter_by(emp_id=employee.employee_id).first()
@@ -3209,7 +3350,7 @@ def update_admin_managed_employee(
             if not payload.oversight_region or not payload.oversight_region.strip():
                 raise HTTPException(status_code=400, detail="Oversight region cannot be blank")
             profile.oversight_region = payload.oversight_region.strip()
-        if supplied.intersection({"supervisor_id", "executive_id", "branch_code"}):
+        if supplied.intersection({"supervisor_id", "executive_id", "branch_code", "start_date"}):
             raise HTTPException(status_code=400, detail="Those hierarchy fields do not apply to executives")
 
     try:
